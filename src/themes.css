@@ -1,0 +1,123 @@
+/* Electron's nativeTheme controls this media query for System, Light and Dark.
+   It is set before the window opens, so native chrome and the first paint agree. */
+:root { color-scheme: light; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    color: #e5eee7;
+    background: #121715;
+    --accent: #abcdb5;
+    --muted: #a6b7aa;
+    --line: #33443a;
+    --soft: #233229;
+    --surface: #1b241f;
+    --surface-raised: #25332b;
+    --field: #111a15;
+    --text: #e5eee7;
+    --text-secondary: #bdcfc1;
+    --text-muted: #a6b7aa;
+    --text-quiet: #8fa394;
+  }
+
+  ::selection { background: #4a6c55; color: #f1f7f2; }
+  button:focus-visible, a:focus-visible, summary:focus-visible { outline-color: #b1dec0; }
+  input:focus, textarea:focus, select:focus { outline-color: #91b59c; }
+  textarea::placeholder, input::placeholder { color: #8b9d90; }
+
+  .titlebar { background: #121715; }
+  .sidebar, .topbar { background: #171e1a; }
+  .titlebar span, .workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol,
+  .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number,
+  .sample-row > span, .optional, .detail-arrow, .skill-picker > label,
+  .skill-picker p, .editor-footer p, .empty-footnote, .usage-note,
+  .workspace-footer, .signal-row, .skill-card .skill-meta, .history-item .meta,
+  .feedback, .stat span, .privacy-note, .help, .version, .shortcut-status,
+  .field-hint, .sources-heading > span, .source-meta { color: var(--text-muted); }
+  .slash { color: #718778; }
+  .brand-dot, .companion > span { color: #a5c5a9; }
+  .tiny-dot { background: #a4c7ad; }
+  .nav-item { color: var(--text-secondary); }
+  .nav-item:hover { background: #233028; color: var(--text); }
+  .nav-item.active { background: #293e31; color: #d0e7d6; }
+  .keys kbd { background: var(--surface); border-color: var(--line); color: var(--text-secondary); }
+  .avatar { background: #2b4031; color: #d3e6d7; }
+  .mode-badge { background: #24362b; border-color: #405b47; color: #c9dece; }
+
+  .eyebrow, .page-heading h1 span, .section-heading h1 span { color: #a6c9ae; }
+  .page-heading p, .section-heading p { color: var(--text-muted); }
+  .mascot, .mascot::before, .mascot::after { background: #8bab82; }
+  .mascot { border-color: #a4c49a; }
+  .mascot i { background: #213d29; }
+  .mascot b { border-color: #213d29; }
+
+  .panel, .skill-card, .history-item, .stat, .progress-panel,
+  .knowledge-source, .empty-state { background: var(--surface); border-color: var(--line); }
+  .result-panel { background: #1a231e; }
+  .panel-heading, .context-box, .result-details, .knowledge-fact,
+  .knowledge-reply { border-color: var(--line); }
+  .text-button { color: #b1cdb6; }
+  .text-button:hover { color: #e1f2e4; }
+  .icon-button { color: var(--text-secondary); }
+  #prompt, #result-text, .knowledge-form > textarea { color: var(--text); }
+  input, select, .context-fields textarea {
+    background: var(--field); border-color: #405448; color: var(--text);
+  }
+  .sample-row button { background: #24332a; border-color: #3a5042; color: #c0d6c6; }
+  .sample-row button:hover { border-color: #83a88e; color: #e0f0e5; }
+  .context-box { background: #18231c; }
+  .context-box summary, .context-fields label { color: #bed8c6; }
+  .select-wrap { border-color: #405448; color: #bed8c6; }
+  .select-wrap select { background: transparent; color: var(--text); }
+  .primary { background: var(--accent); border-color: var(--accent); color: #14291d; }
+  .primary:hover { background: #c2dfcc; border-color: #c2dfcc; }
+  .secondary { background: var(--surface-raised); border-color: #46604e; color: #d5e7da; }
+  .secondary:hover { background: #324739; }
+  .small-tag { background: #2b3d2e; color: #bcd9b8; }
+  .orbit-mark { background: #293c2a; color: #b7cfa1; }
+  .result-empty h3, .empty-state h2 { color: #c3d9b8; }
+  .result-empty > p, .empty-steps, .result-details li, .empty-state,
+  .skill-card p, .skill-card details, .progress-panel > p,
+  .bar-row { color: var(--text-secondary); }
+  .result-details h3, .result-details li::before { color: #b5d1a5; }
+  .coach-strip { background: #263325; border-color: #3b4e36; }
+  .coach-icon, .coach-strip .eyebrow, .coach-label { color: #bdd0aa; }
+  .coach-strip p { color: #d0dfbf; }
+  .signal { background: #263329; color: var(--text-secondary); }
+  .signal.present { background: #304a32; color: #c4e5bd; }
+  .skill-icon { background: #2b3e2e; color: #c4deba; }
+  .history-item h2 { color: var(--text); }
+  .history-actions .delete { color: #e6b8a8; }
+  .feedback button { border-color: #405440; color: #bed1b5; }
+  .feedback button.selected { background: #344e32; border-color: #83a979; color: #d6edcb; }
+  .stat strong { color: #c1dfae; }
+  .bar-row progress, .bar-row progress::-webkit-progress-bar { background: #2a3929; }
+  .bar-row progress::-webkit-progress-value { background: #9dbf89; }
+
+  dialog { background: #1b261e; border-color: #405b45; color: var(--text); }
+  dialog::backdrop { background: #080e0bb3; }
+  dialog label:not(.checkbox-label), .checkbox-label { color: var(--text-secondary); }
+  .checkbox-label input { accent-color: #b3d2a5; }
+  .settings-divider { background: var(--line); }
+  .shortcut-status.warning { color: #e2be80; }
+  #toast { background: #b4d2af; border-color: #d0e4c8; color: #172c1c; }
+  #toast.error { background: #563c32; border-color: #986e57; color: #ffe6d6; }
+
+  .knowledge-connection { background: #213329; border-color: #3b5844; }
+  .knowledge-connection p { color: #b4cdbb; }
+  .knowledge-form .checkbox-label { color: #cbded0; }
+  .knowledge-progress { color: #b8d6bf; }
+  .knowledge-summary h3, .knowledge-reply > label { color: #b6d2b7; }
+  .knowledge-summary > p, .knowledge-fact p { color: #d4e5d7; }
+  .citation { background: #34503a; color: #d6edcf; }
+  .knowledge-fact details, .knowledge-source details { color: #b2c8ac; }
+  .knowledge-fact blockquote { color: #c8ddbf; border-color: #7c9f6b; }
+  .knowledge-summary ul { color: #dacba5; }
+  .knowledge-reply > textarea { background: var(--field); border-color: #405448; color: var(--text); }
+  .knowledge-reply .help { color: var(--text-muted); }
+  .source-id { background: #2b412d; color: #c1ddb6; }
+  .source-title { color: #c5e4c5; }
+  .knowledge-source pre { background: #121b14; color: #c0d2ba; }
+  .incoming-banner, #knowledge-warnings { background: #352b1c; border-color: #685638; color: #f0d19b; }
+  .incoming-banner .text-button, .incoming-banner .icon-button { color: #f1d69e; }
+}
