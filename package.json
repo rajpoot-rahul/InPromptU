@@ -11,10 +11,12 @@
     "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/engine.cjs && node --check src/provider.cjs && node --check src/codex.cjs && node --check src/knowledge.cjs && node --check src/renderer.js",
     "package:mac": "node scripts/package.cjs darwin arm64",
     "package:windows": "node scripts/package.cjs win32 x64",
-    "installer:mac": "npm run package:mac && node scripts/installer-mac.cjs arm64"
+    "installer:mac": "npm run package:mac && node scripts/installer-mac.cjs arm64",
+    "installer:windows": "npm run package:windows && node scripts/installer-windows.cjs"
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",
-    "electron": "45.2.1"
+    "electron": "45.2.1",
+    "electron-builder": "26.18.0"
   }
 }
