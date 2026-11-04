@@ -30,7 +30,7 @@ The companion also offers a prompt workspace: preserve the employee's request, a
 
 ## What the prototype implements
 
-The v0.2.1 application has its own Electron desktop window, a menu-bar or tray presence, a global summon shortcut, and System, Light, and Dark appearances. The Mac release includes an installer and a portable app. The Windows x64 release is a portable app and still needs execution testing on Windows.
+The v0.2.1 application has its own Electron desktop window, a menu-bar or tray presence, a global summon shortcut, and System, Light, and Dark appearances. Mac and Windows x64 have separate installers and optional portable apps. A native Windows workflow checks installation and basic startup; the interactive keyboard/clipboard and signed-in connector workflows still need Windows validation.
 
 The prompt workspace includes five starter skills, offline prompt structuring, optional model-based rewriting through Ollama or an approved API, saved sessions, feedback, and personal progress signals. Offline mode is deterministic; it does not perform model inference.
 
@@ -74,7 +74,7 @@ The prototype has no claimed percentage cost saving, productivity improvement, o
 
 ## Proposed next steps
 
-1. Validate the Windows launch, shortcut, clipboard, and connector workflow on a Windows machine.
+1. Validate the interactive Windows shortcut, clipboard, and signed-in connector workflow on a Windows machine.
 2. Trial the current application with a small set of representative tasks and collect explicit feedback.
 3. Refine retrieval relevance, source freshness, error handling, and the explanation of uncertainty.
 4. Add an approved organisation-specific skill catalogue and optional learning exercises.

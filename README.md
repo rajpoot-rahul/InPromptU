@@ -2,11 +2,18 @@
 
 A Mac-first companion based on the [hackathon brief](https://impromptu-hackathon-brief.hyland-0170.chatgpt.site/#idea). Copy a message from Teams, summon Impromptu, look up Hyland documentation, and review a source-backed reply. The original prompt-coaching workspace remains available.
 
+## Download an installer
+
+- **[Download for Mac — Installer.pkg](https://github.com/rajpoot-rahul/InPromptU/releases/download/v0.2.1/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg)** — Apple Silicon, macOS 13 or later. Run the installer, then open **Applications → Impromptu**.
+- **[Download for Windows — Setup.exe](https://github.com/rajpoot-rahul/InPromptU/releases/download/v0.2.1/Impromptu-0.2.1-Windows-x64-Setup.exe)** — Windows x64. Run Setup, then open **Impromptu** from the Start Menu or desktop shortcut. It includes an uninstaller in Windows Installed apps.
+
+Both are unsigned hackathon preview builds. Sign in to a GitHub account with repository access to download from this private repository. [Portable ZIPs, checksums, and all release assets](https://github.com/rajpoot-rahul/InPromptU/releases/tag/v0.2.1) are also available.
+
 ## Project and downloads
 
 - [Concept and product vision](docs/concept.md) — the original idea, the implemented prototype, and the proposed next steps.
 - [Demo walkthrough](docs/demo.md) — a short prompt-coaching and knowledge-retrieval demo.
-- [v0.2.1 release](https://github.com/rajpoot-rahul/InPromptU/releases/tag/v0.2.1) — Mac installer, Mac portable app, Windows portable app, and SHA-256 checksums.
+- [v0.2.1 release](https://github.com/rajpoot-rahul/InPromptU/releases/tag/v0.2.1) — separate Mac and Windows installers, optional portable apps, and SHA-256 checksums.
 - [Release notes and limitations](docs/releases/v0.2.1.md).
 
 Application downloads are attached to the GitHub release. A source checkout does not include the `release/` directory. This repository and its releases require repository access while private.
@@ -18,7 +25,8 @@ Application downloads are attached to the GitHub release. A source checkout does
 - **Apple Silicon Mac:** open `release/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg` and follow macOS Installer. This places **Impromptu.app** in **Applications**. Open it there, or use Spotlight (Command+Space → Impromptu). The installer requires macOS 13 or later on Apple Silicon. It does not download dependencies or run installation scripts.
 - Impromptu runs in its **own desktop window**, loading the interface from files bundled inside the app. It is not a ChatGPT web page, extension, or embedded chat. Electron and the app code are included, so opening the installed app needs neither Node.js nor this project folder. **Hyland knowledge still requires the separate local Codex connection described below.** Installing Impromptu does not install Codex or grant Atlassian access.
 - **Portable Mac alternative:** open `release/v0.2.1/Impromptu-darwin-arm64/Impromptu.app`. `Launch Impromptu.command` prefers an installed copy, then falls back to this build.
-- **Windows x64:** extract the entire `release/Impromptu-0.2.1-Windows-x64.zip`, then open `Impromptu.exe`. Keep its supporting files together.
+- **Windows x64:** download and run `Impromptu-0.2.1-Windows-x64-Setup.exe`, choose the installation location, then launch Impromptu from its desktop or Start Menu shortcut. Setup defaults to the current user and also supports an all-users installation with administrator approval. Uninstall through Windows Installed apps. Saved sessions are retained by default.
+- **Portable Windows alternative:** extract the entire `Impromptu-0.2.1-Windows-x64.zip`, then open `Impromptu.exe`. Keep its supporting files together.
 - **Updating from an older version:** save your current draft and choose Quit Impromptu before opening the new version. Both versions use the same local saved-session folder. The old build has been left intact.
 - The app must be running for its global shortcut to work. Closing the window keeps it in the menu bar/system tray. Choose **Quit Impromptu** there to stop it. It does not start automatically at login.
 
@@ -109,13 +117,18 @@ python3 scripts/make-icons.py
 npm run package:mac
 npm run package:windows
 npm run installer:mac
+npm run installer:windows
 ```
 
 Source: `src/main.cjs` (desktop), `src/preload.cjs` (narrow bridge), `src/engine.cjs` (skills/checks), `src/provider.cjs` (prompt-model adapters), `src/codex.cjs` (local JSON-RPC transport), `src/knowledge.cjs` (bounded retrieval and drafting), `src/renderer.js` + `index.html` + `styles.css` (UI). No runtime npm dependencies; Electron and packaging tools are pinned development dependencies.
 
 The Mac installer is built with Apple's `pkgbuild` and `productbuild`. It installs only `/Applications/Impromptu.app`, disables bundle relocation so a development copy is not updated accidentally, and leaves local saved sessions and settings separate. It has no install scripts or login items. `npm run installer:mac` packages the current source and produces the `.pkg`; `node scripts/installer-mac.cjs arm64` wraps an already-built matching app.
 
-App and installer are unsigned prototypes. macOS notarization, Windows signing, a Windows installer, automatic updates and an IT rollout are not implemented. Managed Macs may block unsigned installation and require IT approval. No OS security settings are changed. Windows is cross-packaged from Mac and must be tested on Windows before distribution. Prompt-model adapters are tested against controlled responses; the knowledge workflow was also tested with the real Codex/Atlassian connection.
+The Windows installer uses the pinned electron-builder NSIS toolchain and is built on Windows by the manually triggered [Windows installer workflow](.github/workflows/windows-installer.yml). `npm run installer:windows` packages the app and writes Setup.exe under `release/windows-installer/`. `node scripts/installer-windows.cjs` wraps an already-built matching Windows x64 app. The build never publishes automatically. The workflow has read-only repository permissions and uploads a build artifact after its installation smoke check passes.
+
+To attach a tested installer to the existing release, manually run [Publish tested Windows installer](.github/workflows/publish-windows-installer.yml) with the successful build's run ID. It checks the source repository, workflow result, app version, and checksums before uploading, then updates the release checksum manifest. This separate workflow requires release-write access and refuses to overwrite a different installer with the same filename.
+
+Apps and installers are unsigned prototypes. macOS notarization, Windows signing, automatic updates and an IT rollout are not implemented. Managed-device policies may require IT approval. No OS security settings are changed. Full interactive Windows keyboard/clipboard and Codex/Atlassian testing is still needed. Prompt-model adapters are tested against controlled responses; the knowledge workflow was also tested with the real Codex/Atlassian connection on Mac.
 
 ## Verification
 
@@ -123,6 +136,8 @@ The Mac `.pkg` was expanded and checked: it targets `/Applications`, restricts i
 
 Automated tests cover original-text preservation, input limits, endpoint validation, model responses, offline no-network behavior, clipboard handling, shortcut dispatch, sender rejection, RPC framing, connection lifecycle, read-tool and tenant restrictions, partial retrieval failures, bounded evidence, and citation/quotation validation. A live test against the user-supplied hackathon page searched both products, read five accessible sources, reported one failed source read, and generated six facts plus a cited reply. A synthetic draft also confirmed the no-external-tools session can generate successfully. Browser UI checks use synthetic data rather than storing company documents as fixtures.
 
-Earlier native Mac checks covered prompt review/saving, progress and shortcut registration. A macOS ScreenCaptureKit failure blocked physical interaction with the updated native window, so later appearance checks used an isolated offscreen Electron window. Windows has been packaged but not executed here.
+Earlier native Mac checks covered prompt review/saving, progress and shortcut registration. A macOS ScreenCaptureKit failure blocked physical interaction with the updated native window, so later appearance checks used an isolated offscreen Electron window.
+
+The [successful Windows installation check](https://github.com/rajpoot-rahul/InPromptU/actions/runs/41871487298) verified installation, desktop and Start Menu shortcut targets, per-user uninstall registration, installed runtime hashes, native-window startup, uninstall, and preservation of saved user data on a disposable Windows runner. All 18 unit tests also passed there. This does not exercise the interactive prompt/clipboard workflow or a signed-in Codex/Atlassian account.
 
 Appearance in v0.2.1 was verified in an isolated offscreen Electron window: the Settings selector switches Dark, Light and System, both workspaces use the expected colors, and the settings dialog was visually inspected. The existing 18 automated checks also pass. This check did not restart or alter the running user session.

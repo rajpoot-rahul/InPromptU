@@ -21,4 +21,4 @@ Use offline prompt coaching and explain that it structures the prompt with a tem
 
 ## State the current limits
 
-The Mac application has been exercised locally. Windows is packaged but still needs testing on Windows. Builds are unsigned. The knowledge bridge uses experimental Codex APIs and depends on each employee's permissions. Billing reconciliation, automatic routing, organisation dashboards, and employee leaderboards are future concepts.
+The Mac application has been exercised locally. The Windows installer has an automated installation/startup/uninstall check; the interactive keyboard/clipboard and signed-in connector workflows still need Windows testing. Builds are unsigned. The knowledge bridge uses experimental Codex APIs and depends on each employee's permissions. Billing reconciliation, automatic routing, organisation dashboards, and employee leaderboards are future concepts.
