@@ -16,11 +16,11 @@ npm run dev
 
 The current source includes System, Light, Dark, Glass and Max-ind on both platforms, plus OpenRouter, Bedrock SSO and Hugging Face. Windows Glass uses CSS materials; native macOS vibrancy is Mac-only. Each developer configures their own AI access in Settings.
 
-**Release status:** the current release is v0.2.8. Newer source and local builds are not a published release until the **Desktop release** workflow finishes. That workflow builds Mac and Windows from one commit, tests each on its native runner, checks matching versions/checksums, and publishes both installers together. Its `publish` option defaults to off.
+**Release status:** the current release is v0.2.9. Newer source and local builds are not a published release until the **Desktop release** workflow finishes. That workflow builds Mac and Windows from one commit, tests each on its native runner, checks matching versions/checksums, and publishes both installers together. Its `publish` option defaults to off.
 
 ## Download an installer
 
-These links always download the latest release (currently v0.2.8):
+These links always download the latest release (currently v0.2.9):
 
 - **[Download for Mac — Installer.pkg](https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Mac-Apple-Silicon-Installer.pkg)** — Apple Silicon, macOS 13 or later. Run the installer, then open **Applications → Impromptu**.
 - **[Download for Windows — Setup.exe](https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Windows-x64-Setup.exe)** — Windows x64. Run Setup, then open **Impromptu** from the Start Menu or desktop shortcut. It includes an uninstaller in Windows Installed apps.
@@ -32,7 +32,7 @@ Both are unsigned hackathon preview builds: macOS Gatekeeper and Windows SmartSc
 - [Concept and product vision](docs/concept.md) — the original idea, the implemented prototype, and the proposed next steps.
 - [Demo walkthrough](docs/demo.md) — a short prompt-coaching and knowledge-retrieval demo.
 - [Latest release](https://github.com/rajpoot-rahul/InPromptU/releases/latest) — Mac and Windows installers built from one commit, with SHA-256 checksums.
-- [v0.2.8 release notes and limitations](docs/releases/v0.2.8.md). Earlier: [v0.2.1](docs/releases/v0.2.1.md), which also had portable ZIPs.
+- [v0.2.9 release notes and limitations](docs/releases/v0.2.9.md). Earlier: [v0.2.8](docs/releases/v0.2.8.md), [v0.2.1](docs/releases/v0.2.1.md), which also had portable ZIPs.
 
 Application downloads are attached to the GitHub release. A source checkout does not include the `release/` directory. This repository and its releases require repository access while private.
 
