@@ -16,21 +16,23 @@ npm run dev
 
 The current source includes System, Light, Dark, Glass and Max-ind on both platforms, plus OpenRouter, Hugging Face and Bedrock SSO. Windows Glass uses CSS materials; native macOS vibrancy is Mac-only. Each developer configures their own AI access in Settings.
 
-**Release status:** the historical publicised preview is v0.2.1. The newer source and local builds are not a published release until the **Desktop release** workflow finishes. That workflow builds Mac and Windows from one commit, tests each on its native runner, checks matching versions/checksums, and publishes both installers together. Its `publish` option defaults to off.
+**Release status:** the current release is v0.2.8. Newer source and local builds are not a published release until the **Desktop release** workflow finishes. That workflow builds Mac and Windows from one commit, tests each on its native runner, checks matching versions/checksums, and publishes both installers together. Its `publish` option defaults to off.
 
 ## Download an installer
 
-- **[Download for Mac — Installer.pkg](https://github.com/rajpoot-rahul/InPromptU/releases/download/v0.2.1/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg)** — Apple Silicon, macOS 13 or later. Run the installer, then open **Applications → Impromptu**.
-- **[Download for Windows — Setup.exe](https://github.com/rajpoot-rahul/InPromptU/releases/download/v0.2.1/Impromptu-0.2.1-Windows-x64-Setup.exe)** — Windows x64. Run Setup, then open **Impromptu** from the Start Menu or desktop shortcut. It includes an uninstaller in Windows Installed apps.
+These links always download the latest release (currently v0.2.8):
 
-Both are unsigned hackathon preview builds. Sign in to a GitHub account with repository access to download from this private repository. [Portable ZIPs, checksums, and all release assets](https://github.com/rajpoot-rahul/InPromptU/releases/tag/v0.2.1) are also available.
+- **[Download for Mac — Installer.pkg](https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Mac-Apple-Silicon-Installer.pkg)** — Apple Silicon, macOS 13 or later. Run the installer, then open **Applications → Impromptu**.
+- **[Download for Windows — Setup.exe](https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Windows-x64-Setup.exe)** — Windows x64. Run Setup, then open **Impromptu** from the Start Menu or desktop shortcut. It includes an uninstaller in Windows Installed apps.
+
+Both are unsigned hackathon preview builds: macOS Gatekeeper and Windows SmartScreen may warn before opening them. Sign in to a GitHub account with repository access to download from this private repository. [Checksums and all release assets](https://github.com/rajpoot-rahul/InPromptU/releases/latest) are on the release page.
 
 ## Project and downloads
 
 - [Concept and product vision](docs/concept.md) — the original idea, the implemented prototype, and the proposed next steps.
 - [Demo walkthrough](docs/demo.md) — a short prompt-coaching and knowledge-retrieval demo.
-- [v0.2.1 release](https://github.com/rajpoot-rahul/InPromptU/releases/tag/v0.2.1) — separate Mac and Windows installers, optional portable apps, and SHA-256 checksums.
-- [Release notes and limitations](docs/releases/v0.2.1.md).
+- [Latest release](https://github.com/rajpoot-rahul/InPromptU/releases/latest) — Mac and Windows installers built from one commit, with SHA-256 checksums.
+- [v0.2.8 release notes and limitations](docs/releases/v0.2.8.md). Earlier: [v0.2.1](docs/releases/v0.2.1.md), which also had portable ZIPs.
 
 Application downloads are attached to the GitHub release. A source checkout does not include the `release/` directory. This repository and its releases require repository access while private.
 
@@ -38,11 +40,11 @@ Application downloads are attached to the GitHub release. A source checkout does
 
 ## Install and open the app
 
-- **Apple Silicon Mac:** open `release/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg` and follow macOS Installer. This places **Impromptu.app** in **Applications**. Open it there, or use Spotlight (Command+Space → Impromptu). The installer requires macOS 13 or later on Apple Silicon. It does not download dependencies or run installation scripts.
+- **Apple Silicon Mac:** open the downloaded `Impromptu-Mac-Apple-Silicon-Installer.pkg` (or a local build at `release/Impromptu-<version>-Mac-Apple-Silicon-Installer.pkg`) and follow macOS Installer. This places **Impromptu.app** in **Applications**. Open it there, or use Spotlight (Command+Space → Impromptu). The installer requires macOS 13 or later on Apple Silicon. It does not download dependencies or run installation scripts.
 - Impromptu runs in its **own desktop window**, loading the interface from files bundled inside the app. It is not a ChatGPT web page, extension, or embedded chat. Electron and the app code are included, so opening the installed app needs neither Node.js nor this project folder. **Hyland knowledge still requires the separate local Codex connection described below.** Installing Impromptu does not install Codex or grant Atlassian access.
 - **Portable Mac alternative:** open `release/v<version>/Impromptu-darwin-arm64/Impromptu.app`. `Launch Impromptu.command` opens an installed copy, or starts the source when none is installed. Developers should use `npm run dev`.
-- **Windows x64:** download and run `Impromptu-0.2.1-Windows-x64-Setup.exe`, choose the installation location, then launch Impromptu from its desktop or Start Menu shortcut. Setup defaults to the current user and also supports an all-users installation with administrator approval. Uninstall through Windows Installed apps. Saved sessions are retained by default.
-- **Portable Windows alternative:** extract the entire `Impromptu-0.2.1-Windows-x64.zip`, then open `Impromptu.exe`. Keep its supporting files together.
+- **Windows x64:** download and run `Impromptu-Windows-x64-Setup.exe` (a local build is `release/windows-installer/Impromptu-<version>-Windows-x64-Setup.exe`), choose the installation location, then launch Impromptu from its desktop or Start Menu shortcut. Setup defaults to the current user and also supports an all-users installation with administrator approval. Uninstall through Windows Installed apps. Saved sessions are retained by default.
+- **Portable Windows alternative:** open `release/v<version>/Impromptu-win32-x64/Impromptu.exe` from a local build, keeping its supporting files together. (The v0.2.1 release also offered a portable ZIP.)
 - **Updating from an older version:** save your current draft and choose Quit Impromptu before opening the new version. Both versions use the same local saved-session folder. The old build has been left intact.
 - The app must be running for its global shortcut to work. Closing the window keeps it in the menu bar/system tray. Choose **Quit Impromptu** there to stop it. It does not start automatically at login.
 
