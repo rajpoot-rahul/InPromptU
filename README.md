@@ -2,6 +2,16 @@
 
 A Mac-first companion based on the [hackathon brief](https://impromptu-hackathon-brief.hyland-0170.chatgpt.site/#idea). Copy a message from Teams, summon Impromptu, look up Hyland documentation, and review a source-backed reply. The original prompt-coaching workspace remains available.
 
+## Current source — v0.2.6
+
+The source includes Mac-only **Glass** and **Max-ind · Maximal India** themes alongside System, Light and Dark. Both follow the Mac's light/dark appearance. Glass uses a stable opaque canvas and limited blur layers to avoid stale content during tab switches. Max-ind adds jewel colours, textile-inspired borders and architectural details. Mac uses its native window controls without the extra hide button.
+
+Prompt improvement now supports **OpenRouter**, **Hugging Face**, and **Amazon Bedrock with AWS SSO**, alongside Ollama and a custom compatible API. Settings includes provider guidance and a **Test AI connection** action using a fictional prompt. Offline templates remain explicitly labelled as non-AI.
+
+Build the current Mac source with `npm ci` and `npm run package:mac`; the output is `release/v0.2.6/Impromptu-darwin-arm64/Impromptu.app`. Save drafts and quit an older copy before launching it. The downloadable installers below remain **v0.2.1**; v0.2.6 installers have not been published and this update has not been tested on Windows.
+
+Validation: 24 automated tests pass, plus isolated Electron appearance and provider-form checks. The new providers have mocked transport tests; live inference requires your account credentials and model access. No credentials or generated app bundles are committed.
+
 ## Download an installer
 
 - **[Download for Mac — Installer.pkg](https://github.com/rajpoot-rahul/InPromptU/releases/download/v0.2.1/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg)** — Apple Silicon, macOS 13 or later. Run the installer, then open **Applications → Impromptu**.
@@ -24,7 +34,7 @@ Application downloads are attached to the GitHub release. A source checkout does
 
 - **Apple Silicon Mac:** open `release/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg` and follow macOS Installer. This places **Impromptu.app** in **Applications**. Open it there, or use Spotlight (Command+Space → Impromptu). The installer requires macOS 13 or later on Apple Silicon. It does not download dependencies or run installation scripts.
 - Impromptu runs in its **own desktop window**, loading the interface from files bundled inside the app. It is not a ChatGPT web page, extension, or embedded chat. Electron and the app code are included, so opening the installed app needs neither Node.js nor this project folder. **Hyland knowledge still requires the separate local Codex connection described below.** Installing Impromptu does not install Codex or grant Atlassian access.
-- **Portable Mac alternative:** open `release/v0.2.1/Impromptu-darwin-arm64/Impromptu.app`. `Launch Impromptu.command` prefers an installed copy, then falls back to this build.
+- **Portable Mac alternative:** open `release/v0.2.6/Impromptu-darwin-arm64/Impromptu.app`. `Launch Impromptu.command` prefers an installed copy, then falls back to this build.
 - **Windows x64:** download and run `Impromptu-0.2.1-Windows-x64-Setup.exe`, choose the installation location, then launch Impromptu from its desktop or Start Menu shortcut. Setup defaults to the current user and also supports an all-users installation with administrator approval. Uninstall through Windows Installed apps. Saved sessions are retained by default.
 - **Portable Windows alternative:** extract the entire `Impromptu-0.2.1-Windows-x64.zip`, then open `Impromptu.exe`. Keep its supporting files together.
 - **Updating from an older version:** save your current draft and choose Quit Impromptu before opening the new version. Both versions use the same local saved-session folder. The old build has been left intact.
@@ -88,7 +98,12 @@ The app starts in **Offline skills** mode. This preserves the original request a
 For AI rewriting, open Settings:
 
 - **Ollama:** start your existing Ollama service and choose an installed model. Endpoint: `http://localhost:11434/api/chat`. No model is installed by this project.
-- **Approved API:** enter the full Chat Completions endpoint URL, a model ID available to your account, and an API key if required. Example URL shape: `https://your-approved-host/v1/chat/completions`. Only HTTPS is accepted remotely; localhost may use HTTP. Query-string credentials and redirects are rejected.
+- **OpenRouter:** create a key at `openrouter.ai/settings/keys`, select OpenRouter and enter the key. The preset `openrouter/free` routes to free models subject to quotas. Other model IDs may incur charges.
+- **Hugging Face:** create a token with Inference Providers permission at `huggingface.co/settings/tokens`, select Hugging Face and enter a supported chat model ID. Free accounts currently require purchased inference credits; eligible plans include allowances.
+- **Amazon Bedrock / Claude:** install AWS CLI v2 and configure your company's SSO profile with `aws configure sso`. Select Bedrock, enter that profile and region, then click **Sign in with AWS SSO** to open the company browser login. Enter an authorised Claude model ID or inference profile ID/ARN. AWS manages SSO credentials; Impromptu saves only profile, region and model settings. Model tests and improvements are billed to that AWS account. IAM/model access and regional availability must permit the request.
+- **Custom API:** enter the full Chat Completions endpoint URL, a model ID available to your account, and an API key if required. Example URL shape: `https://your-approved-host/v1/chat/completions`. Only HTTPS is accepted remotely; localhost may use HTTP. Query-string credentials and redirects are rejected.
+
+Use **Test AI connection** to validate a fictional sample without sending your draft; this consumes provider quota or credits. Save settings after a successful test.
 
 Clicking Improve sends your original prompt, supplied context, audience, format, and skill to that configured service. It asks for a structured rewrite, validates the returned shape, and reports provider-returned usage when available. Review semantic correctness. There are no tool calls or automatic retries. Requests time out after 90 seconds. Chat subscriptions do not automatically provide API entitlement.
 

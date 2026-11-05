@@ -1,7 +1,7 @@
 {
   "name": "impromptu-desktop",
   "productName": "Impromptu",
-  "version": "0.2.1",
+  "version": "0.2.6",
   "description": "A desktop companion for clearer prompts, Hyland knowledge and source-backed replies.",
   "private": true,
   "main": "src/main.cjs",
@@ -18,5 +18,9 @@
     "@electron/packager": "20.3.0",
     "electron": "45.2.1",
     "electron-builder": "26.18.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1161.0",
+    "@aws-sdk/credential-providers": "^3.1161.0"
   }
 }

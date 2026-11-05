@@ -36,3 +36,46 @@ test('invalid model output and upstream failures never masquerade as a successfu
   await assert.rejects(requestImprovement({ prompt: 'Hello' }, config, '', async () => new Response('private provider details', { status: 401 })), /failed \(401\)/);
   assert.deepEqual(parseSuggestion('```json\n' + JSON.stringify(suggestion) + '\n```'), suggestion);
 });
+
+test('named providers pin destinations and send validated AI requests', async () => {
+  for (const [mode, endpoint] of Object.entries({ openrouter: 'https://openrouter.ai/api/v1/chat/completions', huggingface: 'https://router.huggingface.co/v1/chat/completions' })) {
+    const connection = { mode, endpoint: 'https://wrong.example', model: mode === 'openrouter' ? 'openrouter/free' : 'openai/gpt-oss-120b' };
+    assert.equal(validateConnection(connection).endpoint, endpoint);
+    await assert.rejects(requestImprovement({ prompt: 'Hello' }, connection, '', () => { throw new Error('Must not fetch'); }), /API key/);
+    const result = await requestImprovement({ prompt: 'Draft a response.' }, connection, 'provider-key', async (url, options) => {
+      assert.equal(url, endpoint);
+      assert.equal(options.headers.Authorization, 'Bearer provider-key');
+      assert.equal(JSON.parse(options.body).model, connection.model);
+      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(suggestion) } }] }));
+    });
+    assert.equal(result.mode, mode);
+    assert.equal(result.improved, suggestion.improved);
+    for (const [status, message] of [[402, /credits/], [429, /quota/]]) {
+      await assert.rejects(requestImprovement({ prompt: 'Hello' }, connection, 'provider-key', async () => new Response('', { status })), message);
+    }
+  }
+});
+
+test('Bedrock validates profile and region and drops any supplied HTTP endpoint', () => {
+  const input = { mode: 'bedrock', profile: 'hyland-dev', region: 'us-east-1', model: 'approved-claude-id', endpoint: 'https://wrong.example' };
+  assert.equal(validateConnection(input).endpoint, '');
+  for (const profile of ['', '--profile', 'name;command', '../secret']) assert.throws(() => validateConnection({ ...input, profile }));
+  assert.throws(() => validateConnection({ ...input, region: 'https://wrong.example' }));
+});
+test('Bedrock Converse uses chosen SSO profile, model and bounded generation', async () => {
+  const { converse } = require('../src/bedrock.cjs');
+  let destroyed = false;
+  const dependencies = {
+    fromSSO: options => { assert.equal(options.profile, 'hyland'); return 'sso-provider'; },
+    ConverseCommand: class { constructor(input) { this.input = input; } },
+    BedrockRuntimeClient: class {
+      constructor(options) { assert.equal(options.region, 'us-east-1'); assert.equal(options.credentials, 'sso-provider'); }
+      async send(command) { assert.equal(command.input.modelId, 'claude-id'); assert.equal(command.input.inferenceConfig.maxTokens, 4096); assert.equal(command.input.system[0].text, 'instructions'); return { stopReason: 'end_turn', output: { message: { content: [{ text: JSON.stringify(suggestion) }] } }, usage: { inputTokens: 20, outputTokens: 30 } }; }
+      destroy() { destroyed = true; }
+    }
+  };
+  const result = await converse({ profile: 'hyland', region: 'us-east-1', model: 'claude-id' }, [{ content: 'instructions' }, { content: 'draft' }], dependencies);
+  assert.equal(parseSuggestion(result.content).improved, suggestion.improved);
+  assert.equal(result.usage.outputTokens, 30);
+  assert.equal(destroyed, true);
+});

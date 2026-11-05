@@ -1,0 +1,150 @@
+/* macOS-only appearance. Native vibrancy supplies the material behind the web view. */
+:root[data-theme="glass"] {
+  background: var(--glass-solid);
+  color: #253b44;
+  --accent: #376855;
+  --muted: #566d78;
+  --line: rgba(77, 107, 119, .16);
+  --soft: rgba(231, 242, 237, .7);
+  --glass-text: #253b44;
+  --glass-muted: #566d78;
+  --glass-accent: #376855;
+  --glass-heading: #497b69;
+  --glass-edge: rgba(255, 255, 255, .78);
+  --glass-highlight: rgba(255, 255, 255, .85);
+  --glass-surface: linear-gradient(145deg, rgba(255, 255, 255, .8), rgba(247, 252, 255, .48));
+  --glass-navigation: linear-gradient(145deg, rgba(255, 255, 255, .58), rgba(241, 249, 249, .32));
+  --glass-selected: linear-gradient(135deg, rgba(255, 255, 255, .95), rgba(225, 241, 233, .75));
+  --glass-field: rgba(255, 255, 255, .52);
+  --glass-dialog: linear-gradient(145deg, rgba(255, 255, 255, .92), rgba(237, 246, 246, .84));
+  --glass-primary: linear-gradient(160deg, #4c7d69, #315e4d);
+  --glass-primary-text: #fff;
+  --glass-shadow: 0 10px 30px rgba(28, 58, 74, .08), 0 2px 5px rgba(28, 58, 74, .03);
+  --glass-inset: inset 0 1px 0 var(--glass-highlight);
+  --glass-solid: #edf3f6;
+  --glass-solid-surface: #f9fcfd;
+  --glass-solid-field: #fff;
+  --glass-solid-edge: #a1b3bd;
+  --glass-wash: radial-gradient(ellipse at 12% 10%, rgba(177, 224, 237, .32), transparent 52%), radial-gradient(ellipse at 90% 18%, rgba(216, 198, 238, .28), transparent 56%), radial-gradient(ellipse at 62% 95%, rgba(179, 218, 202, .24), transparent 60%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="glass"] {
+    color: #edf4f8;
+    --accent: #b3d9c6;
+    --muted: #b2c4ce;
+    --line: rgba(203, 224, 235, .14);
+    --soft: rgba(48, 73, 68, .7);
+    --glass-text: #edf4f8;
+    --glass-muted: #b2c4ce;
+    --glass-accent: #b3d9c6;
+    --glass-heading: #b1d8c9;
+    --glass-edge: rgba(215, 234, 246, .18);
+    --glass-highlight: rgba(235, 246, 255, .12);
+    --glass-surface: linear-gradient(145deg, rgba(51, 67, 79, .76), rgba(28, 44, 55, .58));
+    --glass-navigation: linear-gradient(145deg, rgba(48, 64, 77, .62), rgba(28, 42, 53, .4));
+    --glass-selected: linear-gradient(135deg, rgba(131, 167, 159, .3), rgba(85, 123, 115, .28));
+    --glass-field: rgba(14, 28, 38, .52);
+    --glass-dialog: linear-gradient(145deg, rgba(44, 61, 74, .94), rgba(28, 44, 55, .9));
+    --glass-primary: linear-gradient(155deg, #c4e3d6, #99c7b1);
+    --glass-primary-text: #183b2c;
+    --glass-shadow: 0 12px 32px rgba(0, 9, 16, .2), 0 2px 6px rgba(0, 9, 16, .12);
+    --glass-solid: #172530;
+    --glass-solid-surface: #263845;
+    --glass-solid-field: #14242f;
+    --glass-solid-edge: #78939f;
+    --glass-wash: radial-gradient(ellipse at 8% 5%, rgba(55, 117, 138, .16), transparent 52%), radial-gradient(ellipse at 90% 10%, rgba(116, 88, 145, .16), transparent 56%), radial-gradient(ellipse at 65% 95%, rgba(58, 110, 90, .14), transparent 60%);
+  }
+}
+
+:root[data-theme="glass"] body { min-height: 100vh; background-color: var(--glass-solid); background-image: var(--glass-wash); }
+:root[data-theme="glass"] .titlebar { background: transparent; border-color: transparent; }
+:root[data-theme="glass"] :is(.sidebar, .topbar, .panel, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source, .knowledge-connection, .coach-strip, dialog) {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-inset), var(--glass-shadow);
+
+}
+:root[data-theme="glass"] .sidebar {
+  inset: 60px auto 12px 12px;
+  width: calc(var(--sidebar) - 20px);
+  padding: 25px 12px 0;
+  border-radius: 22px;
+  background: var(--glass-navigation);
+}
+:root[data-theme="glass"] .brand { font-size: 23px; margin-left: 8px; gap: 8px; }
+:root[data-theme="glass"] .workspace-tag { margin-left: 8px; margin-bottom: 30px; }
+:root[data-theme="glass"] .nav-item { border-radius: 12px; padding: 12px 10px; color: var(--glass-muted); }
+:root[data-theme="glass"] .nav-item:hover { background: var(--glass-field); color: var(--glass-text); }
+:root[data-theme="glass"] .nav-item.active { background: var(--glass-selected); color: var(--glass-accent); box-shadow: var(--glass-inset), 0 2px 8px rgba(25, 58, 64, .06); }
+:root[data-theme="glass"] .topbar { height: 53px; margin: 8px 20px 0 12px; padding: 0 20px; border-radius: 17px; background: var(--glass-navigation); }
+:root[data-theme="glass"] .panel { border-radius: 22px; }
+:root[data-theme="glass"] .panel-heading { border-color: var(--line); }
+:root[data-theme="glass"] :is(.knowledge-connection, .coach-strip, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source) { border-radius: 17px; }
+:root[data-theme="glass"] :is(.titlebar span, .workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol, .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number, .sample-row > span, .optional, .detail-arrow, .skill-picker > label, .skill-picker p, .editor-footer p, .empty-footnote, .usage-note, .workspace-footer, .signal-row, .skill-card .skill-meta, .history-item .meta, .feedback, .stat span, .privacy-note, .help, .version, .shortcut-status, .field-hint, .sources-heading > span, .source-meta) { color: var(--glass-muted); }
+:root[data-theme="glass"] :is(.page-heading p, .section-heading p, .knowledge-connection p, .result-empty > p, .empty-steps, .result-details li, .skill-card p, .skill-card details, .progress-panel > p, .bar-row, .knowledge-fact details, .knowledge-source details, .knowledge-reply .help) { color: var(--glass-muted); }
+:root[data-theme="glass"] :is(.eyebrow, .page-heading h1 span, .section-heading h1 span, .brand-dot, .companion > span, .text-button, .knowledge-summary h3, .knowledge-reply > label, .source-title, .result-details h3, .result-details li::before) { color: var(--glass-heading); }
+:root[data-theme="glass"] :is(.panel-heading, .knowledge-summary > p, .knowledge-fact p, .history-item h2, .icon-button, .checkbox-label, dialog label:not(.checkbox-label), .context-fields label, .knowledge-form .checkbox-label, .result-empty h3, .empty-state h2) { color: var(--glass-text); }
+:root[data-theme="glass"] :is(.keys kbd, .mode-badge, .sample-row button, .secondary, .select-wrap, .context-box, .feedback button, .signal, .small-tag, .source-id, .citation) { background: var(--glass-field); color: var(--glass-accent); border-color: var(--line); }
+:root[data-theme="glass"] .mode-badge { box-shadow: var(--glass-inset); }
+:root[data-theme="glass"] :is(.context-box summary, .select-wrap select) { color: var(--glass-text); }
+:root[data-theme="glass"] :is(input, select, .context-fields textarea, .knowledge-reply > textarea) { border-radius: 10px; background: var(--glass-field); border-color: var(--line); color: var(--glass-text); }
+:root[data-theme="glass"] .select-wrap select { background: transparent; }
+:root[data-theme="glass"] select option { background: var(--glass-solid-surface); color: var(--glass-text); }
+:root[data-theme="glass"] :is(#prompt, #result-text, .knowledge-form > textarea) { color: var(--glass-text); }
+:root[data-theme="glass"] :is(textarea, input)::placeholder { color: var(--glass-muted); opacity: 1; }
+:root[data-theme="glass"] :is(.primary, .secondary, .sample-row button) { border-radius: 12px; }
+:root[data-theme="glass"] .primary { background: var(--glass-primary); color: var(--glass-primary-text); border-color: transparent; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 12px rgba(27, 67, 50, .14); }
+:root[data-theme="glass"] .primary:hover { filter: brightness(1.05); }
+:root[data-theme="glass"] .secondary:hover { background: var(--glass-selected); }
+:root[data-theme="glass"] :is(.avatar, .orbit-mark, .skill-icon, .signal.present, .feedback button.selected) { background: var(--glass-selected); color: var(--glass-accent); }
+:root[data-theme="glass"] :is(.coach-strip p, .coach-icon, .coach-strip .eyebrow, .coach-label, .stat strong) { color: var(--glass-heading); }
+:root[data-theme="glass"] .knowledge-source pre { background: var(--glass-field); color: var(--glass-text); border-radius: 10px; }
+:root[data-theme="glass"] .knowledge-fact blockquote { color: var(--glass-text); border-color: var(--glass-heading); }
+:root[data-theme="glass"] dialog { background: var(--glass-dialog); color: var(--glass-text); border-radius: 24px; box-shadow: var(--glass-inset), 0 24px 80px rgba(12, 28, 38, .24); }
+:root[data-theme="glass"] dialog::backdrop { background: rgba(17, 35, 45, .24); backdrop-filter: blur(6px); }
+:root[data-theme="glass"] :is(input, select, textarea):focus { outline-color: var(--glass-heading); }
+:root[data-theme="glass"] :is(button, a, summary):focus-visible { outline-color: var(--glass-heading); }
+:root[data-theme="glass"] .checkbox-label input { accent-color: var(--glass-heading); }
+
+/* Native accessibility settings keep the selected Glass style, with opaque materials. */
+:root[data-theme="glass"][data-reduced-transparency="true"] {
+  background: var(--glass-solid);
+  --glass-surface: var(--glass-solid-surface);
+  --glass-navigation: var(--glass-solid-surface);
+  --glass-selected: var(--glass-solid);
+  --glass-field: var(--glass-solid-field);
+  --glass-dialog: var(--glass-solid-surface);
+  --glass-edge: var(--glass-solid-edge);
+  --line: var(--glass-solid-edge);
+  --glass-shadow: none;
+  --glass-wash: none;
+}
+:root[data-theme="glass"][data-reduced-transparency="true"] :is(.sidebar, .topbar, .panel, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source, .knowledge-connection, .coach-strip, dialog),
+:root[data-theme="glass"][data-reduced-transparency="true"] dialog::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+@media (max-width: 1040px) {
+  :root[data-theme="glass"] .brand { font-size: 19px; gap: 5px; margin-left: 4px; }
+  :root[data-theme="glass"] .brand img { width: 27px; height: 27px; }
+  :root[data-theme="glass"] .nav-item { gap: 7px; font-size: 11px; padding-inline: 8px; white-space: nowrap; }
+  :root[data-theme="glass"] .nav-arrow { display: none; }
+  :root[data-theme="glass"] .topbar { margin-right: 14px; }
+}
+
+/* Keep a stable opaque web canvas: transparent native + web backdrops can retain
+   stale tab pixels. Frost only the persistent chrome, not every content card. */
+:root[data-theme="glass"] :is(.sidebar, .topbar) {
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+:root[data-theme="glass"] .view { isolation: isolate; }
+:root[data-theme="glass"] .view[hidden] { display: none !important; }
+:root[data-theme="glass"][data-reduced-transparency="true"] :is(.sidebar, .topbar) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-theme="glass"] :is(.primary, .nav-item) {
+    transition: background-color 80ms ease-out, color 80ms ease-out;
+  }
+}

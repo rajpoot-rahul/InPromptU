@@ -42,8 +42,8 @@ function showView(view) {
 }
 function updateConnection() {
   const offline = state.connection.mode === 'offline';
-  $('connection-label').textContent = activeView === 'knowledge' ? state.knowledge?.connected ? 'Hyland knowledge connected' : 'Codex + Atlassian' : state.preview ? 'Browser preview · offline skills' : offline ? 'Offline skills' : state.connection.mode === 'ollama' ? 'Local model' : 'API configured';
-  $('processing-note').innerHTML = `${icon(offline ? 'lock' : 'shield')}<span>${offline ? 'Runs on your device. No model call.' : `Sends this brief to ${escapeHtml(new URL(state.connection.endpoint).host)} when you click Improve.`}</span>`;
+  $('connection-label').textContent = activeView === 'knowledge' ? state.knowledge?.connected ? 'Hyland knowledge connected' : 'Codex + Atlassian' : state.preview ? 'Browser preview · offline skills' : offline ? 'Offline skills' : state.connection.mode === 'ollama' ? 'Local model' : ({ openrouter: 'OpenRouter', huggingface: 'Hugging Face', bedrock: 'Amazon Bedrock' }[state.connection.mode] || 'Custom API');
+  $('processing-note').innerHTML = `${icon(offline ? 'lock' : 'shield')}<span>${offline ? 'Runs on your device. No model call.' : `Sends this brief to ${escapeHtml((state.connection.mode === 'bedrock' ? `AWS Bedrock (${state.connection.region})` : new URL(state.connection.endpoint).host))} when you click Improve.`}</span>`;
 }
 function updateSkill() { $('skill-description').textContent = state.skills.find(s => s.id === $('skill').value)?.description || ''; }
 function invalidate() {
@@ -137,12 +137,18 @@ function openSettings() {
   $('shortcut-status').textContent = state.preview ? 'Keyboard shortcuts are available in the desktop app.' : state.shortcutRegistered ? `Global shortcut active: ${state.platform === 'darwin' ? '⌘⇧I' : 'Ctrl+Shift+I'}` : 'Shortcut unavailable: another app may have claimed it. Use the menu bar to open Impromptu.';
   $('shortcut-status').classList.toggle('warning', !state.shortcutRegistered && !state.preview);
   $('version').textContent = state.version;
+  $('aws-profile').value = state.connection.profile || ''; $('aws-region').value = state.connection.region || '';
   modeFields(); $('settings-dialog').showModal();
 }
 function modeFields() {
   const mode = $('connection-mode').value;
-  $('model-fields').hidden = mode === 'offline'; $('api-key-field').hidden = mode !== 'compatible';
-  $('mode-explanation').textContent = { offline: 'No credentials needed. Adds the selected reusable skill and your context. This mode does not call an AI model.', ollama: 'Connect a model already installed in Ollama on this computer. Model output is returned for your review.', compatible: 'Connect an approved endpoint supporting the Chat Completions format. API access and billing are separate from chat subscriptions.' }[mode];
+  $('model-fields').hidden = mode === 'offline'; $('api-key-field').hidden = mode === 'offline' || mode === 'ollama' || mode === 'bedrock';
+  $('aws-fields').hidden = mode !== 'bedrock'; $('endpoint-field').hidden = mode === 'bedrock';
+  $('test-connection').hidden = mode === 'offline';
+  $('connection-test-status').hidden = mode === 'offline';
+  $('endpoint').readOnly = ['openrouter', 'huggingface'].includes(mode);
+  $('provider-guide').textContent = { bedrock: 'Configure your company AWS SSO profile once using aws configure sso. Enter its name and AWS region, sign in, then enter your allowed Claude model ID or inference profile ID/ARN. Test requests and improvements are billed to that AWS account.', openrouter: '1. Create a key at openrouter.ai/settings/keys. 2. Paste it below. 3. Keep openrouter/free for free routing, or enter a model ID ending in :free. Free models have quotas; other models may charge credits.', huggingface: '1. Create a token at huggingface.co/settings/tokens with Inference Providers permission. 2. Paste it below. 3. Enter a supported chat model ID. Free accounts require purchased credits; eligible plans include an allowance.' }[mode] || 'Enter the full chat endpoint and an available model ID.';
+  $('mode-explanation').textContent = { bedrock: 'Use Claude through your organisation’s Amazon Bedrock account. Authentication is managed by AWS SSO; no AWS secrets are stored in Impromptu.', offline: 'No credentials needed. Adds the selected reusable skill and your context. This mode does not call an AI model.', ollama: 'Connect a model already installed in Ollama on this computer. Model output is returned for your review.', openrouter: 'Real AI prompt improvement through OpenRouter. Your prompt is sent to OpenRouter and its selected inference provider.', huggingface: 'Real AI prompt improvement through Hugging Face Inference Providers. This is not an unlimited free service.', compatible: 'Connect an endpoint supporting the Chat Completions format. API access and billing are separate from chat subscriptions.' }[mode];
 }
 
 function knowledgeStatus(status = state.knowledge) {
@@ -237,10 +243,24 @@ function setupKnowledge() {
   api.onKnowledgeProgress(message => $('knowledge-progress').textContent = message);
 }
 
+function renderAppearance(appearance = state) {
+  Object.assign(state, { theme: appearance.theme || 'system', reducedTransparency: Boolean(appearance.reducedTransparency) });
+  const glass = state.platform === 'darwin' && state.theme === 'glass';
+  document.documentElement.dataset.theme = glass ? 'glass' : state.theme === 'glass' ? 'system' : state.theme;
+  document.documentElement.dataset.reducedTransparency = String(state.reducedTransparency);
+  $('appearance-help').textContent = state.theme === 'max-ind' ? 'Maximal India · textile-inspired borders, jewel colours and architectural details. Follows your Mac’s light or dark appearance.' : glass
+    ? state.reducedTransparency ? 'Glass uses solid surfaces while Reduce Transparency or Increase Contrast is enabled on your Mac.' : 'Translucent layers that follow your Mac’s light or dark appearance. Your choice is saved automatically.'
+    : 'Applies immediately. Your choice is remembered on this device.';
+}
+
 async function boot() {
   if (!api) throw new Error('Open Impromptu using the desktop launcher.');
   state = await api.bootstrap(); fillIcons();
   const mac = state.platform === 'darwin';
+  $('hide-window').hidden = mac;
+  $('glass-option').hidden = !mac; $('glass-option').disabled = !mac;
+  $('max-ind-option').hidden = !mac; $('max-ind-option').disabled = !mac;
+  renderAppearance();
   document.querySelectorAll('.shortcut-inline').forEach(el => el.textContent = mac ? '⌘⇧I' : 'Ctrl+Shift+I');
   document.querySelectorAll('.shortcut-keys').forEach(el => el.innerHTML = (mac ? ['⌘', '⇧', 'I'] : ['Ctrl', 'Shift', 'I']).map(key => `<kbd>${key}</kbd>`).join(''));
   $('run-key').textContent = mac ? '⌘ ↵' : 'Ctrl ↵';
@@ -264,16 +284,39 @@ async function boot() {
   $('close-settings').onclick = () => $('settings-dialog').close();
   $('appearance').onchange = () => attempt(async () => {
     const select = $('appearance'); select.disabled = true;
-    try { const result = await api.setTheme(select.value); state.theme = result.theme; }
+    try { renderAppearance(await api.setTheme(select.value)); }
     catch (error) { select.value = state.theme || 'system'; throw error; }
     finally { select.disabled = false; }
   });
-  $('connection-mode').onchange = () => { modeFields(); if ($('connection-mode').value === 'ollama') $('endpoint').value = 'http://localhost:11434/api/chat'; else if ($('connection-mode').value === 'compatible' && $('endpoint').value.includes('localhost')) $('endpoint').value = ''; };
-  $('settings-form').onsubmit = event => { event.preventDefault(); attempt(async () => { if (busy) throw new Error('Wait for the current request to finish before changing connection.'); state = await api.saveSettings({ mode: $('connection-mode').value, endpoint: $('endpoint').value, model: $('model').value, apiKey: $('api-key').value, clearKey: $('clear-key').checked, importClipboard: $('clipboard-setting').checked }); $('api-key').value = ''; updateConnection(); $('settings-dialog').close(); toast('Settings saved.'); }); };
+  $('connection-mode').onchange = () => {
+    const mode = $('connection-mode').value;
+    const presets = { openrouter: ['https://openrouter.ai/api/v1/chat/completions', 'openrouter/free'], huggingface: ['https://router.huggingface.co/v1/chat/completions', 'openai/gpt-oss-120b'], ollama: ['http://localhost:11434/api/chat', ''] };
+    [$('endpoint').value, $('model').value] = presets[mode] || ['', ''];
+    $('api-key').value = ''; $('api-key').placeholder = 'Enter the key for this provider · session only';
+    $('connection-test-status').textContent = 'Sends a fictional sample prompt, not your draft. Uses provider quota or credits.';
+    modeFields();
+  };
+  $('aws-sign-in').onclick = async () => {
+    $('aws-sign-in').disabled = true; $('aws-status').textContent = 'Complete AWS SSO sign-in in your browser…';
+    try { $('aws-status').textContent = (await api.awsSignIn($('aws-profile').value.trim())).message; }
+    catch (error) { $('aws-status').textContent = error.message.replace(/^Error invoking remote method '[^']+': Error: /, ''); }
+    finally { $('aws-sign-in').disabled = false; }
+  };
+  $('test-connection').onclick = async () => {
+    const button = $('test-connection'); button.disabled = true;
+    $('connection-test-status').textContent = 'Testing a sample prompt…';
+    try {
+      const result = await api.testConnection({ mode: $('connection-mode').value, endpoint: $('endpoint').value, model: $('model').value, region: $('aws-region').value.trim(), profile: $('aws-profile').value.trim(), apiKey: $('api-key').value, clearKey: $('clear-key').checked });
+      $('connection-test-status').textContent = result.message;
+    } catch (error) { $('connection-test-status').textContent = error.message.replace(/^Error invoking remote method '[^']+': Error: /, ''); }
+    finally { button.disabled = false; }
+  };
+  $('settings-form').onsubmit = event => { event.preventDefault(); attempt(async () => { if (busy) throw new Error('Wait for the current request to finish before changing connection.'); state = await api.saveSettings({ mode: $('connection-mode').value, endpoint: $('endpoint').value, model: $('model').value, region: $('aws-region').value.trim(), profile: $('aws-profile').value.trim(), apiKey: $('api-key').value, clearKey: $('clear-key').checked, importClipboard: $('clipboard-setting').checked }); $('api-key').value = ''; updateConnection(); $('settings-dialog').close(); toast('Settings saved.'); }); };
   $('hide-window').onclick = () => api.hide();
   document.addEventListener('keydown', event => { const modal = $('settings-dialog').open || $('knowledge-settings').open; if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !modal) { if (activeView === 'workspace') { event.preventDefault(); improve(); } if (activeView === 'knowledge') { event.preventDefault(); lookupKnowledge(); } } if (event.key === 'Escape' && !modal) api.hide(); });
   api.onInvoke(incoming);
   api.onNotice(message => toast(message, true));
-  api.onSettings(data => { state = data; updateConnection(); });
+  api.onSettings(data => { state = data; renderAppearance(); updateConnection(); });
+  api.onAppearance(renderAppearance);
 }
 boot().catch(error => toast(error.message, true));

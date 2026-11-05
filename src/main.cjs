@@ -16,12 +16,33 @@ let win, tray, state, knowledge, sessionKey = '', busy = false, quitting = false
 const sourceLinks = new Set();
 const shortcut = 'CommandOrControl+Shift+I';
 const entry = pathToFileURL(path.join(__dirname, 'index.html')).href;
+const themes = process.platform === 'darwin' ? ['system', 'light', 'dark', 'glass', 'max-ind'] : ['system', 'light', 'dark'];
+
+function appearanceState() {
+  return { theme: state.theme, reducedTransparency: Boolean(nativeTheme.prefersReducedTransparency || nativeTheme.shouldUseHighContrastColors) };
+}
+function glassEnabled() {
+  return process.platform === 'darwin' && state.theme === 'glass' && !appearanceState().reducedTransparency;
+}
+function windowBackground() {
+  return glassEnabled() ? '#00000000' : nativeTheme.shouldUseDarkColors ? '#121715' : '#f7f8fa';
+}
+function updateWindowAppearance() {
+  if (!win || win.isDestroyed()) return;
+  if (process.platform === 'darwin') win.setVibrancy(glassEnabled() ? 'under-window' : null);
+  win.setBackgroundColor(windowBackground());
+  win.webContents.send('appearance-changed', appearanceState());
+}
+function applyAppearance() {
+  nativeTheme.themeSource = ['glass', 'max-ind'].includes(state.theme) ? 'system' : state.theme;
+  updateWindowAppearance();
+}
 
 function readState() {
   const defaults = { connection: { mode: 'offline', endpoint: '', model: '' }, theme: 'system', codexPath: '', importClipboard: true, history: [] };
   try {
     const saved = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'workspace.json'), 'utf8'));
-    return { ...defaults, connection: validateConnection(saved.connection), theme: ['system', 'light', 'dark'].includes(saved.theme) ? saved.theme : 'system', codexPath: typeof saved.codexPath === 'string' ? saved.codexPath : '', importClipboard: saved.importClipboard !== false, history: Array.isArray(saved.history) ? saved.history.slice(0, 100) : [] };
+    return { ...defaults, connection: validateConnection(saved.connection), theme: themes.includes(saved.theme) ? saved.theme : 'system', codexPath: typeof saved.codexPath === 'string' ? saved.codexPath : '', importClipboard: saved.importClipboard !== false, history: Array.isArray(saved.history) ? saved.history.slice(0, 100) : [] };
   } catch { return defaults; }
 }
 function persist() {
@@ -32,7 +53,7 @@ function persist() {
   fs.renameSync(tmp, path.join(dir, 'workspace.json'));
 }
 function publicState() {
-  return { skills, connection: state.connection, theme: state.theme, knowledge: knowledge?.status(), hasKey: Boolean(sessionKey), importClipboard: state.importClipboard, history: state.history, platform: process.platform, shortcutRegistered, version: app.getVersion() };
+  return { skills, connection: state.connection, ...appearanceState(), knowledge: knowledge?.status(), hasKey: Boolean(sessionKey), importClipboard: state.importClipboard, history: state.history, platform: process.platform, shortcutRegistered, version: app.getVersion() };
 }
 function createKnowledgeService() {
   const cwd = path.join(app.getPath('userData'), 'knowledge-runtime');
@@ -54,7 +75,9 @@ async function show(importText = false) {
   }
 }
 function createWindow() {
-  win = new BrowserWindow({ width: 1220, height: 850, minWidth: 860, minHeight: 650, backgroundColor: nativeTheme.shouldUseDarkColors ? '#121715' : '#f7f8fa', title: 'Impromptu', titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default', trafficLightPosition: { x: 20, y: 18 }, icon: path.join(__dirname, 'assets/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false } });
+  const mac = process.platform === 'darwin';
+  win = new BrowserWindow({ width: 1220, height: 850, minWidth: 860, minHeight: 650, backgroundColor: windowBackground(), title: 'Impromptu', titleBarStyle: mac ? 'hiddenInset' : 'default', trafficLightPosition: { x: 20, y: 18 }, ...(mac ? { show: false, vibrancy: glassEnabled() ? 'under-window' : undefined, visualEffectState: 'followWindow' } : {}), icon: path.join(__dirname, 'assets/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, additionalArguments: [`--impromptu-theme=${state.theme}`, `--impromptu-reduced-transparency=${appearanceState().reducedTransparency}`] } });
+  if (mac) win.once('ready-to-show', () => { if (!win.isDestroyed()) win.show(); });
   win.loadFile(path.join(__dirname, 'index.html'));
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', (event, url) => { if (url !== entry) event.preventDefault(); });
@@ -71,19 +94,19 @@ if (lock) {
   app.on('second-instance', () => show());
   app.whenReady().then(() => {
     state = readState();
-    nativeTheme.themeSource = state.theme;
-    nativeTheme.on('updated', () => { if (win && !win.isDestroyed()) win.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#121715' : '#f7f8fa'); });
+    applyAppearance();
+    nativeTheme.on('updated', updateWindowAppearance);
     knowledge = createKnowledgeService();
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     handle('bootstrap', () => publicState());
     handle('set-theme', theme => {
-      if (!['system', 'light', 'dark'].includes(theme)) throw new Error('Choose System, Light or Dark appearance.');
+      if (!themes.includes(theme)) throw new Error(`Choose ${themes.join(', ')} appearance.`);
       const previous = state.theme;
       state.theme = theme;
       try { persist(); } catch (error) { state.theme = previous; throw error; }
-      nativeTheme.themeSource = theme;
-      return { theme };
+      applyAppearance();
+      return appearanceState();
     });
     handle('knowledge-connect', () => knowledge.connect());
     handle('knowledge-lookup', async input => {
@@ -113,6 +136,24 @@ if (lock) {
     });
     handle('clipboard-read', async () => (await clipboard.readText()).slice(0, 30000));
     handle('clipboard-write', async value => { if (typeof value !== 'string' || value.length > 60000) throw new Error('Invalid clipboard text.'); await clipboard.writeText(value); return true; });
+    let awsLoginPending = false;
+    handle('aws-sso-login', async profile => {
+      if (awsLoginPending) throw new Error('AWS sign-in is already open.');
+      awsLoginPending = true;
+      try { return await require('./bedrock.cjs').signIn(profile); } finally { awsLoginPending = false; }
+    });
+    handle('test-connection', async input => {
+      if (busy) throw new Error('Wait for the current request to finish.');
+      const connection = validateConnection(input);
+      if (connection.mode === 'offline') throw new Error('Choose an AI provider to test.');
+      if (typeof input.apiKey !== 'string' || input.apiKey.length > 5000) throw new Error('Invalid API key.');
+      const key = input.apiKey.trim() || (!input.clearKey && connection.mode === state.connection.mode && connection.endpoint === state.connection.endpoint ? sessionKey : '');
+      busy = true;
+      try {
+        await requestImprovement({ prompt: 'Write a friendly two-sentence invitation to a fictional book club.' }, connection, key);
+        return { message: 'Connected. The model returned a valid prompt improvement. Save settings to use it.' };
+      } finally { busy = false; }
+    });
     handle('save-settings', input => {
       const connection = validateConnection(input);
       if (typeof input.apiKey !== 'string' || input.apiKey.length > 5000) throw new Error('Invalid API key.');

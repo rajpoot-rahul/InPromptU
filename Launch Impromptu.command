@@ -5,8 +5,8 @@ if [[ -d "/Applications/Impromptu.app" ]]; then
   open "/Applications/Impromptu.app"
 elif [[ -d "$HOME/Applications/Impromptu.app" ]]; then
   open "$HOME/Applications/Impromptu.app"
-elif [[ -d "$TASK_ROOT/release/v0.2.1/Impromptu-darwin-arm64/Impromptu.app" ]]; then
-  open "$TASK_ROOT/release/v0.2.1/Impromptu-darwin-arm64/Impromptu.app"
+elif [[ -d "$TASK_ROOT/release/v0.2.6/Impromptu-darwin-arm64/Impromptu.app" ]]; then
+  open "$TASK_ROOT/release/v0.2.6/Impromptu-darwin-arm64/Impromptu.app"
 else
   cd "$TASK_ROOT"
   export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
