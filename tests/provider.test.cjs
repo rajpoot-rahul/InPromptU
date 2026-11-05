@@ -79,3 +79,12 @@ test('Bedrock Converse uses chosen SSO profile, model and bounded generation', a
   assert.equal(result.usage.outputTokens, 30);
   assert.equal(destroyed, true);
 });
+
+test('AWS CLI discovery handles Windows installation paths and semicolon-separated PATH', () => {
+  const { findAws } = require('../src/bedrock.cjs');
+  const installed = 'C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe';
+  assert.equal(findAws({ platform: 'win32', env: {}, exists: file => file === installed }), installed);
+  const custom = 'D:\\Company Tools\\aws.exe';
+  assert.equal(findAws({ platform: 'win32', env: { PATH: 'C:\\Other;D:\\Company Tools' }, exists: file => file === custom }), custom);
+  assert.equal(findAws({ platform: 'win32', env: {}, exists: () => false }), '');
+});

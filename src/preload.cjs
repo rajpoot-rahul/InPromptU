@@ -4,7 +4,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 window.addEventListener('DOMContentLoaded', () => {
   const argument = name => process.argv.find(value => value.startsWith(`--impromptu-${name}=`))?.split('=')[1];
   const theme = argument('theme');
-  if (['system', 'light', 'dark'].includes(theme) || (['glass', 'max-ind'].includes(theme) && process.platform === 'darwin')) document.documentElement.dataset.theme = theme;
+  if (['system', 'light', 'dark', 'glass', 'max-ind'].includes(theme)) document.documentElement.dataset.theme = theme;
   document.documentElement.dataset.reducedTransparency = String(argument('reduced-transparency') === 'true');
 }, { once: true });
 contextBridge.exposeInMainWorld('impromptu', {

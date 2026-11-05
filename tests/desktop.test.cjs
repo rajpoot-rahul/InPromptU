@@ -79,17 +79,19 @@ test('Mac Glass persists, follows system appearance, and respects accessibility 
   assert.ok(restored.window.options.webPreferences.additionalArguments.includes('--impromptu-theme=glass'));
 });
 
-test('Windows keeps its existing themes and rejects the Mac Glass option', async t => {
+test('Windows Glass follows system appearance without macOS vibrancy', async t => {
   const { handlers, sender, window, nativeTheme } = desktop(t, { platform: 'win32', theme: 'glass' });
-  assert.equal((await handlers.get('bootstrap')(sender)).theme, 'system');
-  await assert.rejects(handlers.get('set-theme')(sender, 'glass'), /Choose/);
+  assert.equal((await handlers.get('bootstrap')(sender)).theme, 'glass');
+  await handlers.get('set-theme')(sender, 'glass');
+  assert.equal(nativeTheme.themeSource, 'system');
+  assert.equal(window.options.titleBarStyle, 'default');
   await handlers.get('set-theme')(sender, 'dark');
   assert.equal(nativeTheme.themeSource, 'dark');
   assert.equal(window.vibrancyCalls, 0);
   assert.equal(window.options.vibrancy, undefined);
 });
 
-test('Max-ind persists on Mac, follows system appearance, and stays unavailable on Windows', async t => {
+test('Max-ind persists and follows system appearance on Mac and Windows', async t => {
   const { handlers, sender, nativeTheme, window, data } = desktop(t);
   await handlers.get('set-theme')(sender, 'max-ind');
   assert.equal(nativeTheme.themeSource, 'system');
@@ -98,6 +100,8 @@ test('Max-ind persists on Mac, follows system appearance, and stays unavailable 
   const restored = desktop(t, { theme: 'max-ind' });
   assert.equal((await restored.handlers.get('bootstrap')(restored.sender)).theme, 'max-ind');
   const windows = desktop(t, { platform: 'win32', theme: 'max-ind' });
-  assert.equal((await windows.handlers.get('bootstrap')(windows.sender)).theme, 'system');
-  await assert.rejects(windows.handlers.get('set-theme')(windows.sender, 'max-ind'), /Choose/);
+  assert.equal((await windows.handlers.get('bootstrap')(windows.sender)).theme, 'max-ind');
+  await windows.handlers.get('set-theme')(windows.sender, 'max-ind');
+  assert.equal(windows.nativeTheme.themeSource, 'system');
+  assert.equal(windows.window.vibrancyCalls, 0);
 });

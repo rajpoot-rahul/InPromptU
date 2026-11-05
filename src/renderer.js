@@ -245,11 +245,11 @@ function setupKnowledge() {
 
 function renderAppearance(appearance = state) {
   Object.assign(state, { theme: appearance.theme || 'system', reducedTransparency: Boolean(appearance.reducedTransparency) });
-  const glass = state.platform === 'darwin' && state.theme === 'glass';
-  document.documentElement.dataset.theme = glass ? 'glass' : state.theme === 'glass' ? 'system' : state.theme;
+  const glass = state.theme === 'glass';
+  document.documentElement.dataset.theme = state.theme;
   document.documentElement.dataset.reducedTransparency = String(state.reducedTransparency);
-  $('appearance-help').textContent = state.theme === 'max-ind' ? 'Maximal India · textile-inspired borders, jewel colours and architectural details. Follows your Mac’s light or dark appearance.' : glass
-    ? state.reducedTransparency ? 'Glass uses solid surfaces while Reduce Transparency or Increase Contrast is enabled on your Mac.' : 'Translucent layers that follow your Mac’s light or dark appearance. Your choice is saved automatically.'
+  $('appearance-help').textContent = state.theme === 'max-ind' ? 'Maximal India · textile-inspired borders, jewel colours and architectural details. Follows your device’s light or dark appearance.' : glass
+    ? state.reducedTransparency ? 'Glass uses solid surfaces while Reduce Transparency or Increase Contrast is enabled on your device.' : 'Translucent layers that follow your device’s light or dark appearance. Your choice is saved automatically.'
     : 'Applies immediately. Your choice is remembered on this device.';
 }
 
@@ -257,9 +257,10 @@ async function boot() {
   if (!api) throw new Error('Open Impromptu using the desktop launcher.');
   state = await api.bootstrap(); fillIcons();
   const mac = state.platform === 'darwin';
-  $('hide-window').hidden = mac;
-  $('glass-option').hidden = !mac; $('glass-option').disabled = !mac;
-  $('max-ind-option').hidden = !mac; $('max-ind-option').disabled = !mac;
+  $('hide-window').hidden = true;
+  $('glass-option').hidden = false; $('glass-option').disabled = false;
+  $('glass-option').textContent = mac ? 'Glass · macOS' : 'Glass · Windows';
+  $('max-ind-option').hidden = false; $('max-ind-option').disabled = false;
   renderAppearance();
   document.querySelectorAll('.shortcut-inline').forEach(el => el.textContent = mac ? '⌘⇧I' : 'Ctrl+Shift+I');
   document.querySelectorAll('.shortcut-keys').forEach(el => el.innerHTML = (mac ? ['⌘', '⇧', 'I'] : ['Ctrl', 'Shift', 'I']).map(key => `<kbd>${key}</kbd>`).join(''));

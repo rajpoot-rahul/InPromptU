@@ -2,15 +2,15 @@
 
 A Mac-first companion based on the [hackathon brief](https://impromptu-hackathon-brief.hyland-0170.chatgpt.site/#idea). Copy a message from Teams, summon Impromptu, look up Hyland documentation, and review a source-backed reply. The original prompt-coaching workspace remains available.
 
-## Current source — v0.2.6
+## Current source — v0.2.7
 
-The source includes Mac-only **Glass** and **Max-ind · Maximal India** themes alongside System, Light and Dark. Both follow the Mac's light/dark appearance. Glass uses a stable opaque canvas and limited blur layers to avoid stale content during tab switches. Max-ind adds jewel colours, textile-inspired borders and architectural details. Mac uses its native window controls without the extra hide button.
+The source includes **Glass** and **Max-ind · Maximal India** themes for Mac and Windows alongside System, Light and Dark. Both follow the device's light/dark appearance. Windows Glass uses CSS materials with an opaque canvas, without macOS vibrancy APIs. Glass uses a stable opaque canvas and limited blur layers to avoid stale content during tab switches. Max-ind adds jewel colours, textile-inspired borders and architectural details. Both platforms use their native window controls without the extra hide button.
 
 Prompt improvement now supports **OpenRouter**, **Hugging Face**, and **Amazon Bedrock with AWS SSO**, alongside Ollama and a custom compatible API. Settings includes provider guidance and a **Test AI connection** action using a fictional prompt. Offline templates remain explicitly labelled as non-AI.
 
-Build the current Mac source with `npm ci` and `npm run package:mac`; the output is `release/v0.2.6/Impromptu-darwin-arm64/Impromptu.app`. Save drafts and quit an older copy before launching it. The downloadable installers below remain **v0.2.1**; v0.2.6 installers have not been published and this update has not been tested on Windows.
+Build the current Mac source with `npm ci` and `npm run package:mac`; the output is `release/v0.2.7/Impromptu-darwin-arm64/Impromptu.app`. Save drafts and quit an older copy before launching it. The downloadable installers below remain **v0.2.1**; v0.2.7 installers have not been published. Build the Windows x64 installer with `npm run installer:windows`; the output is `release/windows-installer/Impromptu-0.2.7-Windows-x64-Setup.exe`. Windows-specific logic is covered by unit tests and renderer simulation; native installation and execution still require the Windows CI job. That job now checks startup in all five themes.
 
-Validation: 24 automated tests pass, plus isolated Electron appearance and provider-form checks. The new providers have mocked transport tests; live inference requires your account credentials and model access. No credentials or generated app bundles are committed.
+Validation: 25 automated tests pass, plus isolated Electron appearance and provider-form checks. The new providers have mocked transport tests; live inference requires your account credentials and model access. No credentials or generated app bundles are committed.
 
 ## Download an installer
 
@@ -34,7 +34,7 @@ Application downloads are attached to the GitHub release. A source checkout does
 
 - **Apple Silicon Mac:** open `release/Impromptu-0.2.1-Mac-Apple-Silicon-Installer.pkg` and follow macOS Installer. This places **Impromptu.app** in **Applications**. Open it there, or use Spotlight (Command+Space → Impromptu). The installer requires macOS 13 or later on Apple Silicon. It does not download dependencies or run installation scripts.
 - Impromptu runs in its **own desktop window**, loading the interface from files bundled inside the app. It is not a ChatGPT web page, extension, or embedded chat. Electron and the app code are included, so opening the installed app needs neither Node.js nor this project folder. **Hyland knowledge still requires the separate local Codex connection described below.** Installing Impromptu does not install Codex or grant Atlassian access.
-- **Portable Mac alternative:** open `release/v0.2.6/Impromptu-darwin-arm64/Impromptu.app`. `Launch Impromptu.command` prefers an installed copy, then falls back to this build.
+- **Portable Mac alternative:** open `release/v0.2.7/Impromptu-darwin-arm64/Impromptu.app`. `Launch Impromptu.command` prefers an installed copy, then falls back to this build.
 - **Windows x64:** download and run `Impromptu-0.2.1-Windows-x64-Setup.exe`, choose the installation location, then launch Impromptu from its desktop or Start Menu shortcut. Setup defaults to the current user and also supports an all-users installation with administrator approval. Uninstall through Windows Installed apps. Saved sessions are retained by default.
 - **Portable Windows alternative:** extract the entire `Impromptu-0.2.1-Windows-x64.zip`, then open `Impromptu.exe`. Keep its supporting files together.
 - **Updating from an older version:** save your current draft and choose Quit Impromptu before opening the new version. Both versions use the same local saved-session folder. The old build has been left intact.

@@ -6,9 +6,18 @@ function profileName(value) {
   if (typeof value !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(value)) throw new Error('Enter your configured AWS SSO profile name (letters, numbers, dots, hyphens or underscores).');
   return value;
 }
+function findAws({ platform = process.platform, env = process.env, exists = file => { try { return fs.statSync(file).isFile(); } catch { return false; } } } = {}) {
+  const win = platform === 'win32';
+  const paths = win ? path.win32 : path;
+  const candidates = win
+    ? [paths.join(env.ProgramFiles || 'C:\\Program Files', 'Amazon', 'AWSCLIV2', 'aws.exe')]
+    : ['/opt/homebrew/bin/aws', '/usr/local/bin/aws'];
+  candidates.push(...String(env.PATH || '').split(win ? ';' : ':').filter(Boolean).map(dir => paths.join(dir, win ? 'aws.exe' : 'aws')));
+  return candidates.find(exists) || '';
+}
 function signIn(profile, spawnFn = spawn) {
   profileName(profile);
-  const executable = ['/opt/homebrew/bin/aws', '/usr/local/bin/aws', ...String(process.env.PATH || '').split(path.delimiter).map(dir => path.join(dir, process.platform === 'win32' ? 'aws.exe' : 'aws'))].find(file => { try { return fs.statSync(file).isFile(); } catch { return false; } });
+  const executable = findAws();
   if (!executable) throw new Error('Install AWS CLI v2 and configure an SSO profile with aws configure sso, then try again.');
   return new Promise((resolve, reject) => {
     const child = spawnFn(executable, ['sso', 'login', '--profile', profile], { shell: false, windowsHide: true, stdio: 'ignore' });
@@ -34,4 +43,4 @@ async function converse(config, messages, dependencies) {
     throw new Error('Bedrock request failed. Check AWS sign-in, region, model access and whether the response completed.');
   } finally { clearTimeout(timer); client.destroy(); }
 }
-module.exports = { profileName, signIn, converse };
+module.exports = { profileName, findAws, signIn, converse };

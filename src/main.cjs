@@ -16,7 +16,7 @@ let win, tray, state, knowledge, sessionKey = '', busy = false, quitting = false
 const sourceLinks = new Set();
 const shortcut = 'CommandOrControl+Shift+I';
 const entry = pathToFileURL(path.join(__dirname, 'index.html')).href;
-const themes = process.platform === 'darwin' ? ['system', 'light', 'dark', 'glass', 'max-ind'] : ['system', 'light', 'dark'];
+const themes = ['system', 'light', 'dark', 'glass', 'max-ind'];
 
 function appearanceState() {
   return { theme: state.theme, reducedTransparency: Boolean(nativeTheme.prefersReducedTransparency || nativeTheme.shouldUseHighContrastColors) };

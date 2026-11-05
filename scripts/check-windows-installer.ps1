@@ -36,19 +36,25 @@ if ((Get-FileHash $originalAsar).Hash -ne (Get-FileHash (Join-Path $installDir '
     throw 'The installed runtime differs from the built application.'
 }
 
+# Exercise saved startup appearance for all supported themes on real Windows.
+foreach ($theme in @('system', 'light', 'dark', 'glass', 'max-ind')) {
+    @{ connection = @{ mode = 'offline'; endpoint = ''; model = '' }; theme = $theme; importClipboard = $false; history = @() } |
+        ConvertTo-Json -Depth 4 | Set-Content (Join-Path $profile 'workspace.json') -Encoding utf8NoBOM
 $process = Start-Process -FilePath $exe -PassThru
 try {
     Start-Sleep -Seconds 8
     $process.Refresh()
     if ($process.HasExited) { throw "The installed app exited during startup ($($process.ExitCode))." }
     if ($process.MainWindowHandle -eq 0) { throw 'The installed app did not open a desktop window.' }
-    Write-Output "Installed app opened a native window: $($process.MainWindowTitle)"
+    Write-Output "Installed app ($theme) opened a native window: $($process.MainWindowTitle)"
 } finally {
     if (!$process.HasExited) {
         # Stop only this test's process tree so uninstall can complete unattended.
         & taskkill.exe /PID $process.Id /T /F | Out-Null
         if ($LASTEXITCODE -ne 0) { throw 'Could not close the test application.' }
     }
+}
+
 }
 
 $result = Start-Process -FilePath $uninstaller -ArgumentList '/S /currentuser' -Wait -PassThru
