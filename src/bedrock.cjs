@@ -26,6 +26,20 @@ function signIn(profile, spawnFn = spawn) {
     child.on('exit', code => { clearTimeout(timer); code === 0 ? resolve({ message: 'AWS SSO signed in. Test AI connection to verify Bedrock model access.' }) : reject(new Error('AWS SSO login did not complete. Check your profile with aws configure sso and retry.')); });
   });
 }
+// Bedrock needs alternating user/assistant turns that start with the user; system text is separate.
+function converseInput(messages) {
+  const system = [], turns = [];
+  messages.forEach((message, index) => {
+    const role = message.role || (index === 0 ? 'system' : 'user');
+    if (role === 'system') { system.push({ text: message.content }); return; }
+    const last = turns.at(-1);
+    if (last && last.role === role) last.content[0].text += `\n\n${message.content}`;
+    else turns.push({ role: role === 'assistant' ? 'assistant' : 'user', content: [{ text: message.content }] });
+  });
+  while (turns[0]?.role === 'assistant') turns.shift();
+  if (!turns.length) throw new Error('There is no message to send to Bedrock.');
+  return { system, messages: turns };
+}
 async function converse(config, messages, dependencies) {
   const { BedrockRuntimeClient, ConverseCommand } = dependencies || require('@aws-sdk/client-bedrock-runtime');
   const fromSSO = dependencies?.fromSSO || require('@aws-sdk/credential-providers').fromSSO;
@@ -33,7 +47,7 @@ async function converse(config, messages, dependencies) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
   try {
-    const response = await client.send(new ConverseCommand({ modelId: config.model, system: [{ text: messages[0].content }], messages: [{ role: 'user', content: [{ text: messages[1].content }] }], inferenceConfig: { maxTokens: 4096 } }), { abortSignal: controller.signal });
+    const response = await client.send(new ConverseCommand({ modelId: config.model, ...converseInput(messages), inferenceConfig: { maxTokens: 4096 } }), { abortSignal: controller.signal });
     if (response.stopReason !== 'end_turn') throw new Error('Bedrock did not finish a complete response. Try a shorter prompt or check the selected model.');
     return { content: (response.output?.message?.content || []).map(part => part.text || '').join(''), usage: response.usage };
   } catch (error) {
@@ -43,4 +57,4 @@ async function converse(config, messages, dependencies) {
     throw new Error('Bedrock request failed. Check AWS sign-in, region, model access and whether the response completed.');
   } finally { clearTimeout(timer); client.destroy(); }
 }
-module.exports = { profileName, findAws, signIn, converse };
+module.exports = { profileName, findAws, signIn, converse, converseInput };

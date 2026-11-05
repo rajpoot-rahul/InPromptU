@@ -81,7 +81,53 @@ The shortcut reads clipboard text once. There is no background clipboard polling
 - Five versioned starter skills: clear thinking, customer response, code investigation, document summary, business analysis. These are example templates, **not approved Hyland policies**.
 - Optional saved sessions, reopen/copy, helpfulness feedback, deletion and JSON export.
 - Personal progress derived only from saved original briefs. The text checks are heuristic signals, not an aptitude/productivity score.
-- Offline skill application, local Ollama, and a configurable Chat Completions compatible API.
+- Offline skill application, local Ollama with guided setup and health status, enforced local-only mode, and a configurable Chat Completions compatible API.
+- **Tokenmining tools** in the Prompt workspace, chosen with **Improve / Compress / Explain**:
+  - **Compress** rewrites the prompt to ask for the same thing in fewer tokens. It shows the before-and-after length and flags identifiers, numbers, quoted text and negations ("do not", "never", "only") that went missing.
+  - **Explain** teaches: what the prompt asks, what works, what's unclear, and tokenmining tips. **Improve using these tips** carries them into an improvement.
+  - Both need an AI model; offline mode refuses rather than faking a result.
+  - Token figures are labelled **estimates** (characters ÷ 4). Ollama can't reliably report exact counts for arbitrary text, so exact counts appear only where the provider reports them for a request.
+  - A **Tokenmining** starter skill is in the Skill library.
+- **Context packs** (Your space → Context packs): carry a long Claude, ChatGPT, Cursor or Codex session into Impromptu as one compact hand-off.
+  - **Create:** install the **hand-off skill** for Cursor, Claude Code or Codex CLI (one `SKILL.md` each, removable), then ask the tool to "hand off this session to Impromptu". It writes the pack to `~/Impromptu/Inbox`. For web chats, **Copy the hand-off prompt**, send it, then paste the pack or bring it in with ⌘⇧I (packs are recognised automatically, even inside a code fence).
+  - **Import:** inbox files (archived to `Inbox/imported` after import) or pasted text. Likely secrets (cloud keys, API tokens, private keys, passwords) are removed before saving by default.
+  - **Use:** **Talk with the context on my [ ▾ ]**: choose a local LLM (each installed Ollama model, on this computer) or your configured cloud provider (AWS Bedrock, OpenRouter, Hugging Face or Custom API). Unconfigured providers are listed but disabled, cloud options are blocked in local-only mode, and choosing one shows where the pack will be sent. Follow-up messages keep using the same provider, the chat is labelled with it, and Bedrock now receives the full multi-turn conversation. You can also **Use as context in the Prompt workspace** or **Build a hand-back prompt**, which loads the pack's suggested next prompt with the Tokenmining skill and Compress, ready to copy back into the expensive model.
+  - Packs are stored in `context-packs.json` in the app's data folder, and nothing is read unless you import it.
+- **On-screen mascot** (Settings → On-screen mascot; off by default, macOS and Windows):
+  - Turning it on requires an explicit consent dialog listing what it can and cannot do.
+  - Once on, a floating companion sits at the bottom-right of the screen. It doesn't take focus from your app.
+  - **Selected text:** "Improve the selected text" and "Send selection to Knowledge & reply" copy the selection from the front app and restore your clipboard. With the mascot on, the ⌘⇧I / Ctrl+Shift+I shortcut also copies the selection itself.
+  - **This screen:** "Explain this screen", "Ask about this screen" and "Read this page" (presses Page Down up to N screens, stops at the end, then scrolls back). These capture the display under the cursor and send the screenshots only to a local Ollama model that supports images, never to a cloud provider, framed as untrusted data. Answers open in Local chat. Screenshots aren't saved.
+  - A red dot and a "Reading your screen" message show during capture.
+  - **Coaching nudges** use only activity inside Impromptu, never other apps or typing: a break reminder after a long prompting session (configurable), help when the same prompt is repeated or briefs keep missing signals, and fact-check warnings when a local model's chat answer cites dates, percentages or links you didn't provide.
+  - **Permissions:** macOS needs **Accessibility** (copying and scrolling) and **Screen Recording**. Settings shows their status and opens System Settings. Quit and reopen after granting. Unsigned builds may need permissions granted again after each update.
+- **Hyland evidence in the Prompt workspace** (under **Add context**):
+  - **Find evidence** searches Confluence and Jira through your Codex connection, with drafting off. Tick the passages to attach.
+  - The main process keeps the retrieved sources and accepts only those IDs, so the renderer can't present invented text as Hyland evidence.
+  - Selected excerpts, bounded to 12,000 characters, are added to the brief's context as cited reference data ([S1], [S2] and so on) and go to your AI provider when you click Improve, Compress or Explain. The note under the button says so.
+  - **Copy** adds the sources, either as excerpts or as links only.
+  - Saved sessions record source titles and links, plus whatever the improved prompt itself quotes.
+  - Disabled in local-only mode.
+- **Skillify** (Skill library):
+  - Paste a prompt that worked, or describe a task you repeat, and the AI drafts a reusable skill: name, category or department, description and working approach. It uses your configured provider and respects local-only mode. **Write one yourself** needs no AI.
+  - You review and edit before anything is saved. Starter skills are read-only, but you can **Duplicate & edit** them.
+  - Your skills appear in the Prompt workspace dropdown (marked "yours"), can start a Local chat with **Chat with it**, and are versioned when edited.
+  - Each skill counts how often it's used, and the list shows the most used first.
+  - **Import / Export** shares skills as JSON with teammates. Exports leave out usage counts.
+  - Skills are stored in `skills.json` in the app's data folder.
+- **Learner track:** six milestones (prompt basics, tokenmining, skills, agents, agentic workflows, multi-agent workflows), each with a practice task, a **Try it** shortcut into the app, and curated official reading.
+  - Steps 1–3 complete automatically from local activity counts: well-specified saved briefs, Compress/Explain use, and saved and used skills.
+  - Steps 4–6 are labelled self-reported, because the app has no agent features to observe.
+  - A suggestion to move on appears once your briefs and benchmark score are strong.
+- **Personal benchmark:** six practice tasks scored out of 100 by a transparent, deterministic rubric with no AI. It awards points for the five brief signals, task-specific essentials and conciseness, and every point is itemised, with a reference prompt per task (references average 95).
+  - Attempts are compared like-for-like, only on tasks answered both times.
+  - Answers, scores and counts stay in the local profile. **Erase learning data** removes them, along with ranked-mode data.
+- **Ranked mode** (opt-in, no server): join with a display name and explicit consent.
+  - **Export my score card** writes a JSON file containing only your alias, your latest complete six-task total and task scores, the date and the app version. No prompts or answers.
+  - Teammates **Import** cards to build a local leaderboard, with ranks, the participants' average and a task-by-task comparison.
+  - Cards are checked for internal consistency (the total must match the task scores). Without a shared server their origin can't be verified, so it's an honour system.
+  - **Leave ranked mode** at any time and optionally remove the imported cards.
+- **Local chat:** a ChatGPT-style conversation window that streams replies from your installed Ollama model, with no subscription and nothing sent off the device. Chats are listed by recency and can be deleted one at a time, deleted all at once, or exported. Switch off **Save new chats on this device** for temporary chats that are never written to disk. Saved chats live in `chats.json` in the app's data folder (local JSON, not encrypted). **Improve this prompt first** sends a draft to the Prompt workspace. Replies come from a local model and can be wrong.
 
 ## Knowledge connection and evidence boundaries
 
@@ -103,7 +149,12 @@ The app starts in **Offline skills** mode. This preserves the original request a
 
 For AI rewriting, open Settings:
 
-- **Ollama:** start your existing Ollama service and choose an installed model. Endpoint: `http://localhost:11434/api/chat`. No model is installed by this project.
+- **One-click local AI setup (with consent):** on a fresh computer the setup card offers **Set up local AI for me**, **Use a cloud provider instead** or **Not now**. Nothing is downloaded until you tick the agreement.
+  - **Ollama:** if it's missing, Impromptu downloads the latest official Ollama release from Ollama's GitHub releases (falling back to ollama.com). On macOS it installs only if the app is signed by Ollama's Apple Team ID `3MU9H2V9Y9` (Infra Technologies, Inc) and Gatekeeper accepts its notarization. On Windows the installer must have a valid Authenticode signature from the same company. If Ollama is already installed, it's just started.
+  - **Model:** a curated list (Llama 3.2 3B, Gemma 3 4B/12B/27B, Qwen 2.5 7B, Llama 3.1 8B, Phi-4 14B) shows exact download sizes, minimum memory, screen-reading support and licence links. Models the computer's memory or free disk can't handle are disabled, and one model is recommended. You can also type any Ollama model name.
+  - **Download:** with progress and cancel. It stops after 2 minutes without progress, and a retry resumes where it left off.
+  - **Finish:** the model is tested with a fictional prompt and saved only if it passes. `gemma3:1b` was excluded because it failed that test. Of the catalogue models, only that failure, the Mac Ollama signature check and the 12B recommendation on a 64 GB Mac have been confirmed on real hardware so far; the other models and the Windows installer still need trying.
+- **Ollama (recommended, on-device):** the Prompt workspace shows a **guided setup** card. It checks `localhost:11434` for Ollama, lists your installed models, sends a fictional test prompt to the one you choose, then saves it, with **local-only mode** on by default. If Ollama is missing, stopped or has no models, the card offers the one-click setup above, or the manual steps (`ollama serve`, `ollama pull <model>`), and re-checks when you return to the window. Settings → **Detect installed models** offers the same list. Impromptu downloads only after you agree, and never deletes or updates models. Runners without structured-output support (for example MLX models) are handled by retrying once without Ollama's JSON constraint; the response must still pass the same validation.
 - **OpenRouter:** create a key at `openrouter.ai/settings/keys`, select OpenRouter and enter the key. The preset `openrouter/free` routes to free models subject to quotas. Other model IDs may incur charges.
 - **Hugging Face:** create a token with Inference Providers permission at `huggingface.co/settings/tokens`, select Hugging Face and enter a supported chat model ID. Free accounts currently require purchased inference credits; eligible plans include allowances.
 - **Amazon Bedrock / Claude:** install AWS CLI v2 and configure your company's SSO profile with `aws configure sso`. Select Bedrock, enter that profile and region, then click **Sign in with AWS SSO** to open the company browser login. Enter an authorised Claude model ID or inference profile ID/ARN. AWS manages SSO credentials; Impromptu saves only profile, region and model settings. Model tests and improvements are billed to that AWS account. IAM/model access and regional availability must permit the request.
@@ -111,7 +162,9 @@ For AI rewriting, open Settings:
 
 Use **Test AI connection** to validate a fictional sample without sending your draft; this consumes provider quota or credits. Save settings after a successful test.
 
-Clicking Improve sends your original prompt, supplied context, audience, format, and skill to that configured service. It asks for a structured rewrite, validates the returned shape, and reports provider-returned usage when available. Review semantic correctness. There are no tool calls or automatic retries. Requests time out after 90 seconds. Chat subscriptions do not automatically provide API entitlement.
+**Local-only mode** (Settings, or the guided-setup checkbox) is enforced in the desktop main process, not just the interface. Improve, connection tests and saved settings are limited to Offline, Ollama, or a Custom API on `localhost`/`127.0.0.1`/`[::1]`. OpenRouter, Hugging Face, Bedrock sign-in, remote APIs and Codex knowledge lookups are refused while it is on.
+
+Clicking Improve sends your original prompt, supplied context, audience, format, and skill to that configured service. It asks for a structured rewrite, validates the returned shape, and reports provider-returned usage when available. Review semantic correctness. There are no tool calls or quality retries; the only automatic resend is Ollama's one-time fallback when a runner cannot constrain output to JSON. Requests time out after 90 seconds. Chat subscriptions do not automatically provide API entitlement.
 
 API keys are held only in the desktop main process's memory until quit. They are not returned to the renderer or saved to disk. Changing endpoint clears the old key. Connection settings are saved; enter the key again after restarting.
 
