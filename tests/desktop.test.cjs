@@ -371,7 +371,7 @@ test('local chat streams replies, rolls back failures, keeps stopped partials an
   assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'chats.json'))).conversations[0].messages.length, 2);
 
   mode = 'down';
-  await assert.rejects(handlers.get('chat-send')(sender, { chatId: chat.id, text: 'Second question', model: 'gemma4:latest' }), /not responding/);
+  await assert.rejects(handlers.get('chat-send')(sender, { chatId: chat.id, text: 'Second question', model: 'gemma4:latest' }), /isn't set up on this computer/);
   assert.equal((await handlers.get('chat-get')(sender, chat.id)).messages.length, 2);
 
   mode = 'hang';

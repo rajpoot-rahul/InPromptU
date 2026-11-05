@@ -36,19 +36,20 @@ test('the Prompt workspace opens with OpenRouter until a provider is configured 
   assert.equal(card({ mode: 'openrouter', completed: true }), 'first-run-done');
 });
 
-test('a configured local model that needs attention points to the Local AI tab instead of the setup flow', () => {
+test('local AI state stays in the Local AI tab and never raises a workspace card', () => {
   const ready = { status: 'ready', models: [{ name: 'gemma3:4b' }] };
   assert.equal(flow.localNeedsAttention('ollama', 'gemma3:4b', ready), false);
   assert.equal(flow.localNeedsAttention('ollama', 'llama3.2', ready), true);
   assert.equal(flow.localNeedsAttention('ollama', 'gemma3:4b', { status: 'not-running', models: [] }), true);
   assert.equal(flow.localNeedsAttention('ollama', 'gemma3:4b', null), false, 'no warning before detection finishes');
   assert.equal(flow.localNeedsAttention('openrouter', 'openrouter/free', { status: 'not-running', models: [] }), false);
-  assert.equal(flow.workspaceCard({ mode: 'ollama', localNeedsAttention: true }), 'local-attention');
-  assert.equal(flow.workspaceCard({ mode: 'ollama', localNeedsAttention: true, hidden: true }), null);
-  assert.equal(flow.workspaceCard({ mode: 'ollama', localNeedsAttention: false }), null);
+  assert.equal(flow.workspaceCard({ mode: 'ollama' }), null);
+  assert.equal(flow.workspaceCard({ mode: 'ollama', hidden: true }), null);
   assert.equal(flow.runtimeStatus(null), 'checking');
   assert.equal(flow.runtimeStatus(ready, true), 'checking');
-  assert.equal(flow.runtimeStatus({ status: 'surprise' }), 'error');
+  assert.equal(flow.runtimeStatus({ status: 'surprise' }), 'not-set-up');
+  for (const status of ['not-running', 'error']) assert.equal(flow.runtimeStatus({ status, models: [] }), 'not-set-up');
+  assert.equal(flow.runtimeStatus({ status: 'no-models', models: [] }), 'no-models');
 });
 
 test('the local setup flow lives in the Local AI tab; the workspace keeps only the OpenRouter card and a pointer', () => {

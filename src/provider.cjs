@@ -1,6 +1,7 @@
 'use strict';
 const { normalizeInput, improve, skills, textStats, missingDetails } = require('./engine.cjs');
 const { isLocalURL } = require('./ollama.cjs');
+const { LOCAL_UNAVAILABLE } = require('./setup-flow.js');
 
 const endpoints = { openrouter: 'https://openrouter.ai/api/v1/chat/completions', huggingface: 'https://router.huggingface.co/v1/chat/completions' };
 
@@ -17,7 +18,7 @@ function validateConnection(raw) {
   try { url = new URL(endpoints[raw.mode] || raw.endpoint); } catch { throw new Error('Enter a complete endpoint URL.'); }
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
   if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && local)) || url.username || url.password || url.hash || url.search) throw new Error('Use HTTPS, or HTTP on localhost, with no credentials or query in the URL.');
-  if (raw.mode === 'ollama' && !local) throw new Error('Local Ollama mode requires a localhost endpoint.');
+  if (raw.mode === 'ollama' && !local) throw new Error('Local AI requires an address on this computer (localhost).');
   if (typeof raw.model !== 'string' || !raw.model.trim() || raw.model.length > 200) throw new Error('Enter your available model ID.');
   return { mode: raw.mode, endpoint: url.toString(), model: raw.model.trim() };
 }
@@ -28,7 +29,7 @@ function isLocalConnection(connection) {
   return isLocalURL(connection.endpoint);
 }
 function assertAllowed(connection, localOnly) {
-  if (localOnly && !isLocalConnection(connection)) throw new Error('Local-only mode is on. Choose Ollama or another localhost model, or turn off local-only mode in Settings.');
+  if (localOnly && !isLocalConnection(connection)) throw new Error('Local-only mode is on. Choose a model on this computer (localhost), or turn off local-only mode in Settings.');
   return connection;
 }
 
@@ -87,7 +88,7 @@ async function requestImprovement(raw, config, apiKey = '', fetchFn = fetch, cat
   const connection = validateConnection(config);
   const baseline = improve(input, catalog);
   if (connection.mode === 'offline') {
-    if (action !== 'improve') throw new Error(`${action === 'compress' ? 'Compress' : 'Explain'} needs an AI model. Set up local AI with Ollama (free, on this computer) in the Prompt workspace or Settings.`);
+    if (action !== 'improve') throw new Error(`${action === 'compress' ? 'Compress' : 'Explain'} needs an AI model. Connect OpenRouter or another provider in the Prompt workspace or Settings.`);
     return { ...baseline, action };
   }
   if (endpoints[connection.mode] && !apiKey.trim()) throw new Error('Enter your provider API key in Settings first.');
@@ -107,7 +108,7 @@ async function requestImprovement(raw, config, apiKey = '', fetchFn = fetch, cat
 // Sends one JSON-returning chat request to the configured provider. Callers validate the content.
 async function complete(messages, config, apiKey = '', fetchFn = fetch) {
   const connection = validateConnection(config);
-  if (connection.mode === 'offline') throw new Error('This needs an AI model. Set up local AI with Ollama (free, on this computer) in the Prompt workspace or Settings.');
+  if (connection.mode === 'offline') throw new Error('This needs an AI model. Connect OpenRouter or another provider in the Prompt workspace or Settings.');
   if (endpoints[connection.mode] && !apiKey.trim()) throw new Error('Enter your provider API key in Settings first.');
   if (connection.mode === 'bedrock') {
     const response = await require('./bedrock.cjs').converse(connection, messages);
@@ -128,10 +129,10 @@ async function complete(messages, config, apiKey = '', fetchFn = fetch) {
       const detail = await errorDetail(response);
       // Some runners (for example MLX) cannot constrain output; the prompt still requests JSON.
       if (/structured output|format/i.test(detail) && [400, 500, 501].includes(response.status)) response = await post({ think: false });
-      else if (response.status === 404 || /not found/i.test(detail)) throw new Error(`The model “${connection.model}” is not installed in Ollama. Choose an installed model in Settings, or install it yourself with “ollama pull”.`);
+      else if (response.status === 404 || /not found/i.test(detail)) throw new Error(`The model “${connection.model}” is not installed on this computer. Choose an installed model in Local AI.`);
       else if (/think/i.test(detail)) response = await post({ format: 'json' });
-      else throw new Error(`Ollama could not run “${connection.model}” (${response.status}). ${detail ? `Ollama said: ${detail}` : 'Check the model in the Ollama app.'}`);
-      if (!response.ok) throw new Error(`Ollama could not run “${connection.model}” (${response.status}). ${(await errorDetail(response)) || 'Check the model in the Ollama app.'}`);
+      else throw new Error(`Local AI could not run “${connection.model}” (${response.status}). ${detail ? `Details: ${detail}` : 'Choose another installed model in Local AI.'}`);
+      if (!response.ok) throw new Error(`Local AI could not run “${connection.model}” (${response.status}). ${(await errorDetail(response)) || 'Choose another installed model in Local AI.'}`);
     }
     if (response.status === 429) throw new Error('Provider quota or rate limit reached. Wait and retry, or check your account limits. No offline substitute was generated.');
     if (response.status === 402) throw new Error('This provider requires credits for the selected model. Check your account or select an OpenRouter free model.');
@@ -147,7 +148,7 @@ async function complete(messages, config, apiKey = '', fetchFn = fetch) {
   } catch (error) {
     if (controller.signal.aborted) throw new Error('The model took longer than 90 seconds. Try a smaller model or offline skills.');
     if (error instanceof SyntaxError) throw new Error('The endpoint returned an unreadable response. Check the API URL.');
-    if (error instanceof TypeError && isOllama) throw new Error(`Ollama is not responding at ${new URL(connection.endpoint).host}. Open the Ollama app, or run “ollama serve”, then try again. Your prompt is unchanged.`);
+    if (error instanceof TypeError && isOllama) throw new Error(`${LOCAL_UNAVAILABLE} Your prompt is unchanged.`);
     if (error instanceof TypeError) throw new Error('Could not reach the model endpoint. Check that the service is running and the URL is correct.');
     throw error;
   } finally { clearTimeout(timeout); }

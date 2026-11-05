@@ -4,6 +4,7 @@
 const { execFile } = require('node:child_process');
 const crypto = require('node:crypto');
 const { ollamaOrigin } = require('./ollama.cjs');
+const { SCREEN_PHASE2 } = require('./setup-flow.js');
 const { analyze } = require('./engine.cjs');
 const { powershell, powershellEnv } = require('./windows.cjs');
 
@@ -105,14 +106,14 @@ async function describeScreens({ images, question, endpoint, model, fetchFn = fe
   const start = Date.now();
   try {
     const response = await fetchFn(`${ollamaOrigin(endpoint)}/api/chat`, { method: 'POST', redirect: 'error', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, stream: false, think: false, messages: [{ role: 'system', content: VISION }, { role: 'user', content: `${framing}\n\nRequest: ${ask}`, images }] }) });
-    if (!response.ok) throw new Error(`The local model could not read the screen (${response.status}).`);
+    if (!response.ok) throw new Error(`The screen could not be read (${response.status}). Try again.`);
     const data = await response.json();
     const text = typeof data.message?.content === 'string' ? data.message.content.trim() : '';
-    if (!text) throw new Error('The local model returned an empty description.');
+    if (!text) throw new Error('The screen reader returned an empty description. Try again.');
     return { text, question: ask, frames: images.length, model, durationMs: Date.now() - start, usage: Number.isSafeInteger(data.prompt_eval_count) && Number.isSafeInteger(data.eval_count) ? { input: data.prompt_eval_count, output: data.eval_count } : null };
   } catch (error) {
     if (controller.signal.aborted) throw new Error('Reading the screen took too long. Try fewer pages or a smaller model.');
-    if (error instanceof TypeError) throw new Error('Ollama is not responding. Start it, then try again.');
+    if (error instanceof TypeError) throw new Error(SCREEN_PHASE2);
     throw error;
   } finally { clearTimeout(timer); }
 }
@@ -159,7 +160,7 @@ function factCheckNudge(reply, supplied) {
   const source = String(supplied).toLowerCase();
   const specifics = [...new Set([...(String(reply).match(/https?:\/\/[^\s)]+/g) || []), ...(String(reply).match(/\b(1[89]\d\d|20\d\d)\b/g) || []), ...(String(reply).match(/\b\d+(?:[.,]\d+)?\s?%/g) || [])])];
   const unsupported = specifics.filter(item => !source.includes(item.toLowerCase())).slice(0, 4);
-  return unsupported.length ? { kind: 'verify', message: `This answer mentions ${unsupported.join(', ')}, which you did not provide and a local model cannot look up. Check these before relying on them.`, actions: [] } : null;
+  return unsupported.length ? { kind: 'verify', message: `This answer mentions ${unsupported.join(', ')}, which you did not provide and the model cannot look up. Check these before relying on them.`, actions: [] } : null;
 }
 
 module.exports = { DEFAULTS, LIMITS, WINDOWS_KEYS, windowsKeyScript, readSettings, sendKeys, grabSelection, captureDisplay, seesOtherApps, visionCapable, describeScreens, Coach, factCheckNudge, similarity, VISION };
