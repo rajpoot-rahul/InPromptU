@@ -1,0 +1,25 @@
+INVOICE  
+  
+  
+Customer: Lakeside Dental Group  
+Customer address: 88 Elm Ave, Austin, TX 78701  
+  
+  
+Supplier: Summit Office Depot Inc.  
+Supplier address: 410 Market St, Denver, CO 80202  
+EIN: 6103495474  
+  
+Customer ID: CUST-877  
+Due Date: Nov 29, 2026  
+Invoice #: INV-2026-8824  
+Invoice Date: Oct 15, 2026  
+PO Number: PO-97087  
+  
+Items:  
+1. A4 copier paper (box of 5 reams) - Qty 5 x 32.03 = 160.15  
+  
+Subtotal: USD 160.15  
+Sales Tax (7%): USD 11.21  
+Total: USD 171.36  
+Amount Due: USD 171.36  
+  

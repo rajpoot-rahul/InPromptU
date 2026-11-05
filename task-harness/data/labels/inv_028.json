@@ -1,0 +1,47 @@
+{
+  "doc_id": "inv_028",
+  "meta": {
+    "locale": "UK",
+    "layout": "B",
+    "tricks": [
+      "customer_first",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Oakfield Facilities Management",
+    "invoice_number": "A/2026/938",
+    "invoice_date": "2026-02-02",
+    "currency": "GBP",
+    "subtotal": 3121.34,
+    "discount": 0.0,
+    "tax": 624.27,
+    "total": 3745.61,
+    "line_items": [
+      {
+        "description": "Software licence - annual",
+        "quantity": 1,
+        "unit_price": 285.0,
+        "amount": 285.0
+      },
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 10,
+        "unit_price": 219.38,
+        "amount": 2193.8
+      },
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 4,
+        "unit_price": 35.1,
+        "amount": 140.4
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 6,
+        "unit_price": 83.69,
+        "amount": 502.14
+      }
+    ]
+  }
+}

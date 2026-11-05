@@ -1,0 +1,25 @@
+Schneider Logistik GmbH
+Am Markt 3, 80331 München
+USt-IdNr.: 4462081170
+
+TAX INVOICE
+
+Invoice Date: 16.03.2026
+Invoice #: INV-2026-3363
+PO Number: PO-79239
+Due Date: 30.04.2026
+Customer ID: CUST-470
+
+Bill To:
+Becker & Sohn KG
+Lindenallee 5, 10115 Berlin
+
+Description                           Qty    Unit Price        Amount
+Ergonomic office chair                 11        283,82      3.122,02
+Website maintenance (monthly)          12        188,68      2.264,16
+
+Subtotal: € 5.386,18
+MwSt (7%): € 377,03
+Grand Total: € 5.763,21
+
+Thank you for your business.

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PromptHarness - Hyland Hackathon Pitch</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#19324c;font:16px/1.65 system-ui,-apple-system,sans-serif}header{background:#153959;color:white;padding:36px 24px}header>div,main{max-width:900px;margin:auto}main{padding:24px}h1{line-height:1.2;margin:4px 0}h2{color:#15558b}h3{color:#164e7c;margin-bottom:6px}section{background:white;border:1px solid #d5dfeb;border-radius:10px;padding:26px;margin-bottom:24px}.pitch{background:#eff8f2;padding:16px;border-left:4px solid #30804e;font-size:18px}.warn{background:#fff4df;border-left:4px solid #b47913;padding:16px}.copybar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}button{background:#164e7c;color:white;border:0;border-radius:6px;padding:11px 17px;font:inherit;cursor:pointer}button:hover{background:#0c3659}.status{font-size:14px}.small{font-size:14px;color:#52647b}ol li,ul li{margin:4px 0}@media print{body{background:white}main{padding:0}section{border:0;padding:12px 0}.copybar{display:none}}
+</style>
+</head>
+<body>
+<header><div><p>Hyland-wide hackathon | Platform pitch | 4 November 2026</p><h1>PromptHarness</h1><p>One prompt standard for every Hyland AI feature</p></div></header>
+<main>
+<section>
+<p class="pitch"><strong>One line:</strong> product teams say <em>what</em> they want; HAIP builds the prompt the same governed way for everyone.</p>
+<div class="copybar"><button type="button" data-copy="submission">Copy submission</button><span class="status" role="status" aria-live="polite"></span></div>
+<article id="submission">
+<h3>Idea title</h3>
+<p>PromptHarness - one prompt standard for every Hyland AI feature</p>
+
+<h3>Problem</h3>
+<p>Each product team writes and maintains its own prompts. The result:</p>
+<ul>
+<li>Output formats differ between products.</li>
+<li>Safety rules are applied unevenly.</li>
+<li>Teams repeat the same prompt work.</li>
+<li>When the AI model changes, every team re-tunes separately.</li>
+</ul>
+
+<h3>Idea</h3>
+<p>A "compile" step inside HAIP. A product sends <strong>what it wants done</strong> plus its content. PromptHarness builds the final prompt from shared, versioned templates.</p>
+
+<h3>How it works</h3>
+<ol>
+<li><strong>Check the request:</strong> HS1 identifies the task type (summarise, extract, classify, compare, answer a question) and flags anything missing, such as no output format. Optional and fast.</li>
+<li><strong>Build the prompt:</strong> a fixed template for that task type fills in role, task, content, limits and output format. Company-wide rules (no personal data in output, cite sources, required format) are added in one place. The same input always gives the same prompt.</li>
+<li><strong>Run and check:</strong> the model answers, the output is checked against the required format, and any failure is logged against the template version that produced it.</li>
+</ol>
+
+<h3>Why it matters to Hyland</h3>
+<ul>
+<li>Rules managed in one place instead of in every product.</li>
+<li>When the model changes, prompts are re-tuned once, centrally.</li>
+<li>Teams get good prompts without needing prompt experts.</li>
+<li>A record of which template produced each answer, which matters for regulated customers.</li>
+</ul>
+
+<h3>Demo</h3>
+<ol>
+<li><strong>Before:</strong> two products make the same kind of request; outputs come back in different formats and one misses a safety rule.</li>
+<li><strong>After:</strong> both go through PromptHarness and return consistent output.</li>
+<li><strong>Edit once:</strong> change one central template live, and both products improve.</li>
+</ol>
+
+<h3>Success signal</h3>
+<p>On 50 real requests from two product teams, compiled prompts return output in the correct format at least 95% of the time, reviewer-rated quality is no worse than today, and the meaning of the request changes in no more than 2 of the 50 cases.</p>
+
+<h3>Risks</h3>
+<ul>
+<li><strong>Teams may not want to give up control:</strong> make it opt-in and allow product-specific additions.</li>
+<li><strong>One template may not fit every use:</strong> templates per task type, with extension points for each product.</li>
+<li><strong>Ownership and overlap:</strong> needs a HAIP-team sponsor; HAIP may already offer prompt templates or guardrails.</li>
+</ul>
+</article>
+</section>
+
+<section>
+<h2>Before you submit</h2>
+<div class="warn">This is a proposal. The problem and numbers above are assumptions until checked with real teams.</div>
+<ol>
+<li><strong>Does HAIP already have prompt templates or guardrails?</strong> If yes, pitch this as an extension of what exists.</li>
+<li><strong>Is the problem real?</strong> Ask two or three product teams how they manage prompts today. One real example of inconsistent output will persuade judges more than anything here.</li>
+<li><strong>Are the names right?</strong> Confirm the HAIP name and who owns it.</li>
+<li><strong>Is the deadline and format known?</strong> Adapt the headings to the hackathon's own template if it has one.</li>
+</ol>
+<p class="small">Expect the question "Copilot and ChatGPT already improve prompts - why build this?" Answer: this is not about one person's prompt; it is about consistent, governed, versioned AI behaviour across every Hyland product.</p>
+</section>
+</main>
+<script>
+document.querySelectorAll('button[data-copy]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const status = button.parentElement.querySelector('.status');
+    const target = document.getElementById(button.dataset.copy);
+    status.textContent = '';
+    if (!target || !navigator.clipboard || !navigator.clipboard.writeText) {
+      status.textContent = 'Clipboard is unavailable. Select the text below and copy it manually.';
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(target.innerText);
+      status.textContent = 'Submission copied. Review before posting.';
+    } catch (error) {
+      status.textContent = 'Copy was blocked. Select the text below and copy it manually.';
+      console.error('Could not copy submission:', error);
+    }
+  });
+});
+</script>
+</body>
+</html>

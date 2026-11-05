@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taskharness"
+version = "0.1.0"
+description = "Task harness for LLM document extraction: fixed template, preprocessing, validation, retry and evaluation."
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.40",
+    "anthropic[bedrock]>=0.40",
+    "boto3>=1.34",
+    "jsonschema>=4.20",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+slides = ["python-pptx>=1.0"]
+
+[tool.setuptools.packages.find]
+include = ["taskharness*"]
+
+[tool.setuptools.package-data]
+"taskharness.web" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

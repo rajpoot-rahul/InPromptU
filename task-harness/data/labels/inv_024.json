@@ -1,0 +1,46 @@
+{
+  "doc_id": "inv_024",
+  "meta": {
+    "locale": "US",
+    "layout": "A",
+    "tricks": [
+      "due_date_early"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Summit Office Depot Inc.",
+    "invoice_number": "A/2026/153",
+    "invoice_date": "2026-10-13",
+    "currency": "USD",
+    "subtotal": 11086.0,
+    "discount": 0.0,
+    "tax": 776.02,
+    "total": 11862.02,
+    "line_items": [
+      {
+        "description": "Data migration service",
+        "quantity": 6,
+        "unit_price": 934.19,
+        "amount": 5605.14
+      },
+      {
+        "description": "Software licence - annual",
+        "quantity": 3,
+        "unit_price": 449.93,
+        "amount": 1349.79
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 1,
+        "unit_price": 233.22,
+        "amount": 233.22
+      },
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 11,
+        "unit_price": 354.35,
+        "amount": 3897.85
+      }
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "doc_id": "inv_012",
+  "meta": {
+    "locale": "US",
+    "layout": "C",
+    "tricks": [
+      "customer_first",
+      "discount"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Cedar & Pine Consulting",
+    "invoice_number": "INV-2026-1452",
+    "invoice_date": "2026-02-26",
+    "currency": "USD",
+    "subtotal": 8108.42,
+    "discount": 405.42,
+    "tax": 635.5,
+    "total": 8338.5,
+    "line_items": [
+      {
+        "description": "On-site support visit",
+        "quantity": 1,
+        "unit_price": 238.69,
+        "amount": 238.69
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 9,
+        "unit_price": 191.13,
+        "amount": 1720.17
+      },
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 5,
+        "unit_price": 37.11,
+        "amount": 185.55
+      },
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 1,
+        "unit_price": 20.29,
+        "amount": 20.29
+      },
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 12,
+        "unit_price": 495.31,
+        "amount": 5943.72
+      }
+    ]
+  }
+}

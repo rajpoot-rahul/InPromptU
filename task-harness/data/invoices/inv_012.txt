@@ -1,0 +1,26 @@
+INVOICE
+
+Customer: Lakeside Dental Group
+Customer address: 410 Market St, Denver, CO 80202
+
+Supplier: Cedar & Pine Consulting
+Supplier address: 1200 Pine Rd, Raleigh, NC 27601
+EIN: 6059041472
+
+Invoice Date: 02/26/2026
+Invoice No.: INV-2026-1452
+PO Number: PO-44151
+Customer ID: CUST-185
+Due Date: 03/28/2026
+
+Items:
+1. On-site support visit - Qty 1 x 238.69 = 238.69
+2. Laptop docking station - Qty 9 x 191.13 = 1,720.17
+3. A4 copier paper (box of 5 reams) - Qty 5 x 37.11 = 185.55
+4. Network cable Cat6 (30 m) - Qty 1 x 20.29 = 20.29
+5. Website maintenance (monthly) - Qty 12 x 495.31 = 5,943.72
+
+Subtotal: USD 8,108.42
+Discount (5%): -USD 405.42
+Sales Tax (8.25%): USD 635.50
+Invoice Total: USD 8,338.50

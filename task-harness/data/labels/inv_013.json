@@ -1,0 +1,46 @@
+{
+  "doc_id": "inv_013",
+  "meta": {
+    "locale": "DE",
+    "layout": "B",
+    "tricks": [
+      "customer_first"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Müller Bürotechnik GmbH",
+    "invoice_number": "A/2026/208",
+    "invoice_date": "2026-08-17",
+    "currency": "EUR",
+    "subtotal": 15320.05,
+    "discount": 0.0,
+    "tax": 2910.81,
+    "total": 18230.86,
+    "line_items": [
+      {
+        "description": "Data migration service",
+        "quantity": 12,
+        "unit_price": 1176.15,
+        "amount": 14113.8
+      },
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 4,
+        "unit_price": 234.92,
+        "amount": 939.68
+      },
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 4,
+        "unit_price": 26.13,
+        "amount": 104.52
+      },
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 7,
+        "unit_price": 23.15,
+        "amount": 162.05
+      }
+    ]
+  }
+}

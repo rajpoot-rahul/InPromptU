@@ -1,0 +1,31 @@
+TAX INVOICE  
+  
+  
+Bill To:  
+Greenleaf Hospitals  
+22 Anna Salai, Chennai 600002  
+  
+  
+From:  
+Lotus Print House  
+Plot 7, Sector 18, Gurugram 122015  
+GSTIN: 3682643353  
+  
+Customer ID: CUST-921  
+Invoice Date: 27-Aug-2026  
+Invoice Number: A/2026/287  
+Due Date: 11-Sep-2026  
+PO Number: PO-11141  
+  
+Description                           Qty    Unit Price        Amount  
+Cloud storage 1 TB plan                 8      2,893.60     23,148.80  
+On-site support visit                  10     16,685.60   1,66,856.00  
+Software licence - annual               9     24,284.80   2,18,563.20  
+  
+Subtotal: ₹ 4,08,568.00  
+Discount (5%): -₹ 20,428.40  
+GST (18%): ₹69,865.13  
+Total: ₹4,58,004.73  
+  
+Please make payment to Lotus Print House.  
+  

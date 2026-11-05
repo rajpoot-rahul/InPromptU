@@ -1,0 +1,29 @@
+DECCAN DIGITAL SERVICES PVT. LTD.
+Plot 42, HITEC City, Hyderabad 500081
+GSTIN: 36AABCD1234E1Z5
+
+TAX INVOICE
+
+Bill To:
+Acme Learning Pvt. Ltd.
+7 Residency Road, Bengaluru 560025
+
+Invoice No.: DDS/2026/0457
+PO Number: PO-55120
+Due Date: 17-Nov-2026
+Invoice Date: 18-Oct-2026
+
+Description                       Qty     Rate (INR)      Amount (INR)
+Cloud hosting (monthly)             3      12,500.00        37,500.00
+Security audit                      1      45,000.00        45,000.00
+Support hours                      12       1,800.00        21,600.00
+
+Subtotal:            ₹1,04,100.00
+Discount (5%):       -₹5,205.00
+GST (18%):           ₹17,801.10
+Total:               ₹1,16,696.10
+Previous Balance:    ₹8,000.00
+Amount Due:          ₹1,24,696.10
+
+Bank: Example Bank, A/C 001234567890, IFSC EXMP0001234
+Thank you for your business.

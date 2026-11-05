@@ -1,0 +1,22 @@
+INVOICE
+
+Customer: St Aidan's Primary School
+Customer address: 5 Kings Road, Reading RG1 3AA
+
+Supplier: Oakfield Facilities Management
+Supplier address: 2 Mill Lane, Bristol BS1 4ST
+VAT Reg No.: 5567134389
+
+Due Date: 28/08/2026
+PO Number: PO-29634
+Customer ID: CUST-276
+Date: 13/08/2026
+Invoice No.: 10527808
+
+Items:
+1. Data migration service - Qty 1 x 1,567.01 = 1,567.01
+2. Laptop docking station - Qty 11 x 149.45 = 1,643.95
+
+Subtotal: GBP 3,210.96
+VAT (5%): GBP 160.55
+Total: GBP 3,371.51

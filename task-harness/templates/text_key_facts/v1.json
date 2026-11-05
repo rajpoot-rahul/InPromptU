@@ -1,0 +1,78 @@
+{
+  "task": "text_key_facts",
+  "title": "Key facts from any text",
+  "version": "1.0.0",
+  "plain_prompt": "Summarise this text and list its key points, names, dates, numbers and action items as JSON.",
+  "role": "You are a careful analyst. You summarise any text and pull out its key facts, using only what the text actually says.",
+  "rules": [
+    "Use only information written in the text. Never add facts, names, dates or numbers that are not in it.",
+    "If the text has no meaningful content (random characters, gibberish or nothing to summarise), set is_meaningful_text to false, set summary to 'No meaningful content.', and leave every list empty.",
+    "summary: one to three plain sentences. Do not write any number in the summary unless that exact number appears in the text.",
+    "key_points: up to five important points. For each, copy a short supporting quote from the text into evidence_quote, word for word (at most 25 words).",
+    "names: people, teams and organisations exactly as written in the text.",
+    "dates: dates and times exactly as written in the text (do not reformat them).",
+    "numbers: amounts, quantities, versions and other figures exactly as written, including any unit or currency written next to them.",
+    "action_items: tasks someone has to do. owner is the person or team exactly as written, or null if no owner is stated. evidence_quote is a word-for-word quote."
+  ],
+  "fields": {
+    "is_meaningful_text": "true if the text contains real content to summarise, false for gibberish.",
+    "summary": "One to three sentences.",
+    "key_points": "Up to five points, each with a word-for-word supporting quote.",
+    "names": "People, teams and organisations as written.",
+    "dates": "Dates and times as written.",
+    "numbers": "Figures as written, with units or currency.",
+    "action_items": "Tasks, with owner (or null) and a word-for-word quote."
+  },
+  "output_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["is_meaningful_text", "summary", "key_points", "names", "dates", "numbers", "action_items"],
+    "properties": {
+      "is_meaningful_text": {"type": "boolean"},
+      "summary": {"type": "string", "minLength": 1},
+      "key_points": {
+        "type": "array",
+        "maxItems": 5,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["point", "evidence_quote"],
+          "properties": {
+            "point": {"type": "string", "minLength": 1},
+            "evidence_quote": {"type": "string", "minLength": 1}
+          }
+        }
+      },
+      "names": {"type": "array", "items": {"type": "string", "minLength": 1}},
+      "dates": {"type": "array", "items": {"type": "string", "minLength": 1}},
+      "numbers": {"type": "array", "items": {"type": "string", "minLength": 1}},
+      "action_items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "owner", "evidence_quote"],
+          "properties": {
+            "action": {"type": "string", "minLength": 1},
+            "owner": {"type": ["string", "null"]},
+            "evidence_quote": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    }
+  },
+  "final_reminder": "Return only one JSON object that matches the schema above, with no commentary. Every quote, name, date and number must be copied word for word from the text. Do not invent anything.",
+  "grounding": {
+    "text_list_fields": ["names", "dates", "numbers"],
+    "object_list_text_fields": {
+      "key_points": ["evidence_quote"],
+      "action_items": ["evidence_quote", "owner"]
+    },
+    "no_new_numbers_fields": ["summary"],
+    "meaningful_flag": "is_meaningful_text",
+    "meaningful_min_words": 8
+  },
+  "max_document_chars": 20000,
+  "max_retries": 1
+}

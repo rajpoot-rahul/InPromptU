@@ -1,0 +1,30 @@
+Sharma Tech Solutions Pvt. Ltd.  
+Plot 7, Sector 18, Gurugram 122015  
+GSTIN: 6581937319  
+  
+  
+INVOICE  
+  
+  
+Due Date: 03-Jul-2026  
+Customer ID: CUST-465  
+PO Number: PO-38556  
+Date of Issue: 18-Jun-2026  
+Invoice No.: INV-2026-5072  
+  
+Bill To:  
+Greenleaf Hospitals  
+22 Anna Salai, Chennai 600002  
+  
+Description                           Qty    Unit Price        Amount  
+Website maintenance (monthly)           2     32,008.00     64,016.00  
+Software licence - annual               5     65,769.60   3,28,848.00  
+  
+Subtotal: INR 3,92,864.00  
+GST (18%): INR 70,715.52  
+Invoice Total: INR 4,63,579.52  
+Previous Balance: INR 4,518.40  
+Amount Due: INR 4,68,097.92  
+  
+Thank you for your business.  
+  

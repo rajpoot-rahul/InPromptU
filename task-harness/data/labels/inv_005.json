@@ -1,0 +1,29 @@
+{
+  "doc_id": "inv_005",
+  "meta": {
+    "locale": "DE",
+    "layout": "A",
+    "tricks": [
+      "discount",
+      "previous_balance"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Müller Bürotechnik GmbH",
+    "invoice_number": "A/2026/715",
+    "invoice_date": "2026-03-15",
+    "currency": "EUR",
+    "subtotal": 424.35,
+    "discount": 42.44,
+    "tax": 72.56,
+    "total": 454.47,
+    "line_items": [
+      {
+        "description": "Printer toner cartridge",
+        "quantity": 9,
+        "unit_price": 47.15,
+        "amount": 424.35
+      }
+    ]
+  }
+}

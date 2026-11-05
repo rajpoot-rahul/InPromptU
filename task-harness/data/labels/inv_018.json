@@ -1,0 +1,41 @@
+{
+  "doc_id": "inv_018",
+  "meta": {
+    "locale": "US",
+    "layout": "A",
+    "tricks": [
+      "noise",
+      "previous_balance"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Cedar & Pine Consulting",
+    "invoice_number": "INV-2026-5429",
+    "invoice_date": "2026-07-12",
+    "currency": "USD",
+    "subtotal": 1484.53,
+    "discount": 0.0,
+    "tax": 89.07,
+    "total": 1573.6,
+    "line_items": [
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 12,
+        "unit_price": 15.48,
+        "amount": 185.76
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 5,
+        "unit_price": 174.97,
+        "amount": 874.85
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 2,
+        "unit_price": 211.96,
+        "amount": 423.92
+      }
+    ]
+  }
+}

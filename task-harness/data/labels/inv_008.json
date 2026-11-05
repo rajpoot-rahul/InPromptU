@@ -1,0 +1,52 @@
+{
+  "doc_id": "inv_008",
+  "meta": {
+    "locale": "US",
+    "layout": "C",
+    "tricks": [
+      "customer_first"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Blue Ridge Analytics LLC",
+    "invoice_number": "72458740",
+    "invoice_date": "2026-01-05",
+    "currency": "USD",
+    "subtotal": 16986.51,
+    "discount": 0.0,
+    "tax": 1401.39,
+    "total": 18387.9,
+    "line_items": [
+      {
+        "description": "Printer toner cartridge",
+        "quantity": 3,
+        "unit_price": 84.91,
+        "amount": 254.73
+      },
+      {
+        "description": "Data migration service",
+        "quantity": 1,
+        "unit_price": 556.09,
+        "amount": 556.09
+      },
+      {
+        "description": "Software licence - annual",
+        "quantity": 12,
+        "unit_price": 1247.73,
+        "amount": 14972.76
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 9,
+        "unit_price": 113.67,
+        "amount": 1023.03
+      },
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 7,
+        "unit_price": 25.7,
+        "amount": 179.9
+      }
+    ]
+  }
+}

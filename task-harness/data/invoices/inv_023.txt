@@ -1,0 +1,29 @@
+TAX INVOICE
+
+Bill To:
+Northgate Housing Trust
+19 Dock Street, Leeds LS10 1JF
+
+From:
+Thames Valley Print Ltd
+2 Mill Lane, Bristol BS1 4ST
+VAT Reg No.: 3620352291
+
+Invoice No.: 66951588
+Due Date: 18 May 2026
+Customer ID: CUST-332
+Invoice Date: 3 May 2026
+PO Number: PO-58525
+
+Description                           Qty    Unit Price        Amount
+Website maintenance (monthly)           7        477.86      3,345.02
+Software licence - annual               1        367.70        367.70
+Network cable Cat6 (30 m)              12         21.57        258.84
+Cloud storage 1 TB plan                 2         41.08         82.16
+
+Subtotal: £4,053.72
+Discount (5%): -£202.69
+VAT (5%): £192.55
+Total: £4,043.58
+
+Please make payment to Thames Valley Print Ltd.

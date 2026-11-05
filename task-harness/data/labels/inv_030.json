@@ -1,0 +1,40 @@
+{
+  "doc_id": "inv_030",
+  "meta": {
+    "locale": "UK",
+    "layout": "B",
+    "tricks": [
+      "customer_first"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Oakfield Facilities Management",
+    "invoice_number": "INV-2026-1483",
+    "invoice_date": "2026-03-26",
+    "currency": "GBP",
+    "subtotal": 1171.5,
+    "discount": 0.0,
+    "tax": 58.58,
+    "total": 1230.08,
+    "line_items": [
+      {
+        "description": "Data migration service",
+        "quantity": 1,
+        "unit_price": 431.1,
+        "amount": 431.1
+      },
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 3,
+        "unit_price": 44.14,
+        "amount": 132.42
+      },
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 2,
+        "unit_price": 303.99,
+        "amount": 607.98
+      }
+    ]
+  }
+}

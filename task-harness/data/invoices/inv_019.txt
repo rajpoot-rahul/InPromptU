@@ -1,0 +1,25 @@
+INVOICE  
+  
+  
+Customer: Northgate Housing Trust  
+Customer address: 5 Kings Road, Reading RG1 3AA  
+  
+  
+Supplier: Oakfield Facilities Management  
+Supplier address: 2 Mill Lane, Bristol BS1 4ST  
+VAT Reg No.: 2693796713  
+  
+Date: 24 February 2026  
+Invoice #: 65148187  
+Customer ID: CUST-729  
+PO Number: PO-69095  
+Due Date: 11 March 2026  
+  
+Items:  
+1. A4 copier paper (box of 5 reams) - Qty 9 x 17.60 = 158.40  
+2. Data migration service - Qty 3 x 666.98 = 2,000.94  
+  
+Subtotal: GBP 2,159.34  
+VAT (5%): GBP 107.97  
+Invoice Total: GBP 2,267.31  
+  

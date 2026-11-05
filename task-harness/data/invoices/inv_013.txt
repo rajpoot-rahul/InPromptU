@@ -1,0 +1,28 @@
+TAX INVOICE
+
+Bill To:
+Klinikum Nordstadt
+Hauptstraße 12, 50667 Köln
+
+From:
+Müller Bürotechnik GmbH
+Am Markt 3, 80331 München
+USt-IdNr.: 2258676654
+
+Invoice Date: 17.08.2026
+Customer ID: CUST-938
+Invoice No.: A/2026/208
+PO Number: PO-96287
+Due Date: 01.09.2026
+
+Description                           Qty    Unit Price        Amount
+Data migration service                 12      1.176,15     14.113,80
+Ergonomic office chair                  4        234,92        939,68
+Network cable Cat6 (30 m)               4         26,13        104,52
+A4 copier paper (box of 5 reams)        7         23,15        162,05
+
+Subtotal: EUR 15.320,05
+MwSt (19%): EUR 2.910,81
+Total: EUR 18.230,86
+
+Please make payment to Müller Bürotechnik GmbH.

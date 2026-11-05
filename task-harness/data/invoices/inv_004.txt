@@ -1,0 +1,25 @@
+INVOICE
+
+Customer: Harper & Cole Law Office
+Customer address: 88 Elm Ave, Austin, TX 78701
+
+Supplier: Northwind IT Services
+Supplier address: 1200 Pine Rd, Raleigh, NC 27601
+EIN: 6980221859
+
+PO Number: PO-64433
+Invoice Number: A/2026/823
+Customer ID: CUST-467
+Date: 07/17/2026
+Due Date: 08/31/2026
+
+Items:
+1. On-site support visit - Qty 4 x 139.57 = 558.28
+2. Cloud storage 1 TB plan - Qty 1 x 29.11 = 29.11
+3. Laptop docking station - Qty 10 x 238.91 = 2,389.10
+4. Data migration service - Qty 5 x 978.00 = 4,890.00
+
+Subtotal: $7,866.49
+Discount (5%): -$393.32
+Sales Tax (7%): $523.12
+Invoice Total: $7,996.29

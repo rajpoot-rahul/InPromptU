@@ -1,0 +1,52 @@
+{
+  "doc_id": "inv_015",
+  "meta": {
+    "locale": "IN",
+    "layout": "A",
+    "tricks": [
+      "due_date_early"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Lotus Print House",
+    "invoice_number": "96331453",
+    "invoice_date": "2026-05-05",
+    "currency": "INR",
+    "subtotal": 80899.2,
+    "discount": 0.0,
+    "tax": 9707.9,
+    "total": 90607.1,
+    "line_items": [
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 1,
+        "unit_price": 3062.4,
+        "amount": 3062.4
+      },
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 2,
+        "unit_price": 21655.2,
+        "amount": 43310.4
+      },
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 1,
+        "unit_price": 1004.0,
+        "amount": 1004.0
+      },
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 11,
+        "unit_price": 2036.0,
+        "amount": 22396.0
+      },
+      {
+        "description": "Printer toner cartridge",
+        "quantity": 2,
+        "unit_price": 5563.2,
+        "amount": 11126.4
+      }
+    ]
+  }
+}

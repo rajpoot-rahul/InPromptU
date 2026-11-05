@@ -1,0 +1,46 @@
+{
+  "doc_id": "inv_001",
+  "meta": {
+    "locale": "UK",
+    "layout": "C",
+    "tricks": [
+      "customer_first"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Oakfield Facilities Management",
+    "invoice_number": "38816302",
+    "invoice_date": "2026-10-24",
+    "currency": "GBP",
+    "subtotal": 6379.94,
+    "discount": 0.0,
+    "tax": 1275.99,
+    "total": 7655.93,
+    "line_items": [
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 7,
+        "unit_price": 30.06,
+        "amount": 210.42
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 10,
+        "unit_price": 79.49,
+        "amount": 794.9
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 4,
+        "unit_price": 104.45,
+        "amount": 417.8
+      },
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 11,
+        "unit_price": 450.62,
+        "amount": 4956.82
+      }
+    ]
+  }
+}

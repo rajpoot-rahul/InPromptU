@@ -1,0 +1,48 @@
+{
+  "doc_id": "inv_025",
+  "meta": {
+    "locale": "UK",
+    "layout": "C",
+    "tricks": [
+      "customer_first",
+      "discount",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Thames Valley Print Ltd",
+    "invoice_number": "INV-2026-5298",
+    "invoice_date": "2026-09-12",
+    "currency": "GBP",
+    "subtotal": 4006.47,
+    "discount": 200.32,
+    "tax": 190.31,
+    "total": 3996.46,
+    "line_items": [
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 7,
+        "unit_price": 447.89,
+        "amount": 3135.23
+      },
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 7,
+        "unit_price": 13.33,
+        "amount": 93.31
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 8,
+        "unit_price": 81.14,
+        "amount": 649.12
+      },
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 1,
+        "unit_price": 128.81,
+        "amount": 128.81
+      }
+    ]
+  }
+}

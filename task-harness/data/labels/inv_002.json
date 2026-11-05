@@ -1,0 +1,41 @@
+{
+  "doc_id": "inv_002",
+  "meta": {
+    "locale": "IN",
+    "layout": "B",
+    "tricks": [
+      "customer_first",
+      "due_date_early"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Sharma Tech Solutions Pvt. Ltd.",
+    "invoice_number": "A/2026/576",
+    "invoice_date": "2026-09-28",
+    "currency": "INR",
+    "subtotal": 150019.2,
+    "discount": 0.0,
+    "tax": 7500.96,
+    "total": 157520.16,
+    "line_items": [
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 2,
+        "unit_price": 2399.2,
+        "amount": 4798.4
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 5,
+        "unit_price": 22257.6,
+        "amount": 111288.0
+      },
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 8,
+        "unit_price": 4241.6,
+        "amount": 33932.8
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+TAX INVOICE
+
+Bill To:
+Lakeside Dental Group
+410 Market St, Denver, CO 80202
+
+From:
+Cedar & Pine Consulting
+1200 Pine Rd, Raleigh, NC 27601
+EIN: 7290679070
+
+Customer ID: CUST-800
+PO Number: PO-72784
+Due Date: 09/19/2026
+Date of Issue: 08/20/2026
+Invoice #: A/2026/178
+
+Description                           Qty    Unit Price        Amount
+Website maintenance (monthly)           3        543.02      1,629.06
+On-site support visit                   5        198.71        993.55
+Laptop docking station                 10        179.75      1,797.50
+
+Subtotal: USD 4,420.11
+Sales Tax (8.25%): USD 364.66
+Invoice Total: USD 4,784.77
+
+Please make payment to Cedar & Pine Consulting.

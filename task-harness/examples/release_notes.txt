@@ -1,0 +1,18 @@
+Release notes - Document Portal 3.2 (released 10 November 2026)
+
+New
+- Bulk upload now accepts up to 500 files at once (previously 100).
+- Search results show a preview of the matching page.
+- Added Hindi and Tamil to the interface languages.
+
+Fixed
+- PDF files over 50 MB no longer time out during upload (DP-3381).
+- Rotated scanned pages are now read correctly by OCR (DP-3402).
+- CSV export now keeps currency symbols such as ₹ and € (DP-3410).
+
+Known issues
+- Guest users may see an error when searching inside shared folders. Workaround: open the folder first, then search. Fix planned for 3.2.1.
+
+Upgrade notes
+- Version 3.2 requires database migration 0047. Allow about 15 minutes of downtime.
+- Support for Internet Explorer 11 has been removed.

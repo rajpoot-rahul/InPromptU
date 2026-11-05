@@ -1,0 +1,21 @@
+Ticket: HD-20931
+Opened: 3 November 2026, 14:05
+Requester: Daniel Okafor (Finance, Lagos office)
+Priority: High
+Category: Access / Permissions
+
+Description:
+Since this morning I cannot open any documents in the "Vendor Contracts 2026" folder.
+I get the message "Access denied - contact your administrator".
+My colleague Grace Mensah in the same team can still open them.
+I need these for the quarter-end review on 6 November.
+
+Agent notes (Priya S., 3 Nov 15:20):
+Checked group membership. Daniel was removed from "FIN-Contracts-Readers" during yesterday's
+role clean-up. Re-added him. Asked him to sign out and back in.
+
+Agent notes (Priya S., 4 Nov 09:10):
+User confirms access works again. Root cause: clean-up script removed users without a manager
+field. 14 other users may be affected; raised problem record PRB-7712 for the identity team.
+
+Status: Resolved (pending problem record PRB-7712)

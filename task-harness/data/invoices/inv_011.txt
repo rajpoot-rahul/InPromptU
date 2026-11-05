@@ -1,0 +1,24 @@
+Northwind IT Services
+88 Elm Ave, Austin, TX 78701
+EIN: 6405684564
+
+INVOICE
+
+PO Number: PO-70118
+Due Date: Jun 18, 2026
+Invoice Date: Jun 3, 2026
+Customer ID: CUST-551
+Invoice No.: A/2026/667
+
+Bill To:
+Lakeside Dental Group
+1200 Pine Rd, Raleigh, NC 27601
+
+Description                           Qty    Unit Price        Amount
+Network cable Cat6 (30 m)               9         28.57        257.13
+
+Subtotal: USD 257.13
+Sales Tax (6%): USD 15.43
+Total: USD 272.56
+
+Thank you for your business.

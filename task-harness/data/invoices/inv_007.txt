@@ -1,0 +1,30 @@
+Lotus Print House  
+22 Anna Salai, Chennai 600002  
+GSTIN: 6061712255  
+  
+  
+TAX INVOICE  
+  
+  
+Date: 1 May 2026  
+PO Number: PO-89316  
+Customer ID: CUST-452  
+Invoice #: A/2026/298  
+Due Date: 31 May 2026  
+  
+Bill To:  
+Greenleaf Hospitals  
+14 MG Road, Bengaluru 560001  
+  
+Description                           Qty    Unit Price        Amount  
+Software licence - annual               4     26,711.20   1,06,844.80  
+Printer toner cartridge                 4      6,280.00     25,120.00  
+Laptop docking station                  4     15,252.80     61,011.20  
+Data migration service                 10   1,41,219.20  14,12,192.00  
+  
+Subtotal: ₹ 16,05,168.00  
+GST (5%): ₹ 80,258.40  
+Invoice Total: ₹16,85,426.40  
+  
+Thank you for your business.  
+  

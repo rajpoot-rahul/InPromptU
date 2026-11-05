@@ -1,0 +1,32 @@
+{
+  "doc_id": "inv_006",
+  "meta": {
+    "locale": "DE",
+    "layout": "A",
+    "tricks": []
+  },
+  "expected": {
+    "vendor_name": "Schneider Logistik GmbH",
+    "invoice_number": "INV-2026-3363",
+    "invoice_date": "2026-03-16",
+    "currency": "EUR",
+    "subtotal": 5386.18,
+    "discount": 0.0,
+    "tax": 377.03,
+    "total": 5763.21,
+    "line_items": [
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 11,
+        "unit_price": 283.82,
+        "amount": 3122.02
+      },
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 12,
+        "unit_price": 188.68,
+        "amount": 2264.16
+      }
+    ]
+  }
+}

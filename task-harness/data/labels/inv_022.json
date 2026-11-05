@@ -1,0 +1,28 @@
+{
+  "doc_id": "inv_022",
+  "meta": {
+    "locale": "IN",
+    "layout": "A",
+    "tricks": [
+      "discount"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Sharma Tech Solutions Pvt. Ltd.",
+    "invoice_number": "68710931",
+    "invoice_date": "2026-05-05",
+    "currency": "INR",
+    "subtotal": 33184.0,
+    "discount": 3318.4,
+    "tax": 5375.81,
+    "total": 35241.41,
+    "line_items": [
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 10,
+        "unit_price": 3318.4,
+        "amount": 33184.0
+      }
+    ]
+  }
+}

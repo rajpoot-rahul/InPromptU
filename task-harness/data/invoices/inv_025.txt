@@ -1,0 +1,29 @@
+INVOICE  
+  
+  
+Customer: Pemberton Estates  
+Customer address: 5 Kings Road, Reading RG1 3AA  
+  
+  
+Supplier: Thames Valley Print Ltd  
+Supplier address: 19 Dock Street, Leeds LS10 1JF  
+VAT Reg No.: 5051228543  
+  
+Customer ID: CUST-855  
+Date: 12 September 2026  
+PO Number: PO-57742  
+Due Date: 12 October 2026  
+Invoice #: INV-2026-5298  
+  
+Items:  
+1. Website maintenance (monthly) - Qty 7 x 447.89 = 3,135.23  
+2. Network cable Cat6 (30 m) - Qty 7 x 13.33 = 93.31  
+3. On-site support visit - Qty 8 x 81.14 = 649.12  
+4. Ergonomic office chair - Qty 1 x 128.81 = 128.81  
+  
+Subtotal: GBP 4,006.47  
+Discount (5%): -GBP 200.32  
+VAT (5%): GBP 190.31  
+Invoice Total: GBP 3,996.46  
+Amount Due: GBP 3,996.46  
+  

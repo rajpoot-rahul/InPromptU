@@ -1,0 +1,211 @@
+1
+00:00:00,000 --> 00:00:05,769
+Hi, I'm Surekha Jaknalli, from team Impromptu, with Rahul Rajpoot and Vivek Chaturvedi.
+
+2
+00:00:05,769 --> 00:00:12,068
+This is my part of our work: Task Harness, a reusable quality gate for every AI call at Hyland.
+
+3
+00:00:12,068 --> 00:00:18,103
+In the next few minutes, I'll show the problem, the solution, a live demo, and the results.
+
+4
+00:00:18,903 --> 00:00:26,179
+When teams ask a generative AI model to read a document, it is usually right, but sometimes it is quietly wrong.
+
+5
+00:00:26,179 --> 00:00:32,221
+In our test, the cheapest Claude model got 6 out of 30 invoices wrong, and nobody was warned.
+
+6
+00:00:32,221 --> 00:00:36,899
+For example, it wrote a discount as minus 393 point 32, instead of plus.
+
+7
+00:00:36,899 --> 00:00:41,317
+A finance system would add that discount, instead of subtracting it.
+
+8
+00:00:41,317 --> 00:00:46,515
+Even the most expensive model returned 15 of its 30 answers in the wrong format.
+
+9
+00:00:46,515 --> 00:00:52,427
+So today, teams either trust the AI blindly, or pay for the biggest model, just to be safe.
+
+10
+00:00:53,227 --> 00:00:56,136
+Task Harness puts a supervisor around the AI.
+
+11
+00:00:56,136 --> 00:00:58,593
+A versioned template defines the task.
+
+12
+00:00:58,593 --> 00:01:00,662
+Normal code cleans the document.
+
+13
+00:01:00,662 --> 00:01:01,632
+The AI answers.
+
+14
+00:01:01,632 --> 00:01:04,024
+Then simple code checks every answer.
+
+15
+00:01:04,024 --> 00:01:08,938
+If a check fails, the AI gets one retry, with the exact problem as feedback.
+
+16
+00:01:08,938 --> 00:01:12,689
+If it still fails, the answer goes to a person for review.
+
+17
+00:01:12,689 --> 00:01:16,374
+It is never passed on silently, and every step is logged.
+
+18
+00:01:17,174 --> 00:01:19,605
+The checks are plain code, not more AI.
+
+19
+00:01:19,605 --> 00:01:21,974
+Is every value really in the document?
+
+20
+00:01:21,974 --> 00:01:27,646
+Is it from the right line: not the due date, not the customer, not a purchase order number?
+
+21
+00:01:27,646 --> 00:01:28,830
+Do the sums add up?
+
+22
+00:01:28,830 --> 00:01:32,383
+And is the format exactly what downstream systems expect?
+
+23
+00:01:33,183 --> 00:01:35,606
+We checked what already exists at Hyland.
+
+24
+00:01:35,606 --> 00:01:38,679
+Brainware already validates classic invoice capture.
+
+25
+00:01:38,679 --> 00:01:46,123
+An internal prompt optimizer improves prompt wording, and several proofs of concept extract fields with large language models.
+
+26
+00:01:46,123 --> 00:01:52,150
+But none of them check generative AI answers in a standard way, or measure which model is good enough.
+
+27
+00:01:52,150 --> 00:01:54,218
+That is the gap Task Harness fills.
+
+28
+00:01:54,218 --> 00:01:58,709
+Invoices are simply our test case, because their answers are easy to verify.
+
+29
+00:01:59,509 --> 00:02:00,940
+Here is the working app.
+
+30
+00:02:00,940 --> 00:02:07,141
+On the Try it screen, I run an invoice through the full harness, and the six stages light up one by one.
+
+31
+00:02:07,141 --> 00:02:10,242
+On its first attempt, the AI broke the format rules.
+
+32
+00:02:10,242 --> 00:02:14,774
+The harness caught it, sent feedback, and the AI fixed it on the second try.
+
+33
+00:02:14,774 --> 00:02:17,338
+Every field now matches the correct answer.
+
+34
+00:02:18,138 --> 00:02:23,340
+If I paste text that is not an invoice, the harness does not accept a made-up answer.
+
+35
+00:02:23,340 --> 00:02:27,319
+It sends it for human review, and explains why, in plain English.
+
+36
+00:02:28,119 --> 00:02:30,753
+Side by side shows the same invoice twice.
+
+37
+00:02:30,753 --> 00:02:35,269
+On the left, the AI alone: the discount is wrong, and nobody was warned.
+
+38
+00:02:35,269 --> 00:02:36,712
+That is a silent error.
+
+39
+00:02:36,712 --> 00:02:43,110
+On the right, the same cheap model inside the harness: every field is correct, and every check passed.
+
+40
+00:02:43,910 --> 00:02:45,910
+And it is not only for invoices.
+
+41
+00:02:45,910 --> 00:02:48,035
+A new task is just a new template.
+
+42
+00:02:48,035 --> 00:02:51,659
+Here, Key facts from any text summarises a customer email.
+
+43
+00:02:51,659 --> 00:02:58,221
+Every key point must come with an exact quote, and names, dates and numbers are checked against the text.
+
+44
+00:02:59,021 --> 00:03:03,912
+Here are the results on 30 invoices, using Claude on Hyland's AWS account.
+
+45
+00:03:03,912 --> 00:03:10,719
+The cheapest model with the harness got 30 out of 30 correct, with 0 format errors and 0 silent errors.
+
+46
+00:03:10,719 --> 00:03:17,592
+That is 2.6 times faster, and about 38 times cheaper, than the most expensive model with a plain prompt.
+
+47
+00:03:18,392 --> 00:03:23,753
+Next, this becomes a template library that any team can extend without prompt engineering.
+
+48
+00:03:23,753 --> 00:03:32,509
+It can run as a check after every call on Hyland's AI gateway, keep an audit trail, and help each team pick the cheapest model that is good enough.
+
+49
+00:03:32,509 --> 00:03:39,061
+It also fits our own tools: for example, checking that Impromptu's prompt rewrites never lose or invent facts.
+
+50
+00:03:39,861 --> 00:03:49,040
+To be honest about the limits: this is 30 synthetic invoices and two tasks so far, and the general text checks verify facts, not the full meaning.
+
+51
+00:03:49,040 --> 00:03:56,396
+Our ask is one pilot team with real, approved documents, time with the Brainware and AI gateway teams, and a sponsor.
+
+52
+00:03:56,396 --> 00:04:01,299
+Task Harness: checked AI answers, with the cheapest model that is good enough.
+
+53
+00:04:01,299 --> 00:04:01,928
+Thank you.

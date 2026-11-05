@@ -1,0 +1,26 @@
+{
+  "mode": "template",
+  "docs": 30,
+  "fully_correct": 30,
+  "field_accuracy": 1.0,
+  "format_errors": 1,
+  "invented_values": 0,
+  "flagged_for_review": 0,
+  "wrong_and_flagged": 0,
+  "silent_errors": 0,
+  "retries": 0,
+  "api_errors": 0,
+  "avg_seconds": 2.42,
+  "total_tokens": 62241,
+  "per_field_accuracy": {
+    "vendor_name": 1.0,
+    "invoice_number": 1.0,
+    "invoice_date": 1.0,
+    "currency": 1.0,
+    "subtotal": 1.0,
+    "discount": 1.0,
+    "tax": 1.0,
+    "total": 1.0,
+    "line_items": 1.0
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "doc_id": "inv_026",
+  "meta": {
+    "locale": "IN",
+    "layout": "B",
+    "tricks": [
+      "customer_first",
+      "discount",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Lotus Print House",
+    "invoice_number": "A/2026/287",
+    "invoice_date": "2026-08-27",
+    "currency": "INR",
+    "subtotal": 408568.0,
+    "discount": 20428.4,
+    "tax": 69865.13,
+    "total": 458004.73,
+    "line_items": [
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 8,
+        "unit_price": 2893.6,
+        "amount": 23148.8
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 10,
+        "unit_price": 16685.6,
+        "amount": 166856.0
+      },
+      {
+        "description": "Software licence - annual",
+        "quantity": 9,
+        "unit_price": 24284.8,
+        "amount": 218563.2
+      }
+    ]
+  }
+}

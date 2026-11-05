@@ -1,0 +1,59 @@
+1
+00:00:00,000 --> 00:00:05,650
+I'm Surekha Jaknalli, from team Impromptu, with Rahul Rajpoot and Vivek Chaturvedi.
+
+2
+00:00:05,650 --> 00:00:08,646
+Impromptu helps people write better prompts.
+
+3
+00:00:08,646 --> 00:00:13,139
+My part, Task Harness, makes sure the AI's answers can be trusted.
+
+4
+00:00:13,939 --> 00:00:17,015
+AI is usually right, but sometimes quietly wrong.
+
+5
+00:00:17,015 --> 00:00:22,853
+In our test, the cheapest Claude model got 6 out of 30 invoices wrong, and nobody was warned.
+
+6
+00:00:22,853 --> 00:00:29,318
+Impromptu asks the AI to keep every fact and constraint, but today nothing checks that it actually did.
+
+7
+00:00:30,118 --> 00:00:38,626
+Task Harness checks every AI answer with plain code: is each value really in the source, is it from the right place, do the numbers add up.
+
+8
+00:00:38,626 --> 00:00:44,013
+If not, the AI gets one retry with the exact problem, and otherwise a person reviews it.
+
+9
+00:00:44,013 --> 00:00:52,214
+With the harness, the cheapest model got 30 out of 30 correct, with zero silent errors, about 38 times cheaper than the biggest model.
+
+10
+00:00:53,014 --> 00:00:58,710
+Our next step is to plug the same gate into Impromptu, so every prompt rewrite gets checked.
+
+11
+00:00:58,710 --> 00:01:02,487
+Nothing lost: every name, number, date and every not is kept.
+
+12
+00:01:02,487 --> 00:01:03,540
+Nothing invented.
+
+13
+00:01:03,540 --> 00:01:05,583
+And the chosen skill is followed.
+
+14
+00:01:05,583 --> 00:01:12,393
+If a check fails, the AI retries once, and the user sees a clear warning instead of a silently changed prompt.
+
+15
+00:01:12,393 --> 00:01:16,355
+Impromptu improves the question; Task Harness checks the answer.

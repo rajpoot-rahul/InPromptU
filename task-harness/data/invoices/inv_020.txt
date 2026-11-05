@@ -1,0 +1,26 @@
+TAX INVOICE
+
+Bill To:
+Orbit Retail Pvt. Ltd.
+Plot 7, Sector 18, Gurugram 122015
+
+From:
+Lotus Print House
+14 MG Road, Bengaluru 560001
+GSTIN: 6455638605
+
+Customer ID: CUST-349
+Due Date: 22/09/2026
+Invoice Date: 23/08/2026
+PO Number: PO-35219
+Invoice Number: INV-2026-8975
+
+Description                           Qty    Unit Price        Amount
+Cloud storage 1 TB plan                 9      3,040.80     27,367.20
+
+Subtotal: ₹27,367.20
+Discount (5%): -₹1,368.36
+GST (12%): ₹3,119.86
+Grand Total: ₹29,118.70
+
+Please make payment to Lotus Print House.

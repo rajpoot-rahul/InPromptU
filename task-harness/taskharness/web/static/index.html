@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Harness - reliable AI answers for every Hyland team</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">TH</span> Task Harness</div>
+  <nav aria-label="Screens">
+    <a href="#problem" data-screen="problem">1 · Problem</a>
+    <a href="#try" data-screen="try">2 · Try it</a>
+    <a href="#compare" data-screen="compare">3 · Side by side</a>
+    <a href="#results" data-screen="results">4 · Results</a>
+    <a href="#roadmap" data-screen="roadmap">5 · Roadmap</a>
+  </nav>
+</header>
+
+<main>
+  <!-- 1. Problem -->
+  <section id="screen-problem" class="screen">
+    <div class="hero">
+      <p class="eyebrow">Hyland-wide hackathon</p>
+      <h1>Every team writes its own prompts.<br>Answers come back inconsistent, unchecked and expensive.</h1>
+      <p class="lead">The Task Harness turns any AI task into a controlled pipeline: a fixed template defines the task, code checks every answer, and anything doubtful is retried or sent to a person, never silently passed on.</p>
+      <a class="button big" href="#try">Try it →</a>
+    </div>
+    <div class="cards three">
+      <div class="card"><h3>😕 Inconsistent</h3><p>The same request returns different formats: "null" in one answer, "0" in another, a minus sign somewhere else.</p></div>
+      <div class="card"><h3>🙈 Unchecked</h3><p>Nobody verifies that a date or total really came from the document. Wrong answers flow straight into business systems.</p></div>
+      <div class="card"><h3>💸 Expensive</h3><p>Teams reach for the biggest model to be safe, paying more and waiting longer for every document.</p></div>
+    </div>
+    <h2 class="center">How the harness works</h2>
+    <ol class="flow">
+      <li><b>Pick a task</b><span>Versioned template</span></li>
+      <li><b>Clean</b><span>Normal code tidies the document</span></li>
+      <li><b>Build prompt</b><span>Rules, fields, output format</span></li>
+      <li><b>AI answers</b><span>Approved model</span></li>
+      <li><b>Check</b><span>Format, source, logic, sums</span></li>
+      <li><b>Retry or flag</b><span>One retry, then human review</span></li>
+      <li><b>Log</b><span>Every step recorded</span></li>
+    </ol>
+  </section>
+
+  <!-- 2. Try it -->
+  <section id="screen-try" class="screen" hidden>
+    <h1>Try it</h1>
+    <div class="controls">
+      <label>1. Task<select id="try-task"></select></label>
+      <label>2. Document<select id="try-doc"></select></label>
+      <label>3. Mode<select id="try-mode"></select></label>
+      <fieldset class="source">
+        <legend>4. Source</legend>
+        <label><input type="radio" name="try-source" value="replay" checked> Saved run</label>
+        <label><input type="radio" name="try-source" value="live"> Live</label>
+      </fieldset>
+      <label>Model<select id="try-model"></select></label>
+      <button id="try-run" class="button">Run ▶</button>
+    </div>
+    <p id="try-note" class="note small"></p>
+    <div id="own-panel" class="panel" hidden>
+      <h3>📄 Your own document</h3>
+      <p class="small">Upload a plain-text file (.txt) or paste text below. Selected task: <b id="own-task-name">Invoice extraction</b>. <span id="own-task-hint"></span> It runs live, so it needs a current AWS sign-in. There is no answer key for your file, so you judge the AI answer yourself, helped by the automatic checks. Do not use confidential or customer data.</p>
+      <label class="small"><b>Upload a text file</b> <input type="file" id="own-file" accept=".txt,.text,.csv,.log,.json,.xml,.html,text/*"></label>
+      <button type="button" id="own-file-clear" class="link-button" hidden>✕ Remove file</button>
+      <p class="small" id="own-file-info"></p>
+      <label class="small" for="own-text"><b>…or paste text</b></label>
+      <textarea id="own-text" rows="8" placeholder="Paste invoice text here"></textarea>
+    </div>
+
+    <ol class="steps" id="try-steps" aria-label="Pipeline stages">
+      <li data-step="task" tabindex="0" title="1. Task: the versioned template that says exactly what to extract (shown in 'Prompt sent to the AI')">Task</li>
+      <li data-step="clean" tabindex="0" title="2. Clean: normal code tidies the document (see Original vs Cleaned)">Clean</li>
+      <li data-step="prompt" tabindex="0" title="3. Prompt: the instructions built from the template and sent to the AI">Prompt</li>
+      <li data-step="ai" tabindex="0" title="4. AI answer: what the AI returned, field by field">AI answer</li>
+      <li data-step="checks" tabindex="0" title="5. Checks: code verifies every value against the document and the rules">Checks</li>
+      <li data-step="result" tabindex="0" title="6. Result: passed, fixed on retry, or sent for human review">Result</li>
+    </ol>
+    <p class="small" id="steps-hint" hidden>These are the 6 stages of the harness. Each turns green when it is done; click one to jump to it.</p>
+
+    <div id="try-error" class="error" hidden></div>
+    <div id="try-output" class="grid two" hidden>
+      <div>
+        <div class="panel reveal" data-step="clean" id="try-doc-panel">
+          <div class="panel-head"><h3>Document</h3>
+            <div class="toggle"><button data-docview="raw">Original</button><button data-docview="cleaned" class="on">Cleaned</button></div>
+          </div>
+          <pre id="try-document" class="doc"></pre>
+          <p class="small" id="try-tricks"></p>
+        </div>
+      </div>
+      <div>
+        <div class="panel reveal" data-step="result" id="try-result"></div>
+        <div class="panel reveal" data-step="prompt" id="try-prompt-panel">
+          <details><summary><h3>Prompt sent to the AI</h3> <span class="small" id="try-template"></span></summary>
+            <div id="try-prompt"></div>
+          </details>
+        </div>
+        <div class="panel reveal" data-step="ai" id="try-ai-panel">
+          <h3>AI answer vs correct answer</h3>
+          <div id="try-fields"></div>
+        </div>
+        <div class="panel reveal" data-step="checks" id="try-checks-panel">
+          <h3>Automatic checks</h3>
+          <p id="try-checks-note" class="note small" hidden></p>
+          <div id="try-checks"></div>
+          <div id="try-retry"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Side by side -->
+  <section id="screen-compare" class="screen" hidden>
+    <h1>Side by side</h1>
+    <div class="controls">
+      <label>Left<select id="cmp-left"></select></label>
+      <label>Right<select id="cmp-right"></select></label>
+      <label>Document<select id="cmp-doc"></select></label>
+      <button id="cmp-run" class="button">Compare ▶</button>
+    </div>
+    <p id="cmp-note" class="note small"></p>
+    <div id="cmp-error" class="error" hidden></div>
+    <div id="cmp-output" class="grid two" hidden>
+      <div class="panel" id="cmp-left-out"></div>
+      <div class="panel" id="cmp-right-out"></div>
+    </div>
+    <details class="panel" id="cmp-doc-panel" hidden><summary><h3>Show the document</h3></summary><pre id="cmp-document" class="doc"></pre></details>
+  </section>
+
+  <!-- 4. Results -->
+  <section id="screen-results" class="screen" hidden>
+    <h1 id="res-title">Results</h1>
+    <div id="res-headline" class="headline"></div>
+    <div class="scroll"><table id="res-table"></table></div>
+    <div id="res-charts" class="charts"></div>
+    <p class="small note" id="res-note"></p>
+  </section>
+
+  <!-- 5. Roadmap -->
+  <section id="screen-roadmap" class="screen" hidden>
+    <h1>From one task to every Hyland team</h1>
+    <div class="cards three">
+      <div class="card"><h3>📚 Template library</h3><p>Ready-made, versioned templates: invoices, contracts, claims, test-log summaries, classification.</p></div>
+      <div class="card"><h3>🧩 Teams add their own</h3><p>A simple screen for teams to define fields, rules and checks without writing prompts.</p></div>
+      <div class="card"><h3>🔒 Approved models only</h3><p>Calls go through the company's approved models and accounts, with no personal keys.</p></div>
+      <div class="card"><h3>🧾 Audit trail</h3><p>Every prompt, answer, check and retry is logged against the template version that produced it.</p></div>
+      <div class="card"><h3>💰 Right-size the model</h3><p>Show when a cheaper, faster model plus checks is good enough, task by task.</p></div>
+      <div class="card"><h3>⚡ HS1 as a fast check</h3><p>Optionally use HS1 for quick yes/no judgments, such as "is this document an invoice?", before the pipeline runs.</p></div>
+    </div>
+    <div class="note">
+      <b>Honest limits today:</b> 30 synthetic invoices, one task, and checks written for that task. Next step: test on real, approved documents from one product team.
+    </div>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

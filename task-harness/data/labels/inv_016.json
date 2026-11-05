@@ -1,0 +1,40 @@
+{
+  "doc_id": "inv_016",
+  "meta": {
+    "locale": "US",
+    "layout": "B",
+    "tricks": [
+      "customer_first"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Cedar & Pine Consulting",
+    "invoice_number": "A/2026/178",
+    "invoice_date": "2026-08-20",
+    "currency": "USD",
+    "subtotal": 4420.11,
+    "discount": 0.0,
+    "tax": 364.66,
+    "total": 4784.77,
+    "line_items": [
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 3,
+        "unit_price": 543.02,
+        "amount": 1629.06
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 5,
+        "unit_price": 198.71,
+        "amount": 993.55
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 10,
+        "unit_price": 179.75,
+        "amount": 1797.5
+      }
+    ]
+  }
+}

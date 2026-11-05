@@ -1,0 +1,35 @@
+{
+  "doc_id": "inv_017",
+  "meta": {
+    "locale": "DE",
+    "layout": "B",
+    "tricks": [
+      "customer_first",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Müller Bürotechnik GmbH",
+    "invoice_number": "A/2026/375",
+    "invoice_date": "2026-02-15",
+    "currency": "EUR",
+    "subtotal": 1738.8,
+    "discount": 0.0,
+    "tax": 330.37,
+    "total": 2069.17,
+    "line_items": [
+      {
+        "description": "Laptop docking station",
+        "quantity": 12,
+        "unit_price": 113.8,
+        "amount": 1365.6
+      },
+      {
+        "description": "Printer toner cartridge",
+        "quantity": 5,
+        "unit_price": 74.64,
+        "amount": 373.2
+      }
+    ]
+  }
+}

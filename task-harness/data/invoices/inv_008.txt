@@ -1,0 +1,26 @@
+INVOICE
+
+Customer: Redwood Schools District
+Customer address: 1200 Pine Rd, Raleigh, NC 27601
+
+Supplier: Blue Ridge Analytics LLC
+Supplier address: 410 Market St, Denver, CO 80202
+EIN: 1562957179
+
+Customer ID: CUST-249
+Invoice No.: 72458740
+PO Number: PO-95964
+Invoice Date: Jan 5, 2026
+Due Date: Jan 20, 2026
+
+Items:
+1. Printer toner cartridge - Qty 3 x 84.91 = 254.73
+2. Data migration service - Qty 1 x 556.09 = 556.09
+3. Software licence - annual - Qty 12 x 1,247.73 = 14,972.76
+4. Laptop docking station - Qty 9 x 113.67 = 1,023.03
+5. A4 copier paper (box of 5 reams) - Qty 7 x 25.70 = 179.90
+
+Subtotal: USD 16,986.51
+Sales Tax (8.25%): USD 1,401.39
+Grand Total: USD 18,387.90
+Amount Due: USD 18,387.90

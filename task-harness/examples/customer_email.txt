@@ -1,0 +1,18 @@
+From: Anita Rao <anita.rao@brightpath-insurance.example>
+To: Support <support@example-vendor.example>
+Date: Mon, 2 Nov 2026 09:14
+Subject: Claims export still failing - urgent
+
+Hi team,
+
+Since the upgrade to version 24.3 on 28 October, our nightly claims export has failed three times.
+About 1,200 claims from last week are still not in our reporting system.
+
+Our auditors arrive on 16 November, so we need this fixed by Friday 13 November at the latest.
+Please do not restart the export job without telling us first, because a partial run creates duplicates.
+
+Could someone call me on +44 20 7946 0123? Ticket reference: SUP-48213.
+
+Thanks,
+Anita Rao
+Operations Manager, BrightPath Insurance

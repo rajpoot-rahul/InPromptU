@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Harness for Team Impromptu - one-page summary</title>
+<style>
+body{margin:0;background:#f3f6fa;color:#1b2b3c;font:16px/1.6 system-ui,-apple-system,sans-serif}
+header{background:#14304d;color:#fff;padding:28px 24px}header>div,main{max-width:900px;margin:auto}main{padding:22px 24px}
+h1{margin:4px 0}h2{color:#14304d;margin:0 0 10px}section{background:#fff;border:1px solid #d8e1ec;border-radius:12px;padding:20px 24px;margin-bottom:18px}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{border:1px solid #d8e1ec;padding:8px 10px;text-align:left;vertical-align:top}th{background:#f2f5f9}
+.copy{background:#eef5fc;border-left:4px solid #1765a8;padding:12px 16px;border-radius:6px}.warn{background:#fff4dc;border-left:4px solid #a86b00;padding:12px 16px;border-radius:6px}
+code{font-size:14px}
+</style>
+</head>
+<body>
+<header><div><p>Team Impromptu · Rahul Rajpoot (team leader), Surekha Jaknalli, Vivek Chaturvedi · 5 November 2026</p>
+<h1>Task Harness: Impromptu's quality gate</h1><p>Impromptu improves the question. Task Harness checks the answer.</p></div></header>
+<main>
+<section>
+<h2>In one minute</h2>
+<p>AI is usually right but sometimes quietly wrong. <b>Task Harness</b> (built by Surekha) wraps any AI call in a quality gate: a fixed template defines the task, plain code checks every answer against the source (values present, taken from the right place, sums add up, correct format), the AI gets one retry with the exact problem, and anything still failing goes to a person instead of passing silently.</p>
+<p><b>Proof:</b> on 30 invoices with Claude on Hyland's AWS account, the cheapest model with the harness got <b>30/30 correct with 0 silent errors</b>, about <b>2.6× faster and ~38× cheaper</b> than the most expensive model with a plain prompt (which silently got 6/30 wrong on the cheap model, and gave 15/30 wrongly formatted answers on the expensive one).</p>
+</section>
+
+<section>
+<h2>How it fits Impromptu</h2>
+<p>Impromptu's "Improve prompt" step (<code>src/provider.cjs</code> → <code>requestImprovement</code>) asks the model to preserve every fact and constraint, but only checks the <i>shape</i> of the reply. The harness adds the missing checks: <b>nothing lost</b> (names, numbers, dates, links, every "not"), <b>nothing invented</b>, <b>skill followed</b>; one retry; a clear warning to the user.</p>
+<div class="warn"><b>Honest status:</b> Task Harness works today as a separate prototype (web app, CLI, 69 automated tests, real results). The integration into Impromptu is the <b>planned next step</b>, not built yet. The video segment says so.</div>
+</section>
+
+<section>
+<h2>Files for the submission</h2>
+<table>
+<tr><th>File</th><th>Use</th></tr>
+<tr><td><code>Impromptu-TaskHarness-Segment.mp4</code> (1 min 17 s, 1080p)</td><td>Insert into the team's Impromptu video, e.g. after the Impromptu demo. <b>Keep the total video under 5 minutes.</b></td></tr>
+<tr><td><code>TaskHarness-5min-Video.mp4</code> (4 min, 1080p)</td><td>Optional supporting file: full Task Harness walkthrough and demo.</td></tr>
+<tr><td><code>video/Impromptu-TaskHarness-segment-script.txt</code> + <code>.srt</code></td><td>Narration text and subtitles for the segment (re-record in your own voice if preferred).</td></tr>
+<tr><td><code>TaskHarness-Hackathon-Slides.pptx</code></td><td>Optional supporting slides.</td></tr>
+<tr><td><code>promptharness-share.zip</code></td><td>Code, README and sample data, if a code attachment is wanted.</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Text to paste into the submission form (solution part)</h2>
+<div class="copy">Impromptu helps employees write better prompts and find source-backed answers. Our quality gate, Task Harness, makes the AI's answers trustworthy: plain code checks every answer against the source, the model gets one retry with the exact problem, and anything still failing is flagged for a person instead of passing silently. In tests on 30 invoices with Claude on Hyland's AWS account, the cheapest model with the harness got 30/30 correct with zero silent errors, about 38× cheaper than the largest model with a plain prompt. Next, the same gate checks every Impromptu prompt rewrite so no fact, number or constraint is lost or invented.</div>
+</section>
+
+<section>
+<h2>Before submitting</h2>
+<ol>
+<li>Team leader (Rahul) decides where the segment goes and confirms the total video is under 5 minutes and under 1 GB.</li>
+<li>Video must show all team names: the segment's first frame lists Rahul Rajpoot, Surekha Jaknalli and Vivek Chaturvedi.</li>
+<li>Repository: Task Harness code can be added to the team repo or the Hyland-sandbox organisation if available; otherwise attach the zip.</li>
+</ol>
+</section>
+</main>
+</body>
+</html>

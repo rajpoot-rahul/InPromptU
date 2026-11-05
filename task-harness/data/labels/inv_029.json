@@ -1,0 +1,47 @@
+{
+  "doc_id": "inv_029",
+  "meta": {
+    "locale": "UK",
+    "layout": "B",
+    "tricks": [
+      "customer_first",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Thames Valley Print Ltd",
+    "invoice_number": "INV-2026-3333",
+    "invoice_date": "2026-10-06",
+    "currency": "GBP",
+    "subtotal": 18750.66,
+    "discount": 0.0,
+    "tax": 937.53,
+    "total": 19688.19,
+    "line_items": [
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 7,
+        "unit_price": 149.15,
+        "amount": 1044.05
+      },
+      {
+        "description": "Data migration service",
+        "quantity": 9,
+        "unit_price": 1792.56,
+        "amount": 16133.04
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 11,
+        "unit_price": 104.51,
+        "amount": 1149.61
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 2,
+        "unit_price": 211.98,
+        "amount": 423.96
+      }
+    ]
+  }
+}

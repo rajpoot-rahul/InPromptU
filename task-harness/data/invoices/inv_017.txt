@@ -1,0 +1,29 @@
+TAX INVOICE  
+  
+  
+Bill To:  
+Becker & Sohn KG  
+Lindenallee 5, 10115 Berlin  
+  
+  
+From:  
+Müller Bürotechnik GmbH  
+Hauptstraße 12, 50667 Köln  
+USt-IdNr.: 2692562946  
+  
+PO Number: PO-60704  
+Date: 15.02.2026  
+Customer ID: CUST-314  
+Invoice Number: A/2026/375  
+Due Date: 01.04.2026  
+  
+Description                           Qty    Unit Price        Amount  
+Laptop docking station                 12        113,80      1.365,60  
+Printer toner cartridge                 5         74,64        373,20  
+  
+Subtotal: € 1.738,80  
+MwSt (19%): € 330,37  
+Total: € 2.069,17  
+  
+Please make payment to Müller Bürotechnik GmbH.  
+  

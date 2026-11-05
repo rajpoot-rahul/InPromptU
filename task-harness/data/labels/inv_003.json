@@ -1,0 +1,28 @@
+{
+  "doc_id": "inv_003",
+  "meta": {
+    "locale": "UK",
+    "layout": "A",
+    "tricks": [
+      "due_date_early"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Oakfield Facilities Management",
+    "invoice_number": "A/2026/813",
+    "invoice_date": "2026-02-15",
+    "currency": "GBP",
+    "subtotal": 384.34,
+    "discount": 0.0,
+    "tax": 19.22,
+    "total": 403.56,
+    "line_items": [
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 11,
+        "unit_price": 34.94,
+        "amount": 384.34
+      }
+    ]
+  }
+}

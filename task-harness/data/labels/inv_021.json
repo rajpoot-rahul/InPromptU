@@ -1,0 +1,47 @@
+{
+  "doc_id": "inv_021",
+  "meta": {
+    "locale": "US",
+    "layout": "A",
+    "tricks": [
+      "due_date_early",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Summit Office Depot Inc.",
+    "invoice_number": "A/2026/509",
+    "invoice_date": "2026-05-03",
+    "currency": "USD",
+    "subtotal": 6276.15,
+    "discount": 0.0,
+    "tax": 376.57,
+    "total": 6652.72,
+    "line_items": [
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 12,
+        "unit_price": 37.41,
+        "amount": 448.92
+      },
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 10,
+        "unit_price": 460.16,
+        "amount": 4601.6
+      },
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 1,
+        "unit_price": 50.12,
+        "amount": 50.12
+      },
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 7,
+        "unit_price": 167.93,
+        "amount": 1175.51
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "doc_id": "inv_020",
+  "meta": {
+    "locale": "IN",
+    "layout": "B",
+    "tricks": [
+      "customer_first",
+      "discount",
+      "due_date_early"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Lotus Print House",
+    "invoice_number": "INV-2026-8975",
+    "invoice_date": "2026-08-23",
+    "currency": "INR",
+    "subtotal": 27367.2,
+    "discount": 1368.36,
+    "tax": 3119.86,
+    "total": 29118.7,
+    "line_items": [
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 9,
+        "unit_price": 3040.8,
+        "amount": 27367.2
+      }
+    ]
+  }
+}

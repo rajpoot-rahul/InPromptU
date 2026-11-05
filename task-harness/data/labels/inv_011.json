@@ -1,0 +1,28 @@
+{
+  "doc_id": "inv_011",
+  "meta": {
+    "locale": "US",
+    "layout": "A",
+    "tricks": [
+      "due_date_early"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Northwind IT Services",
+    "invoice_number": "A/2026/667",
+    "invoice_date": "2026-06-03",
+    "currency": "USD",
+    "subtotal": 257.13,
+    "discount": 0.0,
+    "tax": 15.43,
+    "total": 272.56,
+    "line_items": [
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 9,
+        "unit_price": 28.57,
+        "amount": 257.13
+      }
+    ]
+  }
+}

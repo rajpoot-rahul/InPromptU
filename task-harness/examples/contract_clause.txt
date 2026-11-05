@@ -1,0 +1,17 @@
+SERVICES AGREEMENT - CLAUSE 9: TERM, RENEWAL AND TERMINATION
+
+9.1 This Agreement starts on 1 February 2026 and continues for an initial term of 24 months.
+
+9.2 After the initial term, the Agreement renews automatically for successive 12-month periods,
+unless either party gives written notice of non-renewal at least 90 days before the end of the
+current term.
+
+9.3 The Customer may terminate for convenience on 60 days' written notice, provided that the
+Customer pays an early termination fee equal to 3 months of the then-current monthly fee.
+
+9.4 Either party may terminate immediately if the other party materially breaches this Agreement
+and fails to remedy the breach within 30 days of written notice.
+
+9.5 The monthly fee during the initial term is USD 18,500. Any increase on renewal is capped at 5%.
+
+Parties: Northwind Analytics Ltd ("Supplier") and Lakeside Health Group ("Customer").

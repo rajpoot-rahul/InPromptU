@@ -1,0 +1,31 @@
+TAX INVOICE  
+  
+  
+Bill To:  
+Northgate Housing Trust  
+2 Mill Lane, Bristol BS1 4ST  
+  
+  
+From:  
+Thames Valley Print Ltd  
+19 Dock Street, Leeds LS10 1JF  
+VAT Reg No.: 7073427471  
+  
+Customer ID: CUST-914  
+Date of Issue: 6 October 2026  
+Invoice #: INV-2026-3333  
+PO Number: PO-14124  
+Due Date: 5 November 2026  
+  
+Description                           Qty    Unit Price        Amount  
+Ergonomic office chair                  7        149.15      1,044.05  
+Data migration service                  9      1,792.56     16,133.04  
+Laptop docking station                 11        104.51      1,149.61  
+On-site support visit                   2        211.98        423.96  
+  
+Subtotal: £ 18,750.66  
+VAT (5%): £ 937.53  
+Grand Total: £19,688.19  
+  
+Please make payment to Thames Valley Print Ltd.  
+  

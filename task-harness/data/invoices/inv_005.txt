@@ -1,0 +1,27 @@
+Müller Bürotechnik GmbH
+Hauptstraße 12, 50667 Köln
+USt-IdNr.: 9494685091
+
+TAX INVOICE
+
+Invoice Number: A/2026/715
+PO Number: PO-16891
+Customer ID: CUST-204
+Due Date: 30.03.2026
+Date of Issue: 15.03.2026
+
+Bill To:
+Klinikum Nordstadt
+Am Markt 3, 80331 München
+
+Description                           Qty    Unit Price        Amount
+Printer toner cartridge                 9         47,15        424,35
+
+Subtotal: EUR 424,35
+Discount (10%): -EUR 42,44
+MwSt (19%): EUR 72,56
+Invoice Total: EUR 454,47
+Previous Balance: EUR 290,30
+Amount Due: EUR 744,77
+
+Thank you for your business.

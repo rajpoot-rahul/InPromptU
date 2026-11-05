@@ -1,0 +1,28 @@
+Summit Office Depot Inc.
+410 Market St, Denver, CO 80202
+EIN: 4259042513
+
+TAX INVOICE
+
+Due Date: 10/28/2026
+Invoice Date: 10/13/2026
+PO Number: PO-17882
+Customer ID: CUST-288
+Invoice #: A/2026/153
+
+Bill To:
+Harper & Cole Law Office
+1200 Pine Rd, Raleigh, NC 27601
+
+Description                           Qty    Unit Price        Amount
+Data migration service                  6        934.19      5,605.14
+Software licence - annual               3        449.93      1,349.79
+Laptop docking station                  1        233.22        233.22
+Website maintenance (monthly)          11        354.35      3,897.85
+
+Subtotal: USD 11,086.00
+Sales Tax (7%): USD 776.02
+Total: USD 11,862.02
+Amount Due: USD 11,862.02
+
+Thank you for your business.

@@ -1,0 +1,30 @@
+{
+  "doc_id": "inv_027",
+  "meta": {
+    "locale": "US",
+    "layout": "C",
+    "tricks": [
+      "customer_first",
+      "due_date_early",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Summit Office Depot Inc.",
+    "invoice_number": "INV-2026-8824",
+    "invoice_date": "2026-10-15",
+    "currency": "USD",
+    "subtotal": 160.15,
+    "discount": 0.0,
+    "tax": 11.21,
+    "total": 171.36,
+    "line_items": [
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 5,
+        "unit_price": 32.03,
+        "amount": 160.15
+      }
+    ]
+  }
+}

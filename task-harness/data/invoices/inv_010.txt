@@ -1,0 +1,31 @@
+Lotus Print House  
+22 Anna Salai, Chennai 600002  
+GSTIN: 3092769114  
+  
+  
+INVOICE  
+  
+  
+Customer ID: CUST-307  
+Invoice No.: 44841887  
+PO Number: PO-83336  
+Date: 17-Apr-2026  
+Due Date: 01-Jun-2026  
+  
+Bill To:  
+Orbit Retail Pvt. Ltd.  
+Plot 7, Sector 18, Gurugram 122015  
+  
+Description                           Qty    Unit Price        Amount  
+Cloud storage 1 TB plan                 6      3,696.80     22,180.80  
+Network cable Cat6 (30 m)              11      1,437.60     15,813.60  
+Laptop docking station                  7     12,708.00     88,956.00  
+On-site support visit                   4      9,116.80     36,467.20  
+  
+Subtotal: Rs. 1,63,417.60  
+GST (18%): Rs. 29,415.17  
+Invoice Total: Rs. 1,92,832.77  
+Amount Due: Rs. 1,92,832.77  
+  
+Thank you for your business.  
+  

@@ -1,0 +1,36 @@
+{
+  "doc_id": "inv_014",
+  "meta": {
+    "locale": "IN",
+    "layout": "A",
+    "tricks": [
+      "due_date_early",
+      "noise",
+      "previous_balance"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Sharma Tech Solutions Pvt. Ltd.",
+    "invoice_number": "INV-2026-5072",
+    "invoice_date": "2026-06-18",
+    "currency": "INR",
+    "subtotal": 392864.0,
+    "discount": 0.0,
+    "tax": 70715.52,
+    "total": 463579.52,
+    "line_items": [
+      {
+        "description": "Website maintenance (monthly)",
+        "quantity": 2,
+        "unit_price": 32008.0,
+        "amount": 64016.0
+      },
+      {
+        "description": "Software licence - annual",
+        "quantity": 5,
+        "unit_price": 65769.6,
+        "amount": 328848.0
+      }
+    ]
+  }
+}

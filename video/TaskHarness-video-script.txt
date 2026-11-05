@@ -1,0 +1,37 @@
+Task Harness - 5-minute submission video script
+
+[00:00:00] TITLE
+Hi, I'm Surekha Jaknalli, from team Impromptu, with Rahul Rajpoot and Vivek Chaturvedi. This is my part of our work: Task Harness, a reusable quality gate for every AI call at Hyland. In the next few minutes, I'll show the problem, the solution, a live demo, and the results.
+
+[00:00:18] PROBLEM
+When teams ask a generative AI model to read a document, it is usually right, but sometimes it is quietly wrong. In our test, the cheapest Claude model got 6 out of 30 invoices wrong, and nobody was warned. For example, it wrote a discount as minus 393 point 32, instead of plus. A finance system would add that discount, instead of subtracting it. Even the most expensive model returned 15 of its 30 answers in the wrong format. So today, teams either trust the AI blindly, or pay for the biggest model, just to be safe.
+
+[00:00:53] IDEA
+Task Harness puts a supervisor around the AI. A versioned template defines the task. Normal code cleans the document. The AI answers. Then simple code checks every answer. If a check fails, the AI gets one retry, with the exact problem as feedback. If it still fails, the answer goes to a person for review. It is never passed on silently, and every step is logged.
+
+[00:01:17] CHECKS
+The checks are plain code, not more AI. Is every value really in the document? Is it from the right line: not the due date, not the customer, not a purchase order number? Do the sums add up? And is the format exactly what downstream systems expect?
+
+[00:01:33] FIT
+We checked what already exists at Hyland. Brainware already validates classic invoice capture. An internal prompt optimizer improves prompt wording, and several proofs of concept extract fields with large language models. But none of them check generative AI answers in a standard way, or measure which model is good enough. That is the gap Task Harness fills. Invoices are simply our test case, because their answers are easy to verify.
+
+[00:01:59] DEMO TRY
+Here is the working app. On the Try it screen, I run an invoice through the full harness, and the six stages light up one by one. On its first attempt, the AI broke the format rules. The harness caught it, sent feedback, and the AI fixed it on the second try. Every field now matches the correct answer.
+
+[00:02:18] DEMO FLAGGED
+If I paste text that is not an invoice, the harness does not accept a made-up answer. It sends it for human review, and explains why, in plain English.
+
+[00:02:28] DEMO SIDE
+Side by side shows the same invoice twice. On the left, the AI alone: the discount is wrong, and nobody was warned. That is a silent error. On the right, the same cheap model inside the harness: every field is correct, and every check passed.
+
+[00:02:43] DEMO ANY TEXT
+And it is not only for invoices. A new task is just a new template. Here, Key facts from any text summarises a customer email. Every key point must come with an exact quote, and names, dates and numbers are checked against the text.
+
+[00:02:59] RESULTS
+Here are the results on 30 invoices, using Claude on Hyland's AWS account. The cheapest model with the harness got 30 out of 30 correct, with 0 format errors and 0 silent errors. That is 2.6 times faster, and about 38 times cheaper, than the most expensive model with a plain prompt.
+
+[00:03:18] ROADMAP
+Next, this becomes a template library that any team can extend without prompt engineering. It can run as a check after every call on Hyland's AI gateway, keep an audit trail, and help each team pick the cheapest model that is good enough. It also fits our own tools: for example, checking that Impromptu's prompt rewrites never lose or invent facts.
+
+[00:03:39] ASK
+To be honest about the limits: this is 30 synthetic invoices and two tasks so far, and the general text checks verify facts, not the full meaning. Our ask is one pilot team with real, approved documents, time with the Brainware and AI gateway teams, and a sponsor. Task Harness: checked AI answers, with the cheapest model that is good enough. Thank you.

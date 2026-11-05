@@ -1,0 +1,18 @@
+Test run: nightly-regression #1487
+Branch: release/3.2
+Started: 2026-11-04 01:00 UTC   Finished: 2026-11-04 01:42 UTC
+Environment: staging-eu-2
+
+Summary: 412 tests, 405 passed, 5 failed, 2 skipped
+
+FAILED  test_upload_large_pdf            (timeout after 120 s)
+FAILED  test_upload_large_pdf_retry      (timeout after 120 s)
+FAILED  test_ocr_rotated_page            AssertionError: expected 'Invoice' got 'lnvoice'
+FAILED  test_search_permissions_guest    HTTP 500 from /api/search
+FAILED  test_export_csv_unicode          UnicodeEncodeError: 'ascii' codec can't encode character '\u20b9'
+SKIPPED test_sso_login_okta              (Okta sandbox unavailable)
+SKIPPED test_mobile_viewer_ios           (no iOS device in pool)
+
+Note: both upload failures started after commit 9f3c2ab (storage client upgrade).
+Owner for upload tests: Rahul. Owner for OCR tests: Meena.
+Next scheduled run: 2026-11-05 01:00 UTC

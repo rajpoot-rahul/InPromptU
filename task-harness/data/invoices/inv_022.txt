@@ -1,0 +1,25 @@
+Sharma Tech Solutions Pvt. Ltd.
+22 Anna Salai, Chennai 600002
+GSTIN: 2061107690
+
+TAX INVOICE
+
+Invoice No.: 68710931
+PO Number: PO-24697
+Invoice Date: 5 May 2026
+Due Date: 19 June 2026
+Customer ID: CUST-201
+
+Bill To:
+Orbit Retail Pvt. Ltd.
+Plot 7, Sector 18, Gurugram 122015
+
+Description                           Qty    Unit Price        Amount
+A4 copier paper (box of 5 reams)       10      3,318.40     33,184.00
+
+Subtotal: ₹33,184.00
+Discount (10%): -₹3,318.40
+GST (18%): ₹5,375.81
+Invoice Total: ₹35,241.41
+
+Thank you for your business.

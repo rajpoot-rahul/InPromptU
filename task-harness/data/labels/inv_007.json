@@ -1,0 +1,46 @@
+{
+  "doc_id": "inv_007",
+  "meta": {
+    "locale": "IN",
+    "layout": "A",
+    "tricks": [
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Lotus Print House",
+    "invoice_number": "A/2026/298",
+    "invoice_date": "2026-05-01",
+    "currency": "INR",
+    "subtotal": 1605168.0,
+    "discount": 0.0,
+    "tax": 80258.4,
+    "total": 1685426.4,
+    "line_items": [
+      {
+        "description": "Software licence - annual",
+        "quantity": 4,
+        "unit_price": 26711.2,
+        "amount": 106844.8
+      },
+      {
+        "description": "Printer toner cartridge",
+        "quantity": 4,
+        "unit_price": 6280.0,
+        "amount": 25120.0
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 4,
+        "unit_price": 15252.8,
+        "amount": 61011.2
+      },
+      {
+        "description": "Data migration service",
+        "quantity": 10,
+        "unit_price": 141219.2,
+        "amount": 1412192.0
+      }
+    ]
+  }
+}

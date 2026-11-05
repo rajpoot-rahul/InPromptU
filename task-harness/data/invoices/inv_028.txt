@@ -1,0 +1,32 @@
+TAX INVOICE  
+  
+  
+Bill To:  
+St Aidan's Primary School  
+19 Dock Street, Leeds LS10 1JF  
+  
+  
+From:  
+Oakfield Facilities Management  
+2 Mill Lane, Bristol BS1 4ST  
+VAT Reg No.: 1607177325  
+  
+PO Number: PO-40292  
+Date: 2 February 2026  
+Due Date: 17 February 2026  
+Customer ID: CUST-960  
+Invoice #: A/2026/938  
+  
+Description                           Qty    Unit Price        Amount  
+Software licence - annual               1        285.00        285.00  
+Website maintenance (monthly)          10        219.38      2,193.80  
+A4 copier paper (box of 5 reams)        4         35.10        140.40  
+Laptop docking station                  6         83.69        502.14  
+  
+Subtotal: £ 3,121.34  
+VAT (20%): £ 624.27  
+Total: £3,745.61  
+Amount Due: £3,745.61  
+  
+Please make payment to Oakfield Facilities Management.  
+  

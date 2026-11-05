@@ -1,0 +1,28 @@
+TAX INVOICE
+
+Bill To:
+Northgate Housing Trust
+2 Mill Lane, Bristol BS1 4ST
+
+From:
+Oakfield Facilities Management
+5 Kings Road, Reading RG1 3AA
+VAT Reg No.: 4456202065
+
+Invoice Date: 26/03/2026
+PO Number: PO-63243
+Invoice No.: INV-2026-1483
+Customer ID: CUST-691
+Due Date: 25/04/2026
+
+Description                           Qty    Unit Price        Amount
+Data migration service                  1        431.10        431.10
+Cloud storage 1 TB plan                 3         44.14        132.42
+Ergonomic office chair                  2        303.99        607.98
+
+Subtotal: £1,171.50
+VAT (5%): £58.58
+Total: £1,230.08
+Amount Due: £1,230.08
+
+Please make payment to Oakfield Facilities Management.

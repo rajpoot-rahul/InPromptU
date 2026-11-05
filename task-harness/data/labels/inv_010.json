@@ -1,0 +1,46 @@
+{
+  "doc_id": "inv_010",
+  "meta": {
+    "locale": "IN",
+    "layout": "A",
+    "tricks": [
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Lotus Print House",
+    "invoice_number": "44841887",
+    "invoice_date": "2026-04-17",
+    "currency": "INR",
+    "subtotal": 163417.6,
+    "discount": 0.0,
+    "tax": 29415.17,
+    "total": 192832.77,
+    "line_items": [
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 6,
+        "unit_price": 3696.8,
+        "amount": 22180.8
+      },
+      {
+        "description": "Network cable Cat6 (30 m)",
+        "quantity": 11,
+        "unit_price": 1437.6,
+        "amount": 15813.6
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 7,
+        "unit_price": 12708.0,
+        "amount": 88956.0
+      },
+      {
+        "description": "On-site support visit",
+        "quantity": 4,
+        "unit_price": 9116.8,
+        "amount": 36467.2
+      }
+    ]
+  }
+}

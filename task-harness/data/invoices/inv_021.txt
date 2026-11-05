@@ -1,0 +1,30 @@
+Summit Office Depot Inc.  
+1200 Pine Rd, Raleigh, NC 27601  
+EIN: 2964196103  
+  
+  
+INVOICE  
+  
+  
+PO Number: PO-94645  
+Due Date: May 18, 2026  
+Customer ID: CUST-556  
+Invoice Date: May 3, 2026  
+Invoice #: A/2026/509  
+  
+Bill To:  
+Redwood Schools District  
+410 Market St, Denver, CO 80202  
+  
+Description                           Qty    Unit Price        Amount  
+A4 copier paper (box of 5 reams)       12         37.41        448.92  
+Website maintenance (monthly)          10        460.16      4,601.60  
+Cloud storage 1 TB plan                 1         50.12         50.12  
+Ergonomic office chair                  7        167.93      1,175.51  
+  
+Subtotal: USD 6,276.15  
+Sales Tax (6%): USD 376.57  
+Grand Total: USD 6,652.72  
+  
+Thank you for your business.  
+  

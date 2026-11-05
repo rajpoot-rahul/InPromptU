@@ -1,0 +1,13 @@
+Task Harness - 5-minute submission video script
+
+[00:00:00] INTRO
+I'm Surekha Jaknalli, from team Impromptu, with Rahul Rajpoot and Vivek Chaturvedi. Impromptu helps people write better prompts. My part, Task Harness, makes sure the AI's answers can be trusted.
+
+[00:00:13] GAP
+AI is usually right, but sometimes quietly wrong. In our test, the cheapest Claude model got 6 out of 30 invoices wrong, and nobody was warned. Impromptu asks the AI to keep every fact and constraint, but today nothing checks that it actually did.
+
+[00:00:30] DEMO
+Task Harness checks every AI answer with plain code: is each value really in the source, is it from the right place, do the numbers add up. If not, the AI gets one retry with the exact problem, and otherwise a person reviews it. With the harness, the cheapest model got 30 out of 30 correct, with zero silent errors, about 38 times cheaper than the biggest model.
+
+[00:00:53] IMPROMPTU
+Our next step is to plug the same gate into Impromptu, so every prompt rewrite gets checked. Nothing lost: every name, number, date and every not is kept. Nothing invented. And the chosen skill is followed. If a check fails, the AI retries once, and the user sees a clear warning instead of a silently changed prompt. Impromptu improves the question; Task Harness checks the answer.

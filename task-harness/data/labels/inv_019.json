@@ -1,0 +1,35 @@
+{
+  "doc_id": "inv_019",
+  "meta": {
+    "locale": "UK",
+    "layout": "C",
+    "tricks": [
+      "customer_first",
+      "noise"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Oakfield Facilities Management",
+    "invoice_number": "65148187",
+    "invoice_date": "2026-02-24",
+    "currency": "GBP",
+    "subtotal": 2159.34,
+    "discount": 0.0,
+    "tax": 107.97,
+    "total": 2267.31,
+    "line_items": [
+      {
+        "description": "A4 copier paper (box of 5 reams)",
+        "quantity": 9,
+        "unit_price": 17.6,
+        "amount": 158.4
+      },
+      {
+        "description": "Data migration service",
+        "quantity": 3,
+        "unit_price": 666.98,
+        "amount": 2000.94
+      }
+    ]
+  }
+}

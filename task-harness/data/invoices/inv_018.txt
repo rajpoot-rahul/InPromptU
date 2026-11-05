@@ -1,0 +1,31 @@
+Cedar & Pine Consulting  
+410 Market St, Denver, CO 80202  
+EIN: 6436260435  
+  
+  
+TAX INVOICE  
+  
+  
+Customer ID: CUST-432  
+Invoice Date: Jul 12, 2026  
+PO Number: PO-10228  
+Invoice #: INV-2026-5429  
+Due Date: Aug 11, 2026  
+  
+Bill To:  
+Redwood Schools District  
+88 Elm Ave, Austin, TX 78701  
+  
+Description                           Qty    Unit Price        Amount  
+Network cable Cat6 (30 m)              12         15.48        185.76  
+Laptop docking station                  5        174.97        874.85  
+On-site support visit                   2        211.96        423.92  
+  
+Subtotal: USD 1,484.53  
+Sales Tax (6%): USD 89.07  
+Grand Total: USD 1,573.60  
+Previous Balance: USD 611.05  
+Amount Due: USD 2,184.65  
+  
+Thank you for your business.  
+  

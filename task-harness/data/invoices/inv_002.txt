@@ -1,0 +1,27 @@
+TAX INVOICE
+
+Bill To:
+Orbit Retail Pvt. Ltd.
+22 Anna Salai, Chennai 600002
+
+From:
+Sharma Tech Solutions Pvt. Ltd.
+14 MG Road, Bengaluru 560001
+GSTIN: 3869965264
+
+Due Date: 28/10/2026
+Invoice Date: 28/09/2026
+Customer ID: CUST-564
+PO Number: PO-86750
+Invoice Number: A/2026/576
+
+Description                           Qty    Unit Price        Amount
+A4 copier paper (box of 5 reams)        2      2,399.20      4,798.40
+On-site support visit                   5     22,257.60   1,11,288.00
+Cloud storage 1 TB plan                 8      4,241.60     33,932.80
+
+Subtotal: INR 1,50,019.20
+GST (5%): INR 7,500.96
+Total: INR 1,57,520.16
+
+Please make payment to Sharma Tech Solutions Pvt. Ltd.

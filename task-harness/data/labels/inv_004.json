@@ -1,0 +1,47 @@
+{
+  "doc_id": "inv_004",
+  "meta": {
+    "locale": "US",
+    "layout": "C",
+    "tricks": [
+      "customer_first",
+      "discount"
+    ]
+  },
+  "expected": {
+    "vendor_name": "Northwind IT Services",
+    "invoice_number": "A/2026/823",
+    "invoice_date": "2026-07-17",
+    "currency": "USD",
+    "subtotal": 7866.49,
+    "discount": 393.32,
+    "tax": 523.12,
+    "total": 7996.29,
+    "line_items": [
+      {
+        "description": "On-site support visit",
+        "quantity": 4,
+        "unit_price": 139.57,
+        "amount": 558.28
+      },
+      {
+        "description": "Cloud storage 1 TB plan",
+        "quantity": 1,
+        "unit_price": 29.11,
+        "amount": 29.11
+      },
+      {
+        "description": "Laptop docking station",
+        "quantity": 10,
+        "unit_price": 238.91,
+        "amount": 2389.1
+      },
+      {
+        "description": "Data migration service",
+        "quantity": 5,
+        "unit_price": 978.0,
+        "amount": 4890.0
+      }
+    ]
+  }
+}
