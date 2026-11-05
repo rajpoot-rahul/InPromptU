@@ -10,7 +10,7 @@ function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {})
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-test-'));
   t.after(() => fs.rmSync(data, { recursive: true, force: true }));
   fs.writeFileSync(path.join(data, 'workspace.json'), JSON.stringify({ connection: { mode: 'offline', endpoint: '', model: '' }, theme, history: [] }));
-  const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [];
+  const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [], opened = [];
   let ready, window, copied = 'Synthetic test prompt';
   class BrowserWindow {
     constructor(options) { windows.push(this); if (!window) window = this; this.options = options; this.alwaysOnTop = []; this.vibrancy = options.vibrancy || null; this.background = options.backgroundColor; this.vibrancyCalls = 0; this.webContents = { send: (...args) => events.push(args), isLoading: () => false, setWindowOpenHandler() {}, on() {} }; }
@@ -29,13 +29,14 @@ function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {})
     globalShortcut: { register: (name, fn) => { shortcuts.set(name, fn); return true; }, unregisterAll() {} },
     Tray, Menu: { buildFromTemplate: value => value, setApplicationMenu: value => menus.push(value) }, nativeImage: { createFromPath: file => image(file), createEmpty: () => image('') },
     nativeTheme: { themeSource: 'system', shouldUseDarkColors: false, prefersReducedTransparency: false, shouldUseHighContrastColors: false, on(_event, callback) { this.updated = callback; } },
-    session: { defaultSession: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} } }, dialog, screen: { getPrimaryDisplay: () => ({ workArea: { x: 0, y: 0, width: 1440, height: 900 } }) }, systemPreferences: { getMediaAccessStatus: () => 'denied', isTrustedAccessibilityClient: () => false }, desktopCapturer: { getSources: async () => [] }
+    session: { defaultSession: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} } }, dialog, screen: { getPrimaryDisplay: () => ({ workArea: { x: 0, y: 0, width: 1440, height: 900 } }) }, systemPreferences: { getMediaAccessStatus: () => 'denied', isTrustedAccessibilityClient: () => false }, desktopCapturer: { getSources: async () => [] },
+    shell: { openExternal: async url => { opened.push(url); }, openPath: async file => { opened.push(file); return ''; } }
   };
   const dir = path.resolve(__dirname, '../src');
   vm.runInNewContext(fs.readFileSync(path.join(dir, 'main.cjs'), 'utf8'), { require: name => name === 'electron' ? fake : name.startsWith('./') ? require(path.join(dir, name)) : require(name), __dirname: dir, process: { platform, env: {} }, console, AbortController, URL, setTimeout, clearTimeout, setInterval: () => 0, clearInterval: () => {} });
   ready();
   const sender = { sender: window.webContents, senderFrame: { url: pathToFileURL(path.join(dir, 'index.html')).href } };
-  return { handlers, shortcuts, events, sender, window, windows, appCalls, trays, menus, data, nativeTheme: fake.nativeTheme, copied: () => copied };
+  return { handlers, shortcuts, events, sender, window, windows, appCalls, trays, menus, data, opened, nativeTheme: fake.nativeTheme, copied: () => copied };
 }
 
 test('Windows sets the installer app ID, shows a full-colour tray icon and uses Ctrl+Shift+I; the Mac keeps its template icon', async t => {
@@ -82,6 +83,35 @@ test('Windows context hand-off uses the home folder for the inbox and each tool 
   assert.equal(state.inbox.path, path.join(data, 'Impromptu', 'Inbox'));
   assert.deepEqual([...state.skills.map(s => path.relative(data, s.path))], [path.join('.cursor', 'skills', 'impromptu-handoff', 'SKILL.md'), path.join('.claude', 'skills', 'impromptu-handoff', 'SKILL.md'), path.join('.codex', 'skills', 'impromptu-handoff', 'SKILL.md')]);
   assert.ok(state.prompt.includes(path.join(data, 'Impromptu', 'Inbox')));
+});
+
+test('Hyland latest learning imports the folder, persists status, and opens only safe attachments', async t => {
+  const { handlers, sender, data, opened } = desktop(t);
+  const folder = path.join(data, 'Impromptu', 'Learning', '2026-10-29-fictional-office-hours');
+  fs.mkdirSync(path.join(folder, 'attachments'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'attachments', 'slides.pdf'), 'pdf');
+  fs.writeFileSync(path.join(folder, 'session.md'), '---\nformat: impromptu-learning-session/1\nseries: Fictional Office Hours\ntitle: Agents 101\ndate: 2026-10-29\nsource: teams-recap\nurl: https://example.org/rec\n---\n## Summary\nA fictional intro.\n## Attachments\n- [Slides](attachments/slides.pdf)\n- [Bad](http://example.org/x)\n');
+  assert.equal((await handlers.get('hyland-state')(sender)).folder.pending, 1);
+  const scan = await handlers.get('hyland-scan')(sender);
+  assert.deepEqual([scan.added, scan.state.progress.total, scan.state.folder.pending], [1, 1, 0]);
+  const id = scan.state.series[0].sessions[0].id;
+  const after = await handlers.get('hyland-status')(sender, { id, reviewed: true, attended: true });
+  assert.deepEqual([after.progress.reviewed, after.progress.attended], [1, 1]);
+  const saved = JSON.parse(fs.readFileSync(path.join(data, 'learning-sessions.json'), 'utf8')).sessions[0];
+  assert.ok(saved.reviewed && saved.attended);
+  if (process.platform !== 'win32') assert.equal(fs.statSync(path.join(data, 'learning-sessions.json')).mode & 0o777, 0o600);
+  await handlers.get('hyland-open')(sender, { id, target: 'source' });
+  await handlers.get('hyland-open')(sender, { id, target: 0 });
+  await assert.rejects(handlers.get('hyland-open')(sender, { id, target: 1 }), /blocked/);
+  await assert.rejects(handlers.get('hyland-open')(sender, { id, target: 'https://evil.example' }), /no longer exists/);
+  assert.deepEqual(opened, ['https://example.org/rec', fs.realpathSync(path.join(folder, 'attachments', 'slides.pdf'))]);
+  const pasted = await handlers.get('hyland-paste')(sender, { text: 'Meeting notes\nFictional recap.\nFollow-up tasks\n- Try it', title: 'Recap', series: 'Fictional Office Hours', date: '2026-11-01' });
+  assert.deepEqual([pasted.status, pasted.session.actionItems[0], pasted.state.progress.total], ['added', 'Try it', 2]);
+  await assert.rejects(handlers.get('hyland-paste')(sender, { text: 'x', url: 'javascript:alert(1)' }), /https/);
+  await assert.rejects(handlers.get('hyland-summarize')(sender, { id, provider: 'cloud' }), /cloud provider in Settings/);
+  await assert.rejects(handlers.get('hyland-summarize')(sender, { id, provider: 'https://evil.example' }), /Choose a local model/);
+  await assert.rejects(handlers.get('hyland-summarize')(sender, { id, provider: 'local:' }), /Choose a local model/);
+  await assert.rejects(handlers.get('hyland-status')({ sender: {}, senderFrame: { url: 'https://untrusted.example' } }, { id, reviewed: false }), /Untrusted/);
 });
 
 test('desktop IPC awaits clipboard operations, and the shortcut imports copied text', async t => {

@@ -71,6 +71,40 @@ The shortcut brings copied text into the last-used workspace (Knowledge & reply 
 
 The shortcut reads clipboard text once. There is no background clipboard polling or typing observation. If another draft is open, the incoming text is offered in a banner instead of overwriting it. Disable clipboard import in Settings to make the shortcut only summon the app. If the shortcut is occupied, Settings reports that; open the app from its tray/menu-bar icon.
 
+## Hyland latest learning
+
+Hyland runs many AI discussions, such as the Teams series *AI Coding Tools - Open Office Hours*. **Hyland latest learning** (in *Your space*) keeps track of them so you stay organised: what was discussed, the attachments, and whether you attended and went through the content.
+
+- **Import collected sessions.** Each session is a folder `~/Impromptu/Learning/<YYYY-MM-DD>-<slug>/` with a `session.md` (format below) and optional `attachments/`. Choose **Scan folder**. While the app is open, new or changed folders show a badge on the nav item. Rescanning updates the notes but keeps your status, notes and added links. Sessions are deduplicated by folder name, or by date and title.
+![Hyland latest learning with fictional sample sessions, Dark theme](docs/images/hyland-learning-dark.png)
+
+- **Or paste meeting notes**, such as a Teams recap ("Meeting notes", "Follow-up tasks", "Chapters"), with a series, title, date and optional https link.
+- **Per session:** title, date, source badge (Teams recap, Confluence, notes), summary, action items, topics and attachments. Toggle **I attended** and **I've gone through this content**, and keep private notes.
+- **Progress strip:** *X of N reviewed*, the attended count and a catch-up list of unreviewed sessions.
+- **Summarize with AI** (one session) and **Catch me up** (a digest of up to 12 unreviewed sessions) use a local Ollama model or your configured cloud provider. Both respect local-only mode. Results are labelled *AI-generated* with the model that wrote them. Session notes are framed as untrusted data, and your personal notes are never sent.
+- **Talk about this session** opens Local chat (or a cloud chat) with the session notes.
+- **Safety:** links open in the browser only if they are credential-free public `https://` addresses stored with the session. Other links are shown as blocked. Local attachments open only if they resolve, after following symlinks, inside the learning folder and are documents, slides, spreadsheets, text, images, audio or video. Likely secrets are removed before saving.
+- **Storage:** `learning-sessions.json` in the app's data folder (mode 0600, local JSON, not encrypted), up to 300 sessions. **Remove from this device** never deletes files in the learning folder.
+
+```markdown
+---
+format: impromptu-learning-session/1
+series: AI Coding Tools - Open Office Hours
+title: <title>
+date: 2026-10-29
+source: teams-recap | confluence | manual
+url: https://…
+---
+## Summary
+## Action items
+## Topics
+## Attachments
+- [Slides](attachments/slides.pdf)
+- [Recording](https://…)
+```
+
+Every section is optional. Without front matter, the title comes from a `# heading` or the folder name and the date from the folder name. For development and screenshots, `IMPROMPTU_LEARNING_DIR=<folder>` points the app at another learning folder.
+
 ## What works
 
 - Existing Codex Atlassian connection reused through the official local app-server, with each employee's permissions.
