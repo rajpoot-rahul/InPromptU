@@ -4,8 +4,9 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { execFile } = require('node:child_process');
+const { execFile, spawn } = require('node:child_process');
 const { ollamaOrigin, DEFAULT_ENDPOINT } = require('./ollama.cjs');
+const { powershell, parseDN } = require('./windows.cjs');
 
 // Sizes are the registry download sizes; minRam is a practical floor for responsive use.
 // gemma3:1b was tested and excluded: it echoes the request instead of following Impromptu's structured prompts.
@@ -37,18 +38,34 @@ function recommend(specs, catalog = CATALOG) {
   return models.map(m => ({ ...m, recommended: m.name === best?.name }));
 }
 
-function findOllama(platform = process.platform, env = process.env, exists = file => { try { return fs.statSync(file).isFile() || fs.statSync(file).isDirectory(); } catch { return false; } }) {
+const isFileOrApp = file => { try { const stat = fs.statSync(file); return stat.isFile() || stat.isDirectory(); } catch { return false; } };
+// The official Windows installer is per-user: %LOCALAPPDATA%\Programs\Ollama holds ollama.exe and the "ollama app.exe" tray app.
+function findOllama(platform = process.platform, env = process.env, exists = isFileOrApp) {
+  const win = platform === 'win32';
+  const pathDirs = String(env.PATH || env.Path || '').split(win ? ';' : ':').map(dir => dir.trim().replace(/^"(.*)"$/, '$1')).filter(Boolean);
   const candidates = platform === 'darwin'
     ? ['/Applications/Ollama.app', path.join(os.homedir(), 'Applications/Ollama.app'), '/opt/homebrew/bin/ollama', '/usr/local/bin/ollama']
-    : platform === 'win32' ? [path.join(env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'), ...String(env.PATH || '').split(';').filter(Boolean).map(dir => path.join(dir, 'ollama.exe'))]
-      : String(env.PATH || '').split(':').filter(Boolean).map(dir => path.join(dir, 'ollama'));
+    : win ? [env.LOCALAPPDATA && path.win32.join(env.LOCALAPPDATA, 'Programs', 'Ollama', 'ollama.exe'), env.ProgramFiles && path.win32.join(env.ProgramFiles, 'Ollama', 'ollama.exe'), ...pathDirs.map(dir => path.win32.join(dir, 'ollama.exe'))].filter(Boolean)
+      : pathDirs.map(dir => path.join(dir, 'ollama'));
   return candidates.find(exists) || '';
+}
+
+// Starts an installed Ollama in the background. Windows prefers the tray app, which runs the server and its updater.
+function startOllama(found, { platform = process.platform, exists = isFileOrApp, execFn = execFile, spawnFn = spawn } = {}) {
+  if (!found) throw new Error('Ollama was not found on this computer.');
+  if (platform === 'darwin' && found.endsWith('.app')) return new Promise((resolve, reject) => execFn('/usr/bin/open', ['-g', found], error => error ? reject(error) : resolve({ file: '/usr/bin/open', args: ['-g', found] })));
+  const tray = platform === 'win32' ? path.win32.join(path.win32.dirname(found), 'ollama app.exe') : '';
+  const [file, args] = tray && exists(tray) ? [tray, []] : [found, ['serve']];
+  const child = spawnFn(file, args, { detached: true, stdio: 'ignore', windowsHide: true });
+  child.on?.('error', () => {});
+  child.unref?.();
+  return Promise.resolve({ file, args });
 }
 
 const run = (file, args, options = {}) => new Promise((resolve, reject) => execFile(file, args, { timeout: 120000, windowsHide: true, maxBuffer: 4 * 1024 * 1024, ...options }, (error, stdout, stderr) => error ? reject(Object.assign(error, { stdout, stderr })) : resolve({ stdout: String(stdout), stderr: String(stderr) })));
 
-async function latestRelease(fetchFn = fetch) {
-  const asset = process.platform === 'darwin' ? 'Ollama-darwin.zip' : 'OllamaSetup.exe';
+async function latestRelease(fetchFn = fetch, platform = process.platform) {
+  const asset = platform === 'darwin' ? 'Ollama-darwin.zip' : 'OllamaSetup.exe';
   try {
     const response = await fetchFn('https://api.github.com/repos/ollama/ollama/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, redirect: 'follow' });
     if (response.ok) {
@@ -82,7 +99,13 @@ async function download(url, file, { onProgress = () => {}, signal, fetchFn = fe
 
 // Ollama ships as "Infra Technologies, Inc" (Apple Team ID 3MU9H2V9Y9); accept only that signer, notarized by Apple.
 const OLLAMA_TEAM_ID = '3MU9H2V9Y9';
-const OLLAMA_SIGNER = /\b(Infra Technologies, Inc|Ollama)\b/i;
+// OllamaSetup.exe carries a DigiCert EV code-signing certificate for Ollama Inc. (Ontario corporation 2713355),
+// unchanged from v0.6.0 to v0.40.14. The registration number is pinned so a lookalike "Ollama" subject is refused.
+const OLLAMA_WINDOWS_SIGNER = { CN: 'Ollama Inc.', O: 'Ollama Inc.', SERIALNUMBER: '2713355' };
+function isOllamaWindowsSigner(subject) {
+  const dn = parseDN(subject);
+  return dn.CN === OLLAMA_WINDOWS_SIGNER.CN && dn.O === OLLAMA_WINDOWS_SIGNER.O && (dn.SERIALNUMBER || dn['OID.2.5.4.5']) === OLLAMA_WINDOWS_SIGNER.SERIALNUMBER;
+}
 async function verifyMacApp(app, runFn = run) {
   await runFn('/usr/bin/codesign', ['--verify', '--deep', '--strict', app]);
   const info = await runFn('/usr/bin/codesign', ['-dv', '--verbose=2', app]);
@@ -93,11 +116,17 @@ async function verifyMacApp(app, runFn = run) {
   await runFn('/usr/sbin/spctl', ['--assess', '--type', 'execute', app]);
   return authority;
 }
-async function verifyWindowsInstaller(file, runFn = run) {
-  const { stdout } = await runFn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `$s = Get-AuthenticodeSignature -LiteralPath '${file.replace(/'/g, "''")}'; "$($s.Status)|$($s.SignerCertificate.Subject)"`]);
-  const [status, subject] = stdout.trim().split('|');
-  if (status !== 'Valid' || !OLLAMA_SIGNER.test(subject || '')) throw new Error('The downloaded installer is not validly signed by Ollama (Infra Technologies, Inc), so it was not run.');
-  return subject;
+// The file path travels in an environment variable, so no part of it is parsed as PowerShell.
+const SIGNATURE_SCRIPT = '$s = Get-AuthenticodeSignature -LiteralPath $env:IMPROMPTU_VERIFY_FILE; [pscustomobject]@{ status = [string]$s.Status; subject = [string]$s.SignerCertificate.Subject } | ConvertTo-Json -Compress';
+async function readWindowsSignature(file, runFn = run, env = process.env) {
+  const { stdout } = await runFn(powershell(env), ['-NoProfile', '-NonInteractive', '-Command', SIGNATURE_SCRIPT], { env: { ...env, IMPROMPTU_VERIFY_FILE: file } });
+  try { const data = JSON.parse(String(stdout).replace(/^\uFEFF/, '').trim()); return { status: String(data.status || ''), subject: String(data.subject || '') }; }
+  catch { return { status: '', subject: '' }; }
+}
+async function verifyWindowsInstaller(file, runFn = run, env = process.env) {
+  const { status, subject } = await readWindowsSignature(file, runFn, env);
+  if (status !== 'Valid' || !isOllamaWindowsSigner(subject)) throw new Error('The downloaded installer is not validly signed by Ollama Inc., so it was not run.');
+  return parseDN(subject).CN;
 }
 
 async function waitForServer(endpoint = DEFAULT_ENDPOINT, timeoutMs = 90000, fetchFn = fetch) {
@@ -109,16 +138,20 @@ async function waitForServer(endpoint = DEFAULT_ENDPOINT, timeoutMs = 90000, fet
   throw new Error('Ollama was installed but did not start. Open the Ollama app once, then choose Check again.');
 }
 
-async function installOllama({ onProgress = () => {}, signal, fetchFn = fetch, runFn = run } = {}) {
-  if (!['darwin', 'win32'].includes(process.platform)) throw new Error('Automatic installation is available on macOS and Windows. Install Ollama from ollama.com, then choose Check again.');
-  const release = await latestRelease(fetchFn);
+// OllamaSetup.exe bundles GPU runtimes: about 1.7 GB to download and several GB once installed.
+const WINDOWS_INSTALL_FACTOR = 4;
+async function installOllama({ onProgress = () => {}, signal, fetchFn = fetch, runFn = run, platform = process.platform, startFn = startOllama, findFn = findOllama, freeGB = () => systemSpecs().freeGB, serverTimeoutMs = 90000 } = {}) {
+  if (!['darwin', 'win32'].includes(platform)) throw new Error('Automatic installation is available on macOS and Windows. Install Ollama from ollama.com, then choose Check again.');
+  const release = await latestRelease(fetchFn, platform);
+  const free = freeGB();
+  if (platform === 'win32' && release.size && free !== null && free < (release.size / 1e9) * WINDOWS_INSTALL_FACTOR + 1) throw new Error(`Not enough free disk space to install Ollama (about ${Math.ceil((release.size / 1e9) * WINDOWS_INSTALL_FACTOR + 1)} GB needed, ${free} GB free).`);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-ollama-'));
   try {
     const file = path.join(dir, path.basename(new URL(release.url).pathname) || 'ollama-download');
     onProgress({ stage: 'download', message: `Downloading Ollama ${release.version} from ${release.source}…`, done: 0, total: release.size || 0 });
-    await download(release.url, file, { signal, fetchFn, onProgress: p => onProgress({ stage: 'download', message: `Downloading Ollama ${release.version}…`, ...p }) });
+    await download(release.url, file, { signal, fetchFn, maxBytes: platform === 'win32' ? 4e9 : 2e9, onProgress: p => onProgress({ stage: 'download', message: `Downloading Ollama ${release.version}…`, ...p }) });
     onProgress({ stage: 'verify', message: 'Checking that the download is genuinely signed by Ollama…' });
-    if (process.platform === 'darwin') {
+    if (platform === 'darwin') {
       await runFn('/usr/bin/ditto', ['-x', '-k', file, dir]);
       const app = path.join(dir, 'Ollama.app');
       const signer = await verifyMacApp(app, runFn);
@@ -130,13 +163,26 @@ async function installOllama({ onProgress = () => {}, signal, fetchFn = fetch, r
       await runFn('/usr/bin/open', ['-g', target]);
     } else {
       const signer = await verifyWindowsInstaller(file, runFn);
-      onProgress({ stage: 'install', message: `Installing Ollama (signed by ${signer})…` });
-      await runFn(file, ['/VERYSILENT', '/NORESTART', '/SUPPRESSMSGBOXES'], { timeout: 600000 });
+      if (signal?.aborted) throw new Error('Setup was cancelled.');
+      onProgress({ stage: 'install', message: `Installing Ollama (signed by ${signer}) for this Windows user…` });
+      // Inno Setup: per-user install to %LOCALAPPDATA%\Programs\Ollama without UAC; its post-install step starts the tray app.
+      await runFn(file, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-'], { timeout: 1200000 });
     }
     onProgress({ stage: 'start', message: 'Starting Ollama…' });
-    await waitForServer(DEFAULT_ENDPOINT, 90000, fetchFn);
+    if (platform === 'win32') {
+      try { await waitForServer(DEFAULT_ENDPOINT, Math.min(20000, serverTimeoutMs), fetchFn); }
+      catch {
+        const installed = findFn();
+        if (!installed) throw new Error('Ollama setup finished, but ollama.exe was not found in %LOCALAPPDATA%\\Programs\\Ollama. Open Ollama from the Start menu, then choose Check again.');
+        await startFn(installed);
+        await waitForServer(DEFAULT_ENDPOINT, serverTimeoutMs, fetchFn);
+      }
+    } else await waitForServer(DEFAULT_ENDPOINT, serverTimeoutMs, fetchFn);
     return { version: release.version, source: release.source };
-  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  } finally {
+    // Antivirus scanners can hold the installer open for a moment on Windows.
+    try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); } catch {}
+  }
 }
 
 // Streams /api/pull progress; Ollama reports per-layer totals that are summed here.
@@ -178,4 +224,4 @@ async function pullModel(name, { endpoint = DEFAULT_ENDPOINT, onProgress = () =>
   } finally { clearInterval(watchdog); }
 }
 
-module.exports = { CATALOG, MODEL, OLLAMA_TEAM_ID, systemSpecs, recommend, findOllama, latestRelease, download, verifyMacApp, verifyWindowsInstaller, waitForServer, installOllama, pullModel };
+module.exports = { CATALOG, MODEL, OLLAMA_TEAM_ID, OLLAMA_WINDOWS_SIGNER, SIGNATURE_SCRIPT, systemSpecs, recommend, findOllama, startOllama, latestRelease, download, verifyMacApp, isOllamaWindowsSigner, readWindowsSignature, verifyWindowsInstaller, waitForServer, installOllama, pullModel };

@@ -5,6 +5,7 @@ const { execFile } = require('node:child_process');
 const crypto = require('node:crypto');
 const { ollamaOrigin } = require('./ollama.cjs');
 const { analyze } = require('./engine.cjs');
+const { powershell } = require('./windows.cjs');
 
 const DEFAULTS = { enabled: false, consentAt: '', nudges: true, breakMinutes: 90, scrollFrames: 4, visionModel: '' };
 const LIMITS = { frames: 6, question: 1000, selection: 30000 };
@@ -24,19 +25,35 @@ function readSettings(raw) {
 }
 
 const run = (file, args, execFn = execFile) => new Promise((resolve, reject) => execFn(file, args, { timeout: 8000, windowsHide: true }, error => error ? reject(error) : resolve()));
+// Windows merges synthetic keys with keys still held down, so Ctrl+Shift+I would turn Ctrl+C into Ctrl+Shift+C.
+// Wait briefly for the user to release the shortcut, then send the fixed key to the foreground window.
+const windowsKeyScript = keys => `Add-Type -AssemblyName System.Windows.Forms; $end = [DateTime]::UtcNow.AddMilliseconds(1500); while ([System.Windows.Forms.Control]::ModifierKeys -ne [System.Windows.Forms.Keys]::None -and [DateTime]::UtcNow -lt $end) { Start-Sleep -Milliseconds 30 }; [System.Windows.Forms.SendKeys]::SendWait('${keys}')`;
+const WINDOWS_KEYS = { copy: '^c', pageDown: '{PGDN}', pageUp: '{PGUP}' };
 // Sends a key combination to the frontmost app. macOS needs Accessibility permission for Impromptu.
-function sendKeys(kind, platform = process.platform, execFn = execFile) {
+function sendKeys(kind, platform = process.platform, execFn = execFile, env = process.env) {
   const mac = { copy: 'keystroke "c" using command down', pageDown: 'key code 121', pageUp: 'key code 116' }[kind];
-  const win = { copy: '^c', pageDown: '{PGDN}', pageUp: '{PGUP}' }[kind];
   if (!mac) throw new Error('Unsupported key action.');
   if (platform === 'darwin') return run('/usr/bin/osascript', ['-e', `tell application "System Events" to ${mac}`], execFn);
-  if (platform === 'win32') return run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `(New-Object -ComObject WScript.Shell).SendKeys('${win}')`], execFn);
+  if (platform === 'win32') return run(powershell(env), ['-NoProfile', '-NonInteractive', '-Command', windowsKeyScript(WINDOWS_KEYS[kind])], execFn);
   return Promise.reject(new Error('Screen actions are available on macOS and Windows.'));
 }
 
-// Copies the current selection in the frontmost app, then restores the user's clipboard.
+// Copies the current selection in the frontmost app, then restores the user's clipboard, including rich text and images.
+function clipboardSnapshot(clipboard) {
+  const read = method => { try { return typeof clipboard[method] === 'function' ? clipboard[method]() : undefined; } catch { return undefined; } };
+  return { text: read('readText') || '', html: read('readHTML'), rtf: read('readRTF'), image: read('readImage') };
+}
+function restoreClipboard(clipboard, saved) {
+  const rich = typeof clipboard.write === 'function' && (saved.html || saved.rtf || (saved.image && !saved.image.isEmpty?.()));
+  if (!rich) { clipboard.writeText(saved.text); return; }
+  const data = { text: saved.text };
+  if (saved.html) data.html = saved.html;
+  if (saved.rtf) data.rtf = saved.rtf;
+  if (saved.image && !saved.image.isEmpty?.()) data.image = saved.image;
+  clipboard.write(data);
+}
 async function grabSelection({ clipboard, keys = kind => sendKeys(kind), wait = ms => new Promise(r => setTimeout(r, ms)) }) {
-  const previous = clipboard.readText();
+  const previous = clipboardSnapshot(clipboard);
   const marker = `impromptu-selection-${crypto.randomUUID()}`;
   clipboard.writeText(marker);
   try {
@@ -47,17 +64,17 @@ async function grabSelection({ clipboard, keys = kind => sendKeys(kind), wait = 
       if (value !== marker) return value.slice(0, LIMITS.selection);
     }
     return '';
-  } finally { clipboard.writeText(previous); }
+  } finally { restoreClipboard(clipboard, previous); }
 }
 
-// Captures the display under the cursor as JPEG. Requires Screen Recording permission on macOS.
-async function captureDisplay({ desktopCapturer, screen }) {
+// Captures the display under the cursor as JPEG. Requires Screen Recording permission on macOS; Windows needs none.
+async function captureDisplay({ desktopCapturer, screen, platform = process.platform }) {
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const scale = Math.min(1, 1600 / display.size.width);
   const thumbnailSize = { width: Math.round(display.size.width * display.scaleFactor * scale), height: Math.round(display.size.height * display.scaleFactor * scale) };
   const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize });
   const source = sources.find(s => String(s.display_id) === String(display.id)) || sources[0];
-  if (!source || source.thumbnail.isEmpty()) throw new Error('The screen could not be captured. Check Screen Recording permission for Impromptu.');
+  if (!source || source.thumbnail.isEmpty()) throw new Error(platform === 'darwin' ? 'The screen could not be captured. Check Screen Recording permission for Impromptu.' : 'The screen could not be captured. Windows may block capture while the screen is locked or a secure prompt is open; try again.');
   const jpeg = source.thumbnail.toJPEG(80);
   return { base64: jpeg.toString('base64'), hash: crypto.createHash('sha256').update(source.thumbnail.toBitmap()).digest('hex') };
 }
@@ -145,4 +162,4 @@ function factCheckNudge(reply, supplied) {
   return unsupported.length ? { kind: 'verify', message: `This answer mentions ${unsupported.join(', ')}, which you did not provide and a local model cannot look up. Check these before relying on them.`, actions: [] } : null;
 }
 
-module.exports = { DEFAULTS, LIMITS, readSettings, sendKeys, grabSelection, captureDisplay, seesOtherApps, visionCapable, describeScreens, Coach, factCheckNudge, similarity, VISION };
+module.exports = { DEFAULTS, LIMITS, WINDOWS_KEYS, windowsKeyScript, readSettings, sendKeys, grabSelection, captureDisplay, seesOtherApps, visionCapable, describeScreens, Coach, factCheckNudge, similarity, VISION };

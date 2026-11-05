@@ -10,23 +10,24 @@ function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {})
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-test-'));
   t.after(() => fs.rmSync(data, { recursive: true, force: true }));
   fs.writeFileSync(path.join(data, 'workspace.json'), JSON.stringify({ connection: { mode: 'offline', endpoint: '', model: '' }, theme, history: [] }));
-  const handlers = new Map(), shortcuts = new Map(), events = [];
+  const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [];
   let ready, window, copied = 'Synthetic test prompt';
   class BrowserWindow {
-    constructor(options) { window = this; this.options = options; this.vibrancy = options.vibrancy || null; this.background = options.backgroundColor; this.vibrancyCalls = 0; this.webContents = { send: (...args) => events.push(args), isLoading: () => false, setWindowOpenHandler() {}, on() {} }; }
+    constructor(options) { windows.push(this); if (!window) window = this; this.options = options; this.alwaysOnTop = []; this.vibrancy = options.vibrancy || null; this.background = options.backgroundColor; this.vibrancyCalls = 0; this.webContents = { send: (...args) => events.push(args), isLoading: () => false, setWindowOpenHandler() {}, on() {} }; }
     loadFile() {} on() {} once() {} isDestroyed() { return false; } isMinimized() { return false; } show() {} focus() {} hide() {}
     setVibrancy(value) { this.vibrancy = value; this.vibrancyCalls++; }
-    setAlwaysOnTop() {} setVisibleOnAllWorkspaces() {} showInactive() {} setBounds() {} setFocusable() {} destroy() { this.destroyed = true; }
+    setAlwaysOnTop(...args) { this.alwaysOnTop.push(args); } setVisibleOnAllWorkspaces() {} showInactive() {} setBounds() {} setFocusable() {} destroy() { this.destroyed = true; }
     setBackgroundColor(value) { this.background = value; }
   }
-  class Tray { setToolTip() {} on() {} setContextMenu() {} }
-  const image = { resize() { return this; }, setTemplateImage() {} };
+  class Tray { constructor(image) { this.image = image; trays.push(this); } setToolTip() {} on() {} setContextMenu() {} }
+  const image = file => ({ file, template: false, representations: [], resize(size) { return { ...this, size, toPNG: () => Buffer.from(`${path.basename(file)}@${size.width}`) }; }, setTemplateImage(value) { this.template = value; }, addRepresentation(rep) { this.representations.push(rep); } });
+  const menus = [];
   const fake = {
-    app: { setName() {}, requestSingleInstanceLock: () => true, getPath: () => data, getVersion: () => 'test', on() {}, whenReady: () => ({ then: callback => ready = callback }) },
+    app: { setName() {}, setAppUserModelId: id => appCalls.push(['setAppUserModelId', id]), requestSingleInstanceLock: () => true, getPath: () => data, getVersion: () => 'test', on() {}, whenReady: () => ({ then: callback => ready = callback }) },
     BrowserWindow, ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
     clipboard: { readText: async () => copied, writeText: async value => { await Promise.resolve(); copied = value; } },
     globalShortcut: { register: (name, fn) => { shortcuts.set(name, fn); return true; }, unregisterAll() {} },
-    Tray, Menu: { buildFromTemplate: value => value, setApplicationMenu() {} }, nativeImage: { createFromPath: () => image },
+    Tray, Menu: { buildFromTemplate: value => value, setApplicationMenu: value => menus.push(value) }, nativeImage: { createFromPath: file => image(file), createEmpty: () => image('') },
     nativeTheme: { themeSource: 'system', shouldUseDarkColors: false, prefersReducedTransparency: false, shouldUseHighContrastColors: false, on(_event, callback) { this.updated = callback; } },
     session: { defaultSession: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} } }, dialog, screen: { getPrimaryDisplay: () => ({ workArea: { x: 0, y: 0, width: 1440, height: 900 } }) }, systemPreferences: { getMediaAccessStatus: () => 'denied', isTrustedAccessibilityClient: () => false }, desktopCapturer: { getSources: async () => [] }
   };
@@ -34,8 +35,54 @@ function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {})
   vm.runInNewContext(fs.readFileSync(path.join(dir, 'main.cjs'), 'utf8'), { require: name => name === 'electron' ? fake : name.startsWith('./') ? require(path.join(dir, name)) : require(name), __dirname: dir, process: { platform, env: {} }, console, AbortController, URL, setTimeout, clearTimeout, setInterval: () => 0, clearInterval: () => {} });
   ready();
   const sender = { sender: window.webContents, senderFrame: { url: pathToFileURL(path.join(dir, 'index.html')).href } };
-  return { handlers, shortcuts, events, sender, window, data, nativeTheme: fake.nativeTheme, copied: () => copied };
+  return { handlers, shortcuts, events, sender, window, windows, appCalls, trays, menus, data, nativeTheme: fake.nativeTheme, copied: () => copied };
 }
+
+test('Windows sets the installer app ID, shows a full-colour tray icon and uses Ctrl+Shift+I; the Mac keeps its template icon', async t => {
+  const win = desktop(t, { platform: 'win32' });
+  assert.deepEqual(win.appCalls, [['setAppUserModelId', 'com.impromptu.companion']]);
+  assert.ok(win.shortcuts.has('CommandOrControl+Shift+I'));
+  const icon = win.trays[0].image;
+  assert.deepEqual(icon.representations.map(r => [r.scaleFactor, r.width]), [[1, 16], [1.25, 20], [1.5, 24], [2, 32]]);
+  assert.ok(icon.representations.every(r => String(r.buffer).startsWith('icon.png@')));
+  const winMenu = win.menus[0];
+  assert.deepEqual([...winMenu.map(m => m.label)], ['Edit', 'Window']);
+  assert.ok(winMenu[1].submenu.some(item => item.role === 'quit'));
+  assert.equal(win.window.options.titleBarStyle, 'default');
+  assert.equal(win.window.options.vibrancy, undefined);
+  const mac = desktop(t);
+  assert.deepEqual(mac.appCalls, []);
+  assert.equal(path.basename(mac.trays[0].image.file), 'tray.png');
+  assert.equal(mac.trays[0].image.template, true);
+  assert.equal(mac.menus[0][0].label, 'Impromptu');
+});
+
+test('the Windows mascot is a non-activating, always-on-top tool window that needs no permission prompts', async t => {
+  const { handlers, sender, windows } = desktop(t, { platform: 'win32' });
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
+  const on = await handlers.get('mascot-enable')(sender, { consent: true });
+  assert.equal(on.platform, 'win32');
+  assert.deepEqual([on.permissions.screen, on.permissions.accessibility], [true, true]);
+  const mascot = windows.at(-1);
+  assert.equal(mascot.options.title, 'Impromptu mascot');
+  assert.deepEqual([mascot.options.type, mascot.options.focusable, mascot.options.transparent, mascot.options.alwaysOnTop, mascot.options.skipTaskbar, mascot.options.acceptFirstMouse], ['toolbar', false, true, true, true, undefined]);
+  assert.deepEqual(mascot.alwaysOnTop[0], [true, 'floating']);
+  assert.equal(mascot.options.webPreferences.sandbox, true);
+  assert.equal((await handlers.get('mascot-permission')(sender, 'accessibility')).permissions.accessibility, true);
+  const mac = desktop(t);
+  await mac.handlers.get('mascot-enable')(mac.sender, { consent: true });
+  assert.equal(mac.windows.at(-1).options.type, 'panel');
+});
+
+test('Windows context hand-off uses the home folder for the inbox and each tool skill', async t => {
+  const { handlers, sender, data } = desktop(t, { platform: 'win32' });
+  const state = await handlers.get('context-state')(sender);
+  assert.equal(state.inbox.path, path.join(data, 'Impromptu', 'Inbox'));
+  assert.deepEqual([...state.skills.map(s => path.relative(data, s.path))], [path.join('.cursor', 'skills', 'impromptu-handoff', 'SKILL.md'), path.join('.claude', 'skills', 'impromptu-handoff', 'SKILL.md'), path.join('.codex', 'skills', 'impromptu-handoff', 'SKILL.md')]);
+  assert.ok(state.prompt.includes(path.join(data, 'Impromptu', 'Inbox')));
+});
 
 test('desktop IPC awaits clipboard operations, and the shortcut imports copied text', async t => {
   const { handlers, shortcuts, events, sender, copied } = desktop(t);

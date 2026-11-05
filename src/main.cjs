@@ -17,6 +17,8 @@ const installer = require('./installer.cjs');
 const { KnowledgeService, sourceURL } = require('./knowledge.cjs');
 
 app.setName('Impromptu');
+// Matches the installer's shortcut appId so the taskbar groups and pins the running app with its Start menu entry.
+if (process.platform === 'win32') app.setAppUserModelId('com.impromptu.companion');
 if (process.env.IMPROMPTU_USER_DATA) app.setPath('userData', path.resolve(process.env.IMPROMPTU_USER_DATA));
 const lock = app.requestSingleInstanceLock();
 if (!lock) app.quit();
@@ -161,7 +163,9 @@ function mascotBounds(expanded) {
 function createMascot() {
   if (mascotWin && !mascotWin.isDestroyed()) return;
   const mac = process.platform === 'darwin';
-  mascotWin = new BrowserWindow({ ...mascotBounds(false), transparent: true, frame: false, resizable: false, alwaysOnTop: true, skipTaskbar: true, hasShadow: false, focusable: false, show: false, title: 'Impromptu mascot', ...(mac ? { type: 'panel', acceptFirstMouse: true } : {}), webPreferences: { preload: path.join(__dirname, 'mascot-preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false } });
+  // focusable:false keeps the user's app in the foreground on click, so copy and Page Down reach it rather than the mascot.
+  // On Windows, 'toolbar' also keeps the mascot out of Alt+Tab.
+  mascotWin = new BrowserWindow({ ...mascotBounds(false), transparent: true, frame: false, resizable: false, minimizable: false, maximizable: false, alwaysOnTop: true, skipTaskbar: true, hasShadow: false, focusable: false, show: false, title: 'Impromptu mascot', ...(mac ? { type: 'panel', acceptFirstMouse: true } : process.platform === 'win32' ? { type: 'toolbar' } : {}), webPreferences: { preload: path.join(__dirname, 'mascot-preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false } });
   mascotWin.setAlwaysOnTop(true, 'floating');
   mascotWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   mascotWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -365,8 +369,7 @@ if (lock) {
           if (!existing) await installer.installOllama({ signal: controller.signal, onProgress: sendSetupProgress });
           else {
             sendSetupProgress({ stage: 'start', message: 'Starting the Ollama already on this computer…' });
-            if (existing.endsWith('.app')) await new Promise((resolve, reject) => require('node:child_process').execFile('/usr/bin/open', ['-g', existing], error => error ? reject(error) : resolve()));
-            else require('node:child_process').spawn(existing, ['serve'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+            await installer.startOllama(existing);
             await installer.waitForServer(ollama.DEFAULT_ENDPOINT);
           }
           found = await ollama.probe(ollama.DEFAULT_ENDPOINT);
@@ -661,15 +664,29 @@ if (lock) {
     createWindow();
     if (state.mascot.enabled) createMascot();
     shortcutRegistered = globalShortcut.register(shortcut, () => show(true));
-    const icon = nativeImage.createFromPath(path.join(__dirname, 'assets/tray.png')).resize({ width: 18, height: 18 });
-    if (process.platform === 'darwin') icon.setTemplateImage(true);
-    tray = new Tray(icon); tray.setToolTip('Impromptu — your prompt companion'); tray.on('click', () => show()); updateTray();
+    tray = new Tray(trayIcon()); tray.setToolTip('Impromptu — your prompt companion'); tray.on('click', () => show()); updateTray();
     Menu.setApplicationMenu(Menu.buildFromTemplate([
       ...(process.platform === 'darwin' ? [{ label: 'Impromptu', submenu: [{ role: 'about' }, { type: 'separator' }, { label: 'Hide Impromptu', accelerator: 'Command+H', click: () => win.hide() }, { role: 'quit' }] }] : []),
       { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
       { label: 'Window', submenu: [{ label: 'Show Impromptu', accelerator: shortcut, click: () => show(true) }, { role: 'minimize' }, ...(process.platform === 'win32' ? [{ role: 'quit' }] : [])] }
     ]));
   });
+}
+// macOS tints the dark template glyph for the menu bar. Windows draws icons as-is and its taskbar is dark by default,
+// so it gets the full-colour app icon at each common display scale.
+function trayIcon() {
+  if (process.platform !== 'win32') {
+    const icon = nativeImage.createFromPath(path.join(__dirname, 'assets/tray.png')).resize({ width: 18, height: 18 });
+    if (process.platform === 'darwin') icon.setTemplateImage(true);
+    return icon;
+  }
+  const source = nativeImage.createFromPath(path.join(__dirname, 'assets/icon.png'));
+  const icon = nativeImage.createEmpty();
+  for (const scaleFactor of [1, 1.25, 1.5, 2]) {
+    const size = Math.round(16 * scaleFactor);
+    icon.addRepresentation({ scaleFactor, width: size, height: size, buffer: source.resize({ width: size, height: size, quality: 'best' }).toPNG() });
+  }
+  return icon;
 }
 function updateTray() {
   if (!tray) return;

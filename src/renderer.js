@@ -821,6 +821,8 @@ function renderMascotSettings(info) {
     $(label).classList.toggle('granted', info.permissions[kind]);
     $(`grant-${kind}`).hidden = info.permissions[kind] || !mac;
   }
+  document.querySelectorAll('[data-mac-only]').forEach(row => { row.hidden = !mac; });
+  $('perm-windows').hidden = info.platform !== 'win32';
   $('perm-help').hidden = !mac || (info.permissions.accessibility && info.permissions.screen);
   const select = $('mascot-model');
   select.innerHTML = info.models.length ? info.models.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('') : '<option value="">No local models found</option>';
@@ -840,7 +842,7 @@ function setupMascot() {
   $('mascot-consent-accept').onclick = () => attempt(async () => {
     if (!$('mascot-consent-check').checked) throw new Error('Tick the box to confirm, or choose Cancel.');
     renderMascotSettings(await api.enableMascot({ consent: true })); $('mascot-consent').close();
-    toast('Mascot on. Grant the permissions below, then click the mascot at the bottom-right of your screen.');
+    toast(mascotInfo?.platform === 'darwin' ? 'Mascot on. Grant the permissions below, then click the mascot at the bottom-right of your screen.' : 'Mascot on. Click it at the bottom-right of your screen.');
   });
   $('grant-accessibility').onclick = () => attempt(async () => renderMascotSettings(await api.mascotPermission('accessibility')));
   $('grant-screen').onclick = () => attempt(async () => renderMascotSettings(await api.mascotPermission('screen')));
@@ -891,7 +893,7 @@ function openSettings() {
   $('api-key').placeholder = state.hasKey ? 'Key is in memory · leave blank to keep it' : 'Not saved to disk';
   $('local-only-setting').checked = Boolean(state.localOnly); applyLocalOnlyOptions();
   $('ollama-status').textContent = 'Checks Ollama on this computer for installed models.';
-  $('shortcut-status').textContent = state.preview ? 'Keyboard shortcuts are available in the desktop app.' : state.shortcutRegistered ? `Global shortcut active: ${state.platform === 'darwin' ? '⌘⇧I' : 'Ctrl+Shift+I'}` : 'Shortcut unavailable: another app may have claimed it. Use the menu bar to open Impromptu.';
+  $('shortcut-status').textContent = state.preview ? 'Keyboard shortcuts are available in the desktop app.' : state.shortcutRegistered ? `Global shortcut active: ${state.platform === 'darwin' ? '⌘⇧I' : 'Ctrl+Shift+I'}` : `Shortcut unavailable: another app may have claimed it. ${state.platform === 'darwin' ? 'Use the menu bar icon' : 'Use the Impromptu icon in the taskbar notification area'} to open Impromptu.`;
   $('shortcut-status').classList.toggle('warning', !state.shortcutRegistered && !state.preview);
   $('version').textContent = state.version;
   $('aws-profile').value = state.connection.profile || ''; $('aws-region').value = state.connection.region || '';
@@ -1033,6 +1035,7 @@ async function boot() {
   document.querySelectorAll('.shortcut-inline').forEach(el => el.textContent = mac ? '⌘⇧I' : 'Ctrl+Shift+I');
   document.querySelectorAll('.shortcut-keys').forEach(el => el.innerHTML = (mac ? ['⌘', '⇧', 'I'] : ['Ctrl', 'Shift', 'I']).map(key => `<kbd>${key}</kbd>`).join(''));
   $('run-key').textContent = mac ? '⌘ ↵' : 'Ctrl ↵';
+  if (state.platform === 'win32') $('mascot-consent-platform').textContent = 'On Windows it needs no extra permission, but it cannot copy from or scroll apps running as administrator.';
   updateSkill(); updateConnection(); refreshSkills(state.skills); renderEvidence(); setupKnowledge(); setupChat(); setupSkills(); setupLearning(); setupMascot(); setupContext(); setupInstaller(); setupLocalAI(); showView('knowledge');
   $('ollama-refresh').onclick = detectSettingsModels;
   $('local-only-setting').onchange = applyLocalOnlyOptions;

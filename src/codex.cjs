@@ -7,14 +7,27 @@ const path = require('node:path');
 const os = require('node:os');
 const { StringDecoder } = require('node:string_decoder');
 
-function findCodex(preferred = '') {
-  const name = process.platform === 'win32' ? 'codex.exe' : 'codex';
+// npm on Windows puts a codex.cmd shim on PATH, which cannot be spawned without a shell. The real codex.exe lives in
+// the platform package under the npm prefix (the folder holding the shim, usually %APPDATA%\npm).
+function windowsNpmCodex(prefix, arch) {
+  const [pkg, triple] = arch === 'arm64' ? ['codex-win32-arm64', 'aarch64-pc-windows-msvc'] : ['codex-win32-x64', 'x86_64-pc-windows-msvc'];
+  const root = path.win32.join(prefix, 'node_modules', '@openai', 'codex');
+  return [path.win32.join(root, 'node_modules', '@openai', pkg, 'vendor', triple, 'bin', 'codex.exe'), path.win32.join(root, 'vendor', triple, 'bin', 'codex.exe')];
+}
+const isFile = file => { try { return fs.statSync(file).isFile(); } catch { return false; } };
+function findCodex(preferred = '', { platform = process.platform, env = process.env, arch = process.arch, home = os.homedir(), exists = isFile } = {}) {
+  if (platform === 'win32') {
+    const dirs = String(env.PATH || env.Path || '').split(';').map(dir => dir.trim().replace(/^"(.*)"$/, '$1')).filter(Boolean);
+    const npmPrefixes = [...new Set([env.APPDATA && path.win32.join(env.APPDATA, 'npm'), ...dirs.filter(dir => exists(path.win32.join(dir, 'codex.cmd')))].filter(Boolean))];
+    const candidates = [preferred, ...dirs.map(dir => path.win32.join(dir, 'codex.exe')), ...npmPrefixes.flatMap(prefix => windowsNpmCodex(prefix, arch)), path.win32.join(home, '.local', 'bin', 'codex.exe')];
+    return candidates.find(file => file && exists(file)) || '';
+  }
   const candidates = [preferred,
     '/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex',
     '/Applications/Codex.app/Contents/Resources/codex',
-    ...String(process.env.PATH || '').split(path.delimiter).map(dir => path.join(dir, name)),
-    path.join(os.homedir(), '.local/bin', name), '/opt/homebrew/bin/codex', '/usr/local/bin/codex'];
-  return candidates.find(file => { try { return file && fs.statSync(file).isFile(); } catch { return false; } }) || '';
+    ...String(env.PATH || '').split(':').map(dir => path.join(dir, 'codex')),
+    path.join(home, '.local/bin', 'codex'), '/opt/homebrew/bin/codex', '/usr/local/bin/codex'];
+  return candidates.find(file => file && exists(file)) || '';
 }
 
 class CodexClient extends EventEmitter {

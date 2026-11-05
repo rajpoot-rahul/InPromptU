@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { readSettings, sendKeys, grabSelection, captureDisplay, visionCapable, describeScreens, Coach, factCheckNudge, DEFAULTS, VISION } = require('../src/mascot.cjs');
+const { readSettings, sendKeys, windowsKeyScript, WINDOWS_KEYS, grabSelection, captureDisplay, visionCapable, describeScreens, Coach, factCheckNudge, DEFAULTS, VISION } = require('../src/mascot.cjs');
 
 test('the mascot is off unless consent is recorded, and settings are bounded', () => {
   assert.equal(readSettings({ enabled: true }).enabled, false);
@@ -26,12 +26,42 @@ test('selection grab copies once, restores the clipboard, and reports nothing wh
 test('key actions use fixed commands per platform and nothing user-controlled', async () => {
   const calls = [];
   const execFn = (file, args, _options, done) => { calls.push([file, args]); done(null); };
-  await sendKeys('copy', 'darwin', execFn); await sendKeys('pageDown', 'darwin', execFn); await sendKeys('pageUp', 'win32', execFn);
+  await sendKeys('copy', 'darwin', execFn); await sendKeys('pageDown', 'darwin', execFn); await sendKeys('pageUp', 'win32', execFn, { SystemRoot: 'C:\\Windows' });
   assert.deepEqual(calls[0], ['/usr/bin/osascript', ['-e', 'tell application "System Events" to keystroke "c" using command down']]);
   assert.match(calls[1][1][1], /key code 121/);
-  assert.equal(calls[2][0], 'powershell.exe'); assert.match(calls[2][1].at(-1), /\{PGUP\}/);
+  assert.equal(calls[2][0], 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'); assert.match(calls[2][1].at(-1), /SendWait\('\{PGUP\}'\)/);
   assert.throws(() => sendKeys('typeAnything', 'darwin', execFn), /Unsupported/);
+  assert.throws(() => sendKeys('typeAnything', 'win32', execFn), /Unsupported/);
   await assert.rejects(sendKeys('copy', 'linux', execFn), /macOS and Windows/);
+});
+
+test('Windows key presses wait for the shortcut modifiers to be released before sending a fixed key', async () => {
+  const calls = [];
+  const execFn = (file, args, _options, done) => { calls.push(args.at(-1)); done(null); };
+  for (const kind of Object.keys(WINDOWS_KEYS)) await sendKeys(kind, 'win32', execFn, {});
+  assert.match(calls[0], /ModifierKeys -ne \[System\.Windows\.Forms\.Keys\]::None/);
+  assert.match(calls[0], /SendWait\('\^c'\)$/);
+  assert.match(calls[1], /SendWait\('\{PGDN\}'\)$/);
+  assert.deepEqual(calls, Object.values(WINDOWS_KEYS).map(windowsKeyScript));
+});
+
+test('on a real Windows machine the key script is valid PowerShell', { skip: process.platform !== 'win32' && 'needs Windows PowerShell' }, () => {
+  const { execFileSync } = require('node:child_process');
+  const { powershell } = require('../src/windows.cjs');
+  const { SIGNATURE_SCRIPT } = require('../src/installer.cjs');
+  for (const script of [...Object.values(WINDOWS_KEYS).map(windowsKeyScript), SIGNATURE_SCRIPT]) {
+    const errors = execFileSync(powershell(), ['-NoProfile', '-NonInteractive', '-Command', '$e = $null; [void][System.Management.Automation.Language.Parser]::ParseInput($env:IMPROMPTU_SCRIPT, [ref]$null, [ref]$e); $e.Count'], { env: { ...process.env, IMPROMPTU_SCRIPT: script }, encoding: 'utf8' }).trim();
+    assert.equal(errors, '0', script);
+  }
+});
+
+test('selection grab restores rich clipboard content, not just text', async () => {
+  let clip = { text: 'plain', html: '<b>plain</b>', rtf: '', image: { isEmpty: () => false, id: 'img' } };
+  const writes = [];
+  const clipboard = { readText: () => clip.text, readHTML: () => clip.html, readRTF: () => clip.rtf, readImage: () => clip.image, writeText: value => { clip = { text: value, html: '', rtf: '', image: { isEmpty: () => true } }; }, write: data => { writes.push(data); clip = { ...data }; } };
+  assert.equal(await grabSelection({ clipboard, keys: async () => { clip = { ...clip, text: 'Selected' }; }, wait: async () => {} }), 'Selected');
+  assert.deepEqual(Object.keys(writes[0]).sort(), ['html', 'image', 'text']);
+  assert.equal(writes[0].text, 'plain'); assert.equal(writes[0].image.id, 'img');
 });
 
 test('capture uses the display under the cursor and refuses an empty image', async () => {
@@ -42,7 +72,8 @@ test('capture uses the display under the cursor and refuses an empty image', asy
   assert.equal(frame.base64, Buffer.from('jpeg').toString('base64'));
   assert.equal(requested.thumbnailSize.width, 3200);
   assert.match(frame.hash, /^[0-9a-f]{64}$/);
-  await assert.rejects(captureDisplay({ screen, desktopCapturer: { getSources: async () => [{ display_id: '2', thumbnail: image(true) }] } }), /Screen Recording/);
+  await assert.rejects(captureDisplay({ screen, platform: 'darwin', desktopCapturer: { getSources: async () => [{ display_id: '2', thumbnail: image(true) }] } }), /Screen Recording/);
+  await assert.rejects(captureDisplay({ screen, platform: 'win32', desktopCapturer: { getSources: async () => [{ display_id: '2', thumbnail: image(true) }] } }), error => /could not be captured/.test(error.message) && !/Screen Recording/.test(error.message));
 });
 
 test('screenshots only ever go to a local model, framed as untrusted data', async () => {
