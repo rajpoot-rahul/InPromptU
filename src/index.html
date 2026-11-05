@@ -24,6 +24,7 @@
       <button class="nav-item" data-view="skills"><span data-icon="grid"></span>Skill library</button>
       <button class="nav-item" data-view="progress"><span data-icon="chart"></span>My progress</button>
       <button class="nav-item" data-view="learn"><span data-icon="route"></span>Learner track</button>
+      <button class="nav-item" data-view="hyland"><span data-icon="book"></span>Hyland latest learning<span class="nav-badge" id="hyland-badge" hidden></span></button>
       <button class="nav-item" data-view="history"><span data-icon="clock"></span>Saved sessions</button>
     </nav>
     <div class="nav-label nav-section-label" id="preview-nav-label">PHASE 2 · LOCAL AI</div>
@@ -193,6 +194,49 @@
         </div>
         <div class="benchmark-body" id="ranked-on" hidden></div>
       </section>
+    </section>
+    <section id="hyland-view" class="view" hidden>
+      <div class="section-heading"><div class="eyebrow">HYLAND AI DISCUSSIONS, IN ONE PLACE</div><h1>Hyland latest learning.<br><span>Never lose the thread.</span></h1><p>Office hours, demos and recaps from Hyland’s AI discussions, such as AI Coding Tools – Open Office Hours. See what was discussed, open the attachments, and keep track of what you attended and what you have gone through. Your status and notes stay on this device.</p></div>
+      <section class="learn-summary hl-strip" aria-label="Your learning progress">
+        <div class="learn-progress"><strong id="hl-progress-label">No sessions yet</strong><progress id="hl-progress" max="1" value="0"></progress><small id="hl-attended"></small></div>
+        <div class="hl-catchup"><span class="eyebrow">CATCH UP · NOT REVIEWED YET</span><div id="hl-catchup-list"></div></div>
+        <div class="hl-ai"><label for="hl-provider">AI for summaries and chat</label><select id="hl-provider" aria-describedby="hl-provider-note"></select><button type="button" class="primary compact" id="hl-digest"><span data-icon="spark"></span><span id="hl-digest-label">Catch me up</span></button><p class="help" id="hl-provider-note" role="status"></p></div>
+      </section>
+      <section class="panel hl-digest" id="hl-digest-panel" hidden><div class="panel-heading"><h2><span class="step-number">✳</span>Your catch-up digest</h2><span class="small-tag">AI-GENERATED · CHECK THE SOURCES</span></div><div class="benchmark-body" id="hl-digest-body"></div></section>
+      <div class="context-steps">
+        <section class="panel"><div class="panel-heading"><h2><span class="step-number">01</span>Import collected sessions</h2><span class="small-tag" id="hl-folder-tag">FOLDER</span></div><div class="benchmark-body">
+          <p>Each session is a folder with a <code>session.md</code> and an optional <code>attachments/</code> folder. New and changed sessions are noticed while the app is open; choose <strong>Scan folder</strong> to import them.</p>
+          <p class="inbox-path">Learning folder: <code id="hl-folder-path"></code> <button type="button" class="text-button" id="hl-open-folder">Open folder ↗</button></p>
+          <p class="help" id="hl-folder-status" role="status"></p>
+          <div class="skillify-actions"><button type="button" class="primary compact" id="hl-scan"><span data-icon="download"></span>Scan folder</button></div>
+          <details class="handoff-details"><summary>The session.md format</summary><pre id="hl-format"></pre></details>
+        </div></section>
+        <section class="panel"><div class="panel-heading"><h2><span class="step-number">02</span>Or paste meeting notes</h2><span class="small-tag">TEAMS RECAP · CONFLUENCE · NOTES</span></div><div class="benchmark-body hl-paste">
+          <div class="field-pair"><div><label for="hl-series">Series</label><input id="hl-series" maxlength="100" list="hl-series-list" placeholder="e.g. AI Coding Tools - Open Office Hours"><datalist id="hl-series-list"></datalist></div><div><label for="hl-title-input">Title</label><input id="hl-title-input" maxlength="160" placeholder="Session title"></div></div>
+          <div class="field-pair"><div><label for="hl-date">Date</label><input id="hl-date" type="date"></div><div><label for="hl-source-input">Source</label><select id="hl-source-input"><option value="teams-recap">Teams recap</option><option value="confluence">Confluence</option><option value="manual">My own notes</option></select></div></div>
+          <label for="hl-url">Link to the recording or page <span class="optional">optional · https only</span></label><input id="hl-url" type="url" maxlength="2000" placeholder="https://…">
+          <label for="hl-paste-text">Meeting notes</label><textarea id="hl-paste-text" rows="6" maxlength="60000" placeholder="Paste the Teams recap (Meeting notes, Follow-up tasks…) or your own notes"></textarea>
+          <div class="skillify-actions"><button type="button" class="primary compact" id="hl-add">Add session</button><span class="help">Likely secrets are removed before saving.</span></div>
+        </div></section>
+      </div>
+      <div class="skills-toolbar"><h2>Sessions <span class="optional" id="hl-count"></span></h2></div>
+      <div class="context-layout"><div id="hl-list" class="pack-list"></div>
+        <section class="panel pack-review" id="hl-review" hidden>
+          <div class="panel-heading"><h2 id="hl-title"></h2><span class="small-tag" id="hl-source"></span></div>
+          <div class="benchmark-body">
+            <p class="pack-meta"><span id="hl-meta"></span> <button type="button" class="text-button" id="hl-open-source">Open the recording or page ↗</button></p>
+            <div class="hl-toggles"><label class="checkbox-label"><input type="checkbox" id="hl-attended-toggle">I attended</label><label class="checkbox-label"><input type="checkbox" id="hl-reviewed-toggle">I’ve gone through this content</label></div>
+            <div id="hl-warnings"></div>
+            <div class="skillify-actions"><button type="button" class="secondary" id="hl-summarize"><span data-icon="spark"></span><span id="hl-summarize-label">Summarize with AI</span></button><button type="button" class="primary compact" id="hl-chat"><span data-icon="chat"></span>Talk about this session</button></div>
+            <div id="hl-ai-block"></div>
+            <div id="hl-sections" class="hl-sections"></div>
+            <h3 class="hl-heading">ATTACHMENTS</h3><div id="hl-attachments" class="inbox-list"></div>
+            <div class="hl-link-row"><label for="hl-link-label" class="sr-only">Link label</label><input id="hl-link-label" maxlength="200" placeholder="Label, e.g. Slides"><label for="hl-link-url" class="sr-only">Link address</label><input id="hl-link-url" type="url" maxlength="2000" placeholder="https://…"><button type="button" class="secondary" id="hl-link-add">Add link</button></div>
+            <label for="hl-notes">My notes <span class="optional">private · stored only on this device · not sent to AI</span></label><textarea id="hl-notes" rows="4" maxlength="4000" placeholder="What I want to try, questions to ask next time…"></textarea>
+            <div class="skillify-actions"><button type="button" class="secondary" id="hl-notes-save">Save notes</button><button type="button" class="text-button delete" id="hl-delete">Remove from this device</button></div>
+          </div>
+        </section>
+      </div>
     </section>
     <section id="history-view" class="view" hidden><div class="section-heading row-heading"><div><div class="eyebrow">PICK UP WHERE YOU LEFT OFF</div><h1>Saved sessions<span>.</span></h1><p>Only sessions you explicitly save appear here. Stored on this device.</p></div><button id="export-history" class="secondary"><span data-icon="download"></span>Export JSON</button></div><div id="history-list"></div></section>
     <section id="progress-view" class="view" hidden><div class="section-heading"><div class="eyebrow">YOUR OWN LEARNING JOURNEY</div><h1>Small habits.<br><span>Clearer requests.</span></h1><p>A personal reflection on your saved drafts. No rankings or employee scoring.</p></div><div id="progress-content"></div></section>

@@ -13,6 +13,7 @@ const learning = require('./learning.cjs');
 const { EvidenceCache, evidenceContext, summaries: evidenceSummaries } = require('./evidence.cjs');
 const mascotLib = require('./mascot.cjs');
 const contextLib = require('./context.cjs');
+const hylandLib = require('./hyland-learning.cjs');
 const installer = require('./installer.cjs');
 const { KnowledgeService, sourceURL } = require('./knowledge.cjs');
 
@@ -22,7 +23,7 @@ if (process.platform === 'win32') app.setAppUserModelId('com.impromptu.companion
 if (process.env.IMPROMPTU_USER_DATA) app.setPath('userData', path.resolve(process.env.IMPROMPTU_USER_DATA));
 const lock = app.requestSingleInstanceLock();
 if (!lock) app.quit();
-let chats, skillStore, packStore, inboxWatcher = null;
+let chats, skillStore, packStore, learningStore, inboxWatcher = null, learningWatcher = null;
 const evidenceCache = new EvidenceCache();
 const coach = new mascotLib.Coach();
 let mascotWin = null, mascotTimer = null, mascotView = { busy: '', capturing: false, message: null, nudge: null, vision: { ok: false, message: 'Checking your local model…' } };
@@ -137,6 +138,13 @@ function contextState() {
   return { packs: packStore.summaries(), inbox: { path: inboxDir(), exists: fs.existsSync(inboxDir()), files: contextLib.inboxFiles(inboxDir()) }, skills: Object.entries(targets).map(([tool, file]) => ({ tool, path: file, installed: fs.existsSync(file) })), prompt: contextLib.handoffPrompt(inboxDir()), sections: contextLib.SECTIONS };
 }
 function ensureInbox() { fs.mkdirSync(inboxDir(), { recursive: true, mode: 0o700 }); watchInbox(); }
+const learningDir = () => process.env.IMPROMPTU_LEARNING_DIR ? path.resolve(process.env.IMPROMPTU_LEARNING_DIR) : path.join(app.getPath('home'), 'Impromptu', 'Learning');
+function watchLearning() {
+  if (learningWatcher || !fs.existsSync(learningDir())) return;
+  let timer;
+  try { learningWatcher = fs.watch(learningDir(), { recursive: true }, () => { clearTimeout(timer); timer = setTimeout(() => win?.webContents.send('learning-folder-changed', hylandLib.pendingFolders(learningDir(), learningStore)), 600); }); learningWatcher.on('error', () => { try { learningWatcher?.close(); } catch {} learningWatcher = null; }); learningWatcher.unref?.(); } catch { learningWatcher = null; }
+}
+function hylandState() { const exists = fs.existsSync(learningDir()); return { ...learningStore.overview(), folder: { path: learningDir(), exists, pending: exists ? hylandLib.pendingFolders(learningDir(), learningStore) : 0 }, format: hylandLib.FORMAT, sources: hylandLib.SOURCES }; }
 const mascotEntry = pathToFileURL(path.join(__dirname, 'mascot.html')).href;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 function mascotPermissions() {
@@ -277,7 +285,8 @@ if (lock) {
     chats = new ChatStore(path.join(app.getPath('userData'), 'chats.json'));
     skillStore = new SkillStore(path.join(app.getPath('userData'), 'skills.json'));
     packStore = new contextLib.PackStore(path.join(app.getPath('userData'), 'context-packs.json'));
-    watchInbox();
+    learningStore = new hylandLib.LearningStore(path.join(app.getPath('userData'), 'learning-sessions.json'));
+    watchInbox(); watchLearning();
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     handle('bootstrap', () => publicState());
@@ -601,6 +610,56 @@ if (lock) {
       if (result.canceled) return false;
       fs.writeFileSync(result.filePath, pack.text, { mode: 0o600 }); return true;
     });
+    handle('hyland-state', () => hylandState());
+    handle('hyland-scan', () => {
+      const { found, skipped } = hylandLib.scanFolder(learningDir());
+      const counts = { added: 0, updated: 0, unchanged: 0 };
+      for (const item of found) {
+        try { counts[learningStore.upsert(item.text, { origin: 'folder', folder: item.folder, modified: item.modified }).status]++; }
+        catch (error) { skipped.push(`${path.basename(item.folder)}: ${error.message}`); }
+      }
+      watchLearning();
+      return { ...counts, skipped: skipped.slice(0, 20), state: hylandState() };
+    });
+    handle('hyland-open-folder', async () => { fs.mkdirSync(learningDir(), { recursive: true, mode: 0o700 }); watchLearning(); const error = await shell.openPath(learningDir()); if (error) throw new Error(error); return hylandState(); });
+    handle('hyland-paste', ({ text, series, title, date, url, source } = {}) => {
+      const field = (value, max) => typeof value === 'string' ? value.trim().slice(0, max) : '';
+      if (typeof text !== 'string' || !text.trim()) throw new Error('Paste the meeting notes or Teams recap first.');
+      if (url && !hylandLib.safeUrl(url)) throw new Error('The meeting link must be a complete https:// address.');
+      const { session, status } = learningStore.upsert(text, { origin: 'paste', loose: true, defaults: { series: field(series, 100), title: field(title, 160), date: /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : '', url: field(url, 2000), source: hylandLib.SOURCES.includes(source) ? source : 'teams-recap' } });
+      return { session, status, state: hylandState() };
+    });
+    handle('hyland-status', ({ id, attended, reviewed } = {}) => { learningStore.setStatus(id, { attended, reviewed }); return hylandState(); });
+    handle('hyland-notes', ({ id, notes } = {}) => { learningStore.setNotes(id, notes); return hylandState(); });
+    handle('hyland-add-link', ({ id, label, url } = {}) => { learningStore.addLink(id, { label: typeof label === 'string' ? label : '', url }); return hylandState(); });
+    handle('hyland-delete', id => { learningStore.delete(id); return hylandState(); });
+    handle('hyland-open', async ({ id, target } = {}) => {
+      const session = learningStore.get(id);
+      const item = target === 'source' ? { kind: 'link', href: session.url } : Number.isInteger(target) ? session.attachments[target] : null;
+      if (!item) throw new Error('This attachment no longer exists.');
+      if (item.kind === 'link') { const url = hylandLib.safeUrl(item.href); if (!url) throw new Error('Only https:// links can be opened.'); await shell.openExternal(url); return true; }
+      if (item.kind !== 'file') throw new Error('This link was blocked because it is not a safe https:// address or a file in the session folder.');
+      const error = await shell.openPath(hylandLib.resolveAttachment(learningDir(), session, item.href)); if (error) throw new Error(error); return true;
+    });
+    handle('hyland-summarize', async ({ id, mode, provider } = {}) => {
+      if (busy) throw new Error('Wait for the current request to finish.');
+      const digest = mode === 'digest';
+      const sessions = digest ? learningStore.overview().progress.catchUp.map(s => learningStore.get(s.id)) : [learningStore.get(id)];
+      let connection, key = '', label;
+      if (typeof provider === 'string' && provider.startsWith('local:')) { connection = validateConnection({ mode: 'ollama', endpoint: chatEndpoint(), model: chatModel(provider.slice(6)) }); label = `Local LLM · ${connection.model}`; }
+      else if (provider === 'cloud') { const problem = cloudProblem(); if (problem) throw new Error(problem); connection = state.connection; key = sessionKey; label = `${cloudLabel(connection)} · ${connection.model}`; }
+      else throw new Error('Choose a local model, or your configured cloud provider.');
+      assertAllowed(connection, state.localOnly);
+      const messages = hylandLib.digestMessages(sessions, digest ? 'digest' : 'session');
+      busy = true;
+      try {
+        const start = Date.now();
+        const { content, usage } = await complete(messages, connection, key);
+        const result = { ...hylandLib.parseDigest(content), label, local: connection.mode === 'ollama', usage, at: new Date().toISOString(), durationMs: Date.now() - start, count: Math.min(sessions.length, hylandLib.LIMITS.digestSessions) };
+        if (!digest) learningStore.setAI(id, result);
+        learn('digest'); return { result, state: hylandState() };
+      } finally { busy = false; }
+    });
     handle('setup-dismiss', () => { state.setup = { ...state.setup, dismissed: true }; persist(); return publicState(); });
     const helpLinks = { 'ollama-download': 'https://ollama.com/download', 'ollama-models': 'https://ollama.com/search' };
     handle('open-help', async id => {
@@ -699,6 +758,6 @@ function updateTray() {
   ]));
 }
 app.on('activate', () => { if (state) show(); });
-app.on('before-quit', () => { quitting = true; try { inboxWatcher?.close(); } catch {} knowledge?.close(); for (const controller of chatReplies.values()) controller.abort(); });
+app.on('before-quit', () => { quitting = true; try { inboxWatcher?.close(); learningWatcher?.close(); } catch {} knowledge?.close(); for (const controller of chatReplies.values()) controller.abort(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => {});

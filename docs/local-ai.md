@@ -49,6 +49,32 @@ Format `impromptu-context-pack/1`: Markdown with front matter (`format`, `source
 - Extension points for other importers (Cursor/Codex transcripts, ChatGPT/Claude data exports): produce a pack string and call `PackStore.add(text, { origin })`. Condense raw transcripts with a local model before calling it.
 - Chat providers: `chatProviders()` returns `{ local: [{ model, label }], cloud: [{ mode, label, available, reason }], localOnly }`. `chatNew({ provider: 'cloud' })` creates a chat bound to the configured cloud connection (`provider: 'cloud'`, `providerLabel`), and `chatSend` then uses `provider.complete` instead of Ollama streaming. `bedrock.converseInput` turns messages into alternating Bedrock turns.
 
+## Hyland latest learning (`src/hyland-learning.cjs`)
+
+Format `impromptu-learning-session/1`, written by collecting agents (Teams recaps, Confluence pages, manual notes) into `~/Impromptu/Learning/<YYYY-MM-DD>-<slug>/session.md`, with files in an `attachments/` subfolder:
+
+```markdown
+---
+format: impromptu-learning-session/1
+series: <series name>
+title: <title>
+date: <ISO date>
+source: teams-recap | confluence | manual
+url: <https link>
+---
+## Summary
+## Action items
+## Topics
+## Attachments
+(Markdown links; relative links point into attachments/)
+```
+
+- Parsing is tolerant: every section is optional, list items may be `-`, `*`, `1.` or plain lines (Topics may be comma-separated), and headings such as "Meeting notes", "Follow-up tasks" and "Chapters" are recognised. Without front matter, bare-line headings (as in pasted Teams recaps) also count. Missing title and date fall back to a `# heading` and the folder name. `session.md` must be a regular file of 300 KB or less; symlinks are skipped. `IMPROMPTU_LEARNING_DIR` overrides the folder.
+- Attachments are classified as `link` (credential-free public `https://` addresses only; see `safeUrl`), `file` (a relative path that cannot escape the session folder) or `blocked`. `resolveAttachment` follows symlinks and requires the result to be inside the learning folder and to have a document, media or text extension.
+- Store: `learning-sessions.json` holds `{ version: 1, sessions: [{ id, series, title, date, source, url, summary, actionItems[], topics[], attachments[{ label, kind, href, manual? }], missing[], redacted[], origin: folder|paste, folder, folderName, sourceModified, importedAt, updatedAt, attended, reviewed, notes, ai }] }`. `attended` and `reviewed` are ISO timestamps or `""`. `ai` is the last session summary `{ overview, points[], actions[], label, local, usage, at }`. Up to 300 sessions; notes up to 4,000 characters. Sessions are deduplicated by folder name, then by date and title, and an update keeps the personal fields.
+- IPC: `hylandState()` returns `{ series: [{ name, sessions }], progress: { total, reviewed, attended, catchUp[] }, folder: { path, exists, pending }, format, sources }`. The others are `hylandScan()`, `hylandOpenFolder()`, `hylandPaste({ text, series, title, date, url, source })`, `hylandStatus({ id, attended?, reviewed? })`, `hylandNotes({ id, notes })`, `hylandAddLink({ id, label, url })`, `hylandDelete(id)`, `hylandOpen({ id, target: 'source' | attachmentIndex })` and `hylandSummarize({ id?, mode: 'session' | 'digest', provider: 'local:<model>' | 'cloud' })`, plus the event `learning-folder-changed` (pending count). The renderer never passes a URL or path to open, only a session ID and an index.
+- AI: `digestMessages` frames the session notes as untrusted data and asks for JSON `{ overview, points, actions }`, which `parseDigest` validates. Digests cover up to 12 unreviewed sessions within 24,000 characters. Personal notes are never sent. The main process calls `assertAllowed` before `provider.complete`.
+
 ## Mascot (`src/mascot.cjs`, `mascot.html`)
 
 - `workspace.json` → `mascot: { enabled, consentAt, nudges, breakMinutes, scrollFrames, visionModel }`. `enabled` is ignored without `consentAt`.
