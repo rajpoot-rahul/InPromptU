@@ -1,0 +1,76 @@
+name: Desktop release
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish BOTH tested installers as the latest release
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: mac
+          - os: windows-2025
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run installer:${{ matrix.platform }}
+      - name: Mac packaged startup checks
+        if: matrix.platform == 'mac'
+        run: node scripts/check-mac-startup.cjs
+      - name: Windows installation, startup and uninstall checks
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: ./scripts/check-windows-installer.ps1
+      - run: npm run stage:${{ matrix.platform }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: release/distribution/${{ matrix.platform }}/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+  publish:
+    if: inputs.publish && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: release/distribution
+      - name: Verify matching versions and publish both platforms
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/publish-release.cjs

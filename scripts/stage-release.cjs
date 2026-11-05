@@ -1,0 +1,17 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { execFileSync } = require('node:child_process');
+const { version } = require('../package.json');
+const platform = process.argv[2];
+if (!['mac', 'windows'].includes(platform)) throw new Error('Choose mac or windows.');
+const source = platform === 'mac' ? `release/Impromptu-${version}-Mac-Apple-Silicon-Installer.pkg` : `release/windows-installer/Impromptu-${version}-Windows-x64-Setup.exe`;
+const name = platform === 'mac' ? 'Impromptu-Mac-Apple-Silicon-Installer.pkg' : 'Impromptu-Windows-x64-Setup.exe';
+const output = path.join('release', 'distribution', platform);
+fs.mkdirSync(output, { recursive: true });
+fs.copyFileSync(source, path.join(output, name));
+const sha256 = crypto.createHash('sha256').update(fs.readFileSync(source)).digest('hex');
+const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+fs.writeFileSync(path.join(output, `${platform}.json`), JSON.stringify({ version, commit, platform, file: name, sha256 }, null, 2) + '\n');
+console.log(`Staged ${name} from ${commit}`);

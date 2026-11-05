@@ -13,7 +13,7 @@ const version = require('../package.json').version;
     appBundleId: 'com.impromptu.companion', appCategoryType: 'public.app-category.productivity',
     appCopyright: 'Impromptu hackathon prototype',
     icon: path.join(root, 'src/assets', platform === 'darwin' ? 'icon.icns' : 'icon.ico'),
-    ignore: [/^\/release($|\/)/, /^\/tests($|\/)/, /^\/scripts($|\/)/, /^\/docs($|\/)/, /^\/\.github($|\/)/, /^\/\.cache($|\/)/, /^\/\.git($|\/)/, /^\/README\.md$/, /^\/Launch Impromptu\.command$/],
+    ignore: [/^\/release($|\/)/, /^\/tests($|\/)/, /^\/scripts($|\/)/, /^\/docs($|\/)/, /^\/\.github($|\/)/, /^\/\.cache($|\/)/, /^\/\.git($|\/)/, /^\/README\.md$/, /^\/CONTRIBUTING\.md$/, /^\/\.nvmrc$/, /^\/Launch Impromptu\.command$/],
     osxSign: false,
     win32metadata: { CompanyName: 'Impromptu', FileDescription: 'Impromptu prompt companion', ProductName: 'Impromptu' }
   });

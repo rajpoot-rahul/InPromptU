@@ -8,11 +8,16 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/engine.cjs && node --check src/provider.cjs && node --check src/codex.cjs && node --check src/knowledge.cjs && node --check src/renderer.js",
+    "check": "node scripts/check.cjs",
     "package:mac": "node scripts/package.cjs darwin arm64",
     "package:windows": "node scripts/package.cjs win32 x64",
     "installer:mac": "npm run package:mac && node scripts/installer-mac.cjs arm64",
-    "installer:windows": "npm run package:windows && node scripts/installer-windows.cjs"
+    "installer:windows": "npm run package:windows && node scripts/installer-windows.cjs",
+    "dev": "node scripts/dev.cjs",
+    "doctor": "node scripts/doctor.cjs",
+    "verify": "npm run check && npm test",
+    "stage:mac": "node scripts/stage-release.cjs mac",
+    "stage:windows": "node scripts/stage-release.cjs windows"
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",
@@ -22,5 +27,8 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1161.0",
     "@aws-sdk/credential-providers": "^3.1161.0"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }
