@@ -25,9 +25,8 @@
   input:focus, textarea:focus, select:focus { outline-color: #91b59c; }
   textarea::placeholder, input::placeholder { color: #8b9d90; }
 
-  .titlebar { background: #121715; }
   .sidebar, .topbar { background: #171e1a; }
-  .titlebar span, .workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol,
+  .workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol,
   .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number,
   .sample-row > span, .optional, .detail-arrow, .skill-picker > label,
   .skill-picker p, .editor-footer p, .empty-footnote, .usage-note,

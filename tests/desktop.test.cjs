@@ -6,18 +6,19 @@ const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const insights = require('../src/insights.cjs');
+const { EventEmitter } = require('node:events');
 
-function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {}) {
+function desktop(t, { platform = 'darwin', theme = 'system', dialog = {}, savedState = {} } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-test-'));
-  fs.writeFileSync(path.join(data, 'workspace.json'), JSON.stringify({ connection: { mode: 'offline', endpoint: '', model: '' }, theme, history: [] }));
+  fs.writeFileSync(path.join(data, 'workspace.json'), JSON.stringify({ connection: { mode: 'offline', endpoint: '', model: '' }, theme, history: [], ...savedState }));
   const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [], opened = [], appEvents = new Map();
   // Runs the app's own quit cleanup so fs.watch handles close; unref'd watchers still kept the Windows test process alive.
   t.after(() => { for (const name of ['before-quit', 'will-quit']) for (const listener of appEvents.get(name) || []) listener(); });
   t.after(() => fs.rmSync(data, { recursive: true, force: true }));
   let ready, window, copied = 'Synthetic test prompt';
-  class BrowserWindow {
-    constructor(options) { windows.push(this); if (!window) window = this; this.options = options; this.alwaysOnTop = []; this.vibrancy = options.vibrancy || null; this.background = options.backgroundColor; this.vibrancyCalls = 0; this.webContents = { send: (...args) => events.push(args), isLoading: () => false, setWindowOpenHandler() {}, on() {} }; }
-    loadFile() {} on() {} once() {} isDestroyed() { return false; } isMinimized() { return false; } show() {} focus() {} hide() {}
+  class BrowserWindow extends EventEmitter {
+    constructor(options) { super(); windows.push(this); if (!window) window = this; this.options = options; this.shown = 0; this.hidden = 0; this.alwaysOnTop = []; this.vibrancy = options.vibrancy || null; this.background = options.backgroundColor; this.vibrancyCalls = 0; this.webContents = { send: (...args) => events.push(args), isLoading: () => false, setWindowOpenHandler() {}, on() {} }; }
+    loadFile() {} isDestroyed() { return false; } isMinimized() { return false; } show() { this.shown++; } focus() {} hide() { this.hidden++; }
     setVibrancy(value) { this.vibrancy = value; this.vibrancyCalls++; }
     setAlwaysOnTop(...args) { this.alwaysOnTop.push(args); } setVisibleOnAllWorkspaces() {} showInactive() {} setBounds() {} setFocusable() {} destroy() { this.destroyed = true; }
     setBackgroundColor(value) { this.background = value; }
@@ -39,7 +40,7 @@ function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {})
   vm.runInNewContext(fs.readFileSync(path.join(dir, 'main.cjs'), 'utf8'), { require: name => name === 'electron' ? fake : name.startsWith('./') ? require(path.join(dir, name)) : require(name), __dirname: dir, process: { platform, env: {} }, console, AbortController, URL, setTimeout, clearTimeout, setInterval: () => 0, clearInterval: () => {} });
   ready();
   const sender = { sender: window.webContents, senderFrame: { url: pathToFileURL(path.join(dir, 'index.html')).href } };
-  return { handlers, shortcuts, events, sender, window, windows, appCalls, trays, menus, data, opened, nativeTheme: fake.nativeTheme, copied: () => copied };
+  return { handlers, shortcuts, events, sender, window, windows, appCalls, trays, menus, data, opened, nativeTheme: fake.nativeTheme, copied: () => copied, emitApp: name => { for (const listener of appEvents.get(name) || []) listener(); } };
 }
 
 test('Windows sets the installer app ID, shows a full-colour tray icon and uses Ctrl+Shift+I; the Mac keeps its template icon', async t => {
@@ -59,6 +60,78 @@ test('Windows sets the installer app ID, shows a full-colour tray icon and uses 
   assert.equal(path.basename(mac.trays[0].image.file), 'tray.png');
   assert.equal(mac.trays[0].image.template, true);
   assert.equal(mac.menus[0][0].label, 'Impromptu');
+});
+
+test('Mac keeps native controls and ready-to-show, hides on close, restores from the Dock, and clears context on Quit', async t => {
+  const { window, handlers, sender, emitApp, menus } = desktop(t, { platform: 'darwin', theme: 'glass' });
+  assert.equal(window.options.titleBarStyle, 'default');
+  assert.equal(window.options.trafficLightPosition, undefined);
+  assert.equal(window.options.frame, undefined);
+  assert.equal(window.options.show, false);
+  assert.equal(window.options.vibrancy, 'under-window');
+  assert.equal(window.shown, 0);
+  window.emit('ready-to-show');
+  assert.equal(window.shown, 1);
+  const bridge = await handlers.get('agent-context-browser')(sender, true);
+  let prevented = false;
+  window.emit('close', { preventDefault() { prevented = true; } });
+  assert.equal(prevented, true); assert.equal(window.hidden, 1);
+  assert.equal((await handlers.get('agent-context-state')(sender)).browser.enabled, true);
+  emitApp('activate'); assert.equal(window.shown, 2);
+  assert.ok(menus[0][0].submenu.some(item => item.role === 'quit'));
+  emitApp('before-quit');
+  assert.equal((await handlers.get('agent-context-state')(sender)).browser.enabled, false);
+  assert.deepEqual((await handlers.get('agent-context-state')(sender)).entries, []);
+  await assert.rejects(fetch(`http://127.0.0.1:${bridge.port}/ping`));
+  prevented = false;
+  window.emit('close', { preventDefault() { prevented = true; } });
+  assert.equal(prevented, false);
+});
+
+for (const platform of ['darwin', 'win32']) {
+  test(`${platform}: Context packs defaults off and its persisted toggle keeps saved packs and provider settings`, async t => {
+    const instance = desktop(t, { platform });
+    const call = (name, input) => instance.handlers.get(name)(instance.sender, input);
+    assert.equal((await call('bootstrap')).contextPacksEnabled, false);
+    await call('set-context-packs-enabled', true);
+    const pack = await call('context-import-paste', { text: '---\nformat: impromptu-context-pack/1\ntitle: Sample handoff\n---\n## Goal\nContinue the work\n## Decisions made\nKeep offline support', redactSecrets: true });
+    assert.ok(pack);
+    const enabled = JSON.parse(fs.readFileSync(path.join(instance.data, 'workspace.json')));
+    const reopened = desktop(t, { platform, savedState: enabled });
+    assert.equal((await reopened.handlers.get('bootstrap')(reopened.sender)).contextPacksEnabled, true);
+    await call('set-context-packs-enabled', false);
+    assert.equal((await call('bootstrap')).contextPacksEnabled, false);
+    assert.equal((await call('context-state')).packs.length, 1);
+    assert.deepEqual((await call('bootstrap')).connection, enabled.connection);
+    await assert.rejects(call('set-context-packs-enabled', 'true'), /Choose whether/);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(instance.data, 'workspace.json'))).contextPacksEnabled, false);
+  });
+
+  test(`${platform}: installed app exports the bundled extension to a stable folder without enabling sharing`, async t => {
+    const { handlers, sender, data, opened } = desktop(t, { platform });
+    const { FILES } = require('../src/context-extension.cjs');
+    const folder = await handlers.get('agent-context-extension-folder')(sender);
+    assert.equal(folder, path.join(data, 'browser-extensions', 'chatgpt-context'));
+    assert.equal(opened.at(-1), folder);
+    assert.deepEqual(fs.readdirSync(folder).sort(), [...FILES].sort());
+    for (const name of FILES) assert.deepEqual(fs.readFileSync(path.join(folder, name)), fs.readFileSync(path.join(__dirname, '../extensions/chatgpt-context', name)));
+    assert.equal((await handlers.get('agent-context-state')(sender)).browser.enabled, false);
+    fs.writeFileSync(path.join(folder, 'background.js'), 'old version');
+    assert.equal(await handlers.get('agent-context-extension-folder')(sender), folder);
+    assert.match(fs.readFileSync(path.join(folder, 'background.js'), 'utf8'), /TRUSTED_CONTEXTS/);
+    await assert.rejects(handlers.get('agent-context-extension-folder')({ ...sender, senderFrame: { url: 'https://example.com' } }), /Untrusted/);
+  });
+}
+
+test('Mac Locate Codex can browse an app bundle and remembers the selected binary with spaces in its path', async t => {
+  let executable, options;
+  const { handlers, sender, data } = desktop(t, { platform: 'darwin', dialog: { showOpenDialog: async (_window, input) => { options = input; return { canceled: false, filePaths: [executable] }; } } });
+  executable = path.join(data, 'Test Codex.app', 'Contents', 'Resources', 'codex');
+  fs.mkdirSync(path.dirname(executable), { recursive: true }); fs.writeFileSync(executable, 'synthetic');
+  await handlers.get('knowledge-locate')(sender);
+  assert.deepEqual([...options.properties], ['openFile', 'treatPackageAsDirectory']);
+  assert.equal(options.filters, undefined);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'workspace.json'))).codexPath, executable);
 });
 
 test('the Windows mascot is a non-activating, always-on-top tool window that needs no permission prompts', async t => {
@@ -224,6 +297,35 @@ test('guided local setup tests the chosen installed model, then saves it with lo
   const saved = JSON.parse(fs.readFileSync(path.join(data, 'workspace.json')));
   assert.deepEqual([saved.connection.model, saved.localOnly, Boolean(saved.setup.completedAt)], ['gemma4:latest', true, true]);
   await assert.rejects(handlers.get('local-ai-use')(sender, { model: 'gemma4:latest', endpoint: 'https://remote.example/api/chat' }), /localhost/);
+});
+
+for (const platform of ['darwin', 'win32']) test(`${platform}: agent context stays opt-in, traverses the paired bridge and IPC into a prompt, and clears on disconnect`, async t => {
+  const { handlers, sender, copied, data } = desktop(t, { platform });
+  const call = (name, input) => handlers.get(name)(sender, input);
+  assert.equal((await call('agent-context-state')).browser.enabled, false);
+  assert.equal((await call('agent-context-state')).codex.enabled, false);
+  await call('save-settings', { mode: 'offline', endpoint: '', model: '', apiKey: '', localOnly: true });
+  const browser = await call('agent-context-browser', true);
+  t.after(() => call('agent-context-browser', false));
+  await call('agent-context-pair');
+  const token = copied().split(':')[2];
+  const received = await fetch(`http://127.0.0.1:${browser.port}/context`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ url: 'https://chatgpt.com/c/test', title: 'Offline checkout', messages: [{ role: 'user', text: 'Reproduce the checkout failure with coupon SAVE10. Keep offline support.' }] }) });
+  assert.equal(received.status, 200);
+  assert.equal((await call('agent-context-state')).entries.length, 1);
+  const plain = await call('improve', { prompt: 'fix this' });
+  assert.doesNotMatch(plain.improved, /SAVE10/);
+  const result = await call('improve', { prompt: 'fix this', agentContext: true, agentTarget: 'auto' });
+  assert.match(result.improved, /SAVE10/); assert.equal(result.agentSources[0].source, 'chatgpt');
+  assert.doesNotMatch(fs.readFileSync(path.join(data, 'workspace.json'), 'utf8'), /SAVE10/);
+  const promptHistory = fs.readFileSync(path.join(data, 'prompt-log.json'), 'utf8');
+  assert.equal((await call('insights-state')).count, 2);
+  assert.match(promptHistory, /fix this/);
+  assert.doesNotMatch(promptHistory, /SAVE10|Offline checkout/);
+  const unknown = { ...sender, senderFrame: { url: 'https://evil.example' } };
+  await assert.rejects(handlers.get('agent-context-state')(unknown));
+  await call('agent-context-browser', false);
+  assert.equal((await call('agent-context-state')).entries.length, 0);
+  await assert.rejects(call('improve', { prompt: 'fix this', agentContext: true }), /Connect a source/);
 });
 
 test('local-only mode is enforced in the main process for cloud providers and knowledge', async t => {

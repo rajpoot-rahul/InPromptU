@@ -112,7 +112,14 @@ class PromptLog {
     fs.mkdirSync(path.dirname(this.file), { recursive: true, mode: 0o700 });
     const tmp = `${this.file}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify({ version: 1, enabled: this.enabled, entries: this.entries }), { mode: 0o600 });
-    fs.renameSync(tmp, this.file);
+    // Windows can briefly lock a recently written file. Keep the old log intact while retrying the atomic replacement.
+    for (let retry = 0; ; retry++) {
+      try { fs.renameSync(tmp, this.file); break; }
+      catch (error) {
+        if (process.platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(error.code) || retry === 5) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10 * 2 ** retry);
+      }
+    }
   }
   record(entry) {
     if (!this.enabled || !validEntry(entry)) return false;

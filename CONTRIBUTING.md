@@ -18,7 +18,7 @@ Create a branch from updated main, make changes, then run:
 npm run verify
 ```
 
-This checks every JavaScript source/build/test file, validates version alignment and runs the unit tests. Open a PR; Desktop checks runs on Mac and Windows. The repository owner should require both jobs in branch protection before a team-wide rollout. Those remote settings are not configured by these files.
+This checks every JavaScript source/build/test file, validates version alignment and runs the unit tests. Open a PR; Desktop checks runs on Apple Silicon Mac (`macos-15`), Intel Mac (`macos-15-intel`) and Windows. Each Mac job also packages its native architecture, checks that context modules and the companion extension are bundled, and smoke-starts the packaged app in all five themes. The repository owner should require all three jobs in branch protection before a team-wide rollout. Those remote settings are not configured by these files. The standard release workflow still distributes the Apple Silicon Mac installer and Windows x64 installer.
 
 Use `npm ci` after pulling a changed lockfile. Runtime libraries belong in `dependencies`; build/test tools belong in `devDependencies`. Commit both package files together. Never bulk-replace a version string in the lockfile, because it can change unrelated dependencies.
 
@@ -77,6 +77,13 @@ An existing version/tag is never overwritten. If publication fails, inspect the 
 ## Manual acceptance
 
 On each actual OS: verify displayed version, switch all five themes, resize and switch tabs, copy sample text and summon using the global shortcut, save/reopen a sample session, and test one authorised provider. Check upgrade preservation of settings/history. Verify company Codex/Atlassian access separately. Automated startup checks do not replace these interactive checks.
+
+For the context and layout changes, also verify on a Mac:
+- The promotional header is absent; the native traffic-light buttons and window dragging still work. Resize to the minimum supported window size and scroll the sidebar to Settings.
+- Context packs starts hidden. Enable it in Settings, quit and relaunch, then disable it while viewing a saved pack. The workspace returns to Prompt workspace and the saved pack is still available when enabled again.
+- Connect Codex history from an app launched through Finder, inspect a task and refresh. Use Locate Codex to browse inside an app bundle if discovery fails. Check the installed CLI supports the history API; unit tests do not verify account sign-in or CLI-version compatibility.
+- Choose Open extension folder, load it into Chrome or Edge, pair it, and confirm one fictional saved ChatGPT conversation appears. Safari and the native ChatGPT app are outside this integration's coverage.
+- Close the window and reopen it from the menu bar/Dock. Quit fully, relaunch, and confirm both sources start off and the previous pairing code no longer works.
 
 ## If pushing is blocked in the coding environment
 

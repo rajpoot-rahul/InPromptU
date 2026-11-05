@@ -13,6 +13,9 @@ const learning = require('./learning.cjs');
 const { EvidenceCache, evidenceContext, summaries: evidenceSummaries } = require('./evidence.cjs');
 const mascotLib = require('./mascot.cjs');
 const contextLib = require('./context.cjs');
+const { AgentContext } = require('./agent-context.cjs');
+const { ContextBridge } = require('./context-bridge.cjs');
+const { prepareExtension } = require('./context-extension.cjs');
 const hylandLib = require('./hyland-learning.cjs');
 const installer = require('./installer.cjs');
 const { KnowledgeService, sourceURL } = require('./knowledge.cjs');
@@ -26,6 +29,7 @@ if (process.env.IMPROMPTU_USER_DATA) app.setPath('userData', path.resolve(proces
 const lock = app.requestSingleInstanceLock();
 if (!lock) app.quit();
 let chats, skillStore, packStore, learningStore, inboxWatcher = null, learningPoll = null;
+let agentContext, contextBridge;
 const evidenceCache = new EvidenceCache();
 const coach = new mascotLib.Coach();
 let mascotWin = null, mascotTimer = null, mascotView = { busy: '', capturing: false, message: null, nudge: null, vision: { ok: false, message: 'Checking your local model…' } };
@@ -58,10 +62,10 @@ function applyAppearance() {
 }
 
 function readState() {
-  const defaults = { connection: { mode: 'offline', endpoint: '', model: '' }, theme: 'system', codexPath: '', importClipboard: true, localOnly: false, setup: { dismissed: false, completedAt: '' }, chat: { saveNewChats: true, model: '' }, learning: { events: {}, manual: {}, runs: [] }, ranked: { joined: false, alias: '', joinedAt: '', board: [] }, mascot: { ...mascotLib.DEFAULTS }, history: [] };
+  const defaults = { contextPacksEnabled: false, connection: { mode: 'offline', endpoint: '', model: '' }, theme: 'system', codexPath: '', importClipboard: true, localOnly: false, setup: { dismissed: false, completedAt: '' }, chat: { saveNewChats: true, model: '' }, learning: { events: {}, manual: {}, runs: [] }, ranked: { joined: false, alias: '', joinedAt: '', board: [] }, mascot: { ...mascotLib.DEFAULTS }, history: [] };
   try {
     const saved = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'workspace.json'), 'utf8'));
-    return { ...defaults, connection: validateConnection(saved.connection), theme: themes.includes(saved.theme) ? saved.theme : 'system', codexPath: typeof saved.codexPath === 'string' ? saved.codexPath : '', importClipboard: saved.importClipboard !== false, localOnly: saved.localOnly === true, setup: { dismissed: saved.setup?.dismissed === true, completedAt: typeof saved.setup?.completedAt === 'string' ? saved.setup.completedAt : '' }, chat: { saveNewChats: saved.chat?.saveNewChats !== false, model: typeof saved.chat?.model === 'string' ? saved.chat.model.slice(0, 200) : '' }, learning: readLearning(saved.learning), ranked: readRanked(saved.ranked), mascot: mascotLib.readSettings(saved.mascot), history: Array.isArray(saved.history) ? saved.history.slice(0, 100) : [] };
+    return { ...defaults, contextPacksEnabled: saved.contextPacksEnabled === true, connection: validateConnection(saved.connection), theme: themes.includes(saved.theme) ? saved.theme : 'system', codexPath: typeof saved.codexPath === 'string' ? saved.codexPath : '', importClipboard: saved.importClipboard !== false, localOnly: saved.localOnly === true, setup: { dismissed: saved.setup?.dismissed === true, completedAt: typeof saved.setup?.completedAt === 'string' ? saved.setup.completedAt : '' }, chat: { saveNewChats: saved.chat?.saveNewChats !== false, model: typeof saved.chat?.model === 'string' ? saved.chat.model.slice(0, 200) : '' }, learning: readLearning(saved.learning), ranked: readRanked(saved.ranked), mascot: mascotLib.readSettings(saved.mascot), history: Array.isArray(saved.history) ? saved.history.slice(0, 100) : [] };
   } catch { return defaults; }
 }
 function readLearning(raw) {
@@ -101,7 +105,7 @@ function persist() {
   fs.renameSync(tmp, path.join(dir, 'workspace.json'));
 }
 function publicState() {
-  return { skills: skillStore.all(), connection: state.connection, ...appearanceState(), knowledge: knowledge?.status(), hasKey: Boolean(sessionKey), importClipboard: state.importClipboard, localOnly: state.localOnly, setup: state.setup, chat: state.chat, history: state.history, platform: process.platform, shortcutRegistered, version: app.getVersion() };
+  return { contextPacksEnabled: state.contextPacksEnabled, skills: skillStore.all(), connection: state.connection, ...appearanceState(), knowledge: knowledge?.status(), hasKey: Boolean(sessionKey), importClipboard: state.importClipboard, localOnly: state.localOnly, setup: state.setup, chat: state.chat, history: state.history, platform: process.platform, shortcutRegistered, version: app.getVersion() };
 }
 function createKnowledgeService() {
   const cwd = path.join(app.getPath('userData'), 'knowledge-runtime');
@@ -132,9 +136,9 @@ const skillTargets = () => ({ cursor: path.join(app.getPath('home'), '.cursor', 
 function watchInbox() {
   try { inboxWatcher?.close(); } catch {}
   inboxWatcher = null;
-  if (!fs.existsSync(inboxDir())) return;
+  if (!state.contextPacksEnabled || !fs.existsSync(inboxDir())) return;
   let timer;
-  try { inboxWatcher = fs.watch(inboxDir(), () => { clearTimeout(timer); timer = setTimeout(() => win?.webContents.send('context-inbox-changed', contextLib.inboxFiles(inboxDir()).length), 400); }); inboxWatcher.unref?.(); } catch {}
+  try { inboxWatcher = fs.watch(inboxDir(), () => { clearTimeout(timer); timer = setTimeout(() => { if (state.contextPacksEnabled) win?.webContents.send('context-inbox-changed', contextLib.inboxFiles(inboxDir()).length); }, 400); }); inboxWatcher.unref?.(); } catch {}
 }
 function contextState() {
   const targets = skillTargets();
@@ -266,7 +270,7 @@ async function mascotAction(name, payload) {
 }
 function createWindow() {
   const mac = process.platform === 'darwin';
-  win = new BrowserWindow({ width: 1220, height: 850, minWidth: 860, minHeight: 650, backgroundColor: windowBackground(), title: 'Impromptu', titleBarStyle: mac ? 'hiddenInset' : 'default', trafficLightPosition: { x: 20, y: 18 }, ...(mac ? { show: false, vibrancy: glassEnabled() ? 'under-window' : undefined, visualEffectState: 'followWindow' } : {}), icon: path.join(__dirname, 'assets/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, additionalArguments: [`--impromptu-theme=${state.theme}`, `--impromptu-reduced-transparency=${appearanceState().reducedTransparency}`] } });
+  win = new BrowserWindow({ width: 1220, height: 850, minWidth: 860, minHeight: 650, backgroundColor: windowBackground(), title: 'Impromptu', titleBarStyle: 'default', ...(mac ? { show: false, vibrancy: glassEnabled() ? 'under-window' : undefined, visualEffectState: 'followWindow' } : {}), icon: path.join(__dirname, 'assets/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, additionalArguments: [`--impromptu-theme=${state.theme}`, `--impromptu-reduced-transparency=${appearanceState().reducedTransparency}`] } });
   if (mac) win.once('ready-to-show', () => { if (!win.isDestroyed()) win.show(); });
   win.loadFile(path.join(__dirname, 'index.html'));
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -290,12 +294,51 @@ if (lock) {
     chats = new ChatStore(path.join(app.getPath('userData'), 'chats.json'));
     skillStore = new SkillStore(path.join(app.getPath('userData'), 'skills.json'));
     packStore = new contextLib.PackStore(path.join(app.getPath('userData'), 'context-packs.json'));
+    const contextChanged = () => { if (win && !win.isDestroyed()) win.webContents.send('agent-context-changed'); };
+    agentContext = new AgentContext({ onChange: contextChanged });
+    contextBridge = new ContextBridge({ receive: payload => agentContext.receive(payload), onChange: contextChanged });
+    handle('agent-context-state', () => ({ ...agentContext.status(), browser: contextBridge.status() }));
+    handle('agent-context-connect', async () => {
+      const cwd = path.join(app.getPath('userData'), 'context-runtime');
+      fs.mkdirSync(cwd, { recursive: true, mode: 0o700 });
+      return agentContext.connect({ cwd, executable: state.codexPath });
+    });
+    handle('agent-context-refresh', () => agentContext.refresh());
+    handle('agent-context-disconnect', () => { agentContext.disconnect(); return true; });
+    handle('agent-context-preview', input => {
+      if (typeof input?.prompt !== 'string' || input.prompt.length > 30000 || typeof input.target !== 'string' || input.target.length > 300) throw new Error('Invalid context query.');
+      return agentContext.preview(input.prompt, input.target);
+    });
+    handle('agent-context-browser', async enabled => {
+      if (typeof enabled !== 'boolean') throw new Error('Choose whether to enable browser collection.');
+      if (enabled) return contextBridge.start();
+      contextBridge.stop(); agentContext.clearBrowser(); return contextBridge.status();
+    });
+    handle('agent-context-pair', async () => {
+      const code = contextBridge.pairing();
+      if (!code) throw new Error('Enable ChatGPT collection first.');
+      await clipboard.writeText(code); return true;
+    });
+    handle('agent-context-extension-folder', async () => {
+      const folder = prepareExtension(app.getPath('userData'));
+      const error = await shell.openPath(folder);
+      if (error) throw new Error(`Could not open the extension folder: ${error}`);
+      return folder;
+    });
     learningStore = new hylandLib.LearningStore(path.join(app.getPath('userData'), 'learning-sessions.json'));
     promptLog = new insights.PromptLog(path.join(app.getPath('userData'), 'prompt-log.json'));
     watchInbox(); watchLearning();
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     handle('bootstrap', () => publicState());
+    handle('set-context-packs-enabled', enabled => {
+      if (typeof enabled !== 'boolean') throw new Error('Choose whether to show Context packs.');
+      const previous = state.contextPacksEnabled;
+      state.contextPacksEnabled = enabled;
+      try { persist(); } catch (error) { state.contextPacksEnabled = previous; throw error; }
+      watchInbox();
+      return state.contextPacksEnabled;
+    });
     handle('set-theme', theme => {
       if (!themes.includes(theme)) throw new Error(`Choose ${themes.join(', ')} appearance.`);
       const previous = state.theme;
@@ -326,7 +369,7 @@ if (lock) {
     handle('knowledge-disconnect', () => { if (knowledge.active) throw new Error('Wait for the lookup to finish.'); knowledge.close(); sourceLinks.clear(); return knowledge.status(); });
     handle('knowledge-locate', async () => {
       if (knowledge.active) throw new Error('Wait for the lookup to finish.');
-      const result = await dialog.showOpenDialog(win, { title: 'Choose the Codex executable', properties: ['openFile'], ...(process.platform === 'win32' ? { filters: [{ name: 'Codex executable', extensions: ['exe'] }] } : {}) });
+      const result = await dialog.showOpenDialog(win, { title: 'Choose the Codex executable', properties: ['openFile', ...(process.platform === 'darwin' ? ['treatPackageAsDirectory'] : [])], ...(process.platform === 'win32' ? { filters: [{ name: 'Codex executable', extensions: ['exe'] }] } : {}) });
       if (result.canceled) return knowledge.status();
       const file = result.filePaths[0];
       if (!['codex', 'codex.exe'].includes(path.basename(file).toLowerCase()) || !fs.statSync(file).isFile()) throw new Error('Choose the codex or codex.exe executable installed by Codex.');
@@ -339,9 +382,11 @@ if (lock) {
       try {
         assertAllowed(state.connection, state.localOnly);
         const evidence = evidenceCache.select(input?.evidence);
-        const request = evidence.length ? { ...input, context: [typeof input.context === 'string' ? input.context.trim() : '', evidenceContext(evidence)].filter(Boolean).join('\n\n') } : input;
+        const withEvidence = evidence.length ? { ...input, context: [typeof input.context === 'string' ? input.context.trim() : '', evidenceContext(evidence)].filter(Boolean).join('\n\n') } : input;
+        const { request, sources } = agentContext.augment(withEvidence);
         const start = Date.now(); const result = await requestImprovement(request, state.connection, sessionKey, undefined, skillStore.all());
         try { promptLog.record(insights.entryFrom(input, result)); } catch {}
+        if (sources.length) result.agentSources = sources;
         if (evidence.length) result.evidence = evidenceSummaries(evidence); skillStore.recordUse(result.skillId); learn(result.action || 'improve'); coach.record(result.action || 'improve', input?.prompt || ''); maybeNudge(); return { ...result, durationMs: Date.now() - start }; }
       finally { busy = false; }
     });
@@ -786,6 +831,6 @@ function updateTray() {
   ]));
 }
 app.on('activate', () => { if (state) show(); });
-app.on('before-quit', () => { quitting = true; try { inboxWatcher?.close(); } catch {} clearInterval(learningPoll); knowledge?.close(); for (const controller of chatReplies.values()) controller.abort(); });
+app.on('before-quit', () => { quitting = true; try { inboxWatcher?.close(); } catch {} clearInterval(learningPoll); contextBridge?.stop(); agentContext?.close(); knowledge?.close(); for (const controller of chatReplies.values()) controller.abort(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => {});

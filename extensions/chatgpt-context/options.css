@@ -1,0 +1,11 @@
+:root { font-family: system-ui, sans-serif; color: #173c33; background: #f4f8f5; }
+main { max-width: 650px; margin: 60px auto; padding: 28px; background: white; border: 1px solid #d6e5dd; border-radius: 20px; }
+h1 { font-size: 32px; letter-spacing: -1px; }
+p { line-height: 1.6; }
+.eyebrow { font-size: 12px; letter-spacing: 2px; }
+label { display: block; margin-top: 24px; font-weight: 600; }
+input { box-sizing: border-box; width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #acc5b6; border-radius: 8px; }
+button { padding: 12px 18px; color: white; background: #176b51; border: 0; border-radius: 8px; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+#disconnect { color: #173c33; background: #e4eee8; }
+#status { font-weight: 600; }

@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "InPromptU ChatGPT Context",
+  "version": "0.1.0",
+  "description": "Share loaded ChatGPT conversation messages with your paired InPromptU desktop app.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{ "matches": ["https://chatgpt.com/*"], "js": ["content.js"], "run_at": "document_idle" }],
+  "action": { "default_title": "Configure InPromptU context sharing" },
+  "options_page": "options.html"
+}

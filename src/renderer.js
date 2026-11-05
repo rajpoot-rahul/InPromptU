@@ -32,6 +32,7 @@ function input() { return { prompt: $('prompt').value, context: $('context').val
 function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = String(message).replace(/^Error invoking remote method '[^']+': Error: /, ''); $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => $('toast').hidden = true, error ? 8000 : 3500); }
 async function attempt(fn) { try { return await fn(); } catch (error) { toast(error.message, true); } }
 function showView(view) {
+  if (view === 'context' && !state.contextPacksEnabled) view = 'workspace';
   activeView = view;
   if (view === 'workspace' || view === 'knowledge') incomingMode = view;
   for (const name of ['workspace', 'local-ai', 'chat', 'context', 'knowledge', 'skills', 'history', 'progress', 'learn', 'hyland']) $(`${name}-view`).hidden = name !== view;
@@ -641,6 +642,10 @@ function renderResult(result) {
   if (result.action === 'compress' && result.stats) renderSavings(result);
   $('result-sources').hidden = !result.evidence?.length;
   $('result-sources').innerHTML = result.evidence?.length ? `<h3>HYLAND SOURCES ATTACHED</h3><ul>${result.evidence.map(e => `<li>[${escapeHtml(e.id)}] ${escapeHtml(e.title)} · ${escapeHtml(e.product)}</li>`).join('')}</ul>` : '';
+  if (result.agentSources?.length) {
+    $('result-sources').hidden = false;
+    $('result-sources').innerHTML += `<h3>CONVERSATION CONTEXT USED</h3><ul>${result.agentSources.map(source => `<li>${escapeHtml(source.title)} · ${escapeHtml(source.source)} · ${source.characters} characters${source.partial ? ' · partial history' : ''}</li>`).join('')}</ul>`;
+  }
   $('result-tag').textContent = result.mode === 'offline' ? 'LOCAL SKILL APPLIED' : result.action === 'compress' ? 'AI COMPRESSION' : 'AI SUGGESTION';
   $('result-text').value = result.improved;
   for (const key of ['changes', 'questions']) $(key).innerHTML = result[key].map(item => `<li>${escapeHtml(item)}</li>`).join('');
@@ -659,7 +664,7 @@ async function improve() {
   const snapshot = input();
   try {
     const evidence = selectedEvidence();
-    const result = await api.improve({ ...snapshot, action: promptAction, ...(evidence.length ? { evidence } : {}) }); current = { input: snapshot, result }; savedId = null; renderResult(result);
+    const result = await api.improve({ ...snapshot, ...window.agentContextUI.request(), action: promptAction, ...(evidence.length ? { evidence } : {}) }); current = { input: snapshot, result }; savedId = null; renderResult(result);
     const used = state.skills.find(skill => skill.custom && skill.id === result.skillId); if (used) used.uses = (used.uses || 0) + 1;
   }
   catch (error) {
@@ -860,8 +865,31 @@ let contextData = null, activePack = null;
 const toolNames = { cursor: 'Cursor', 'claude-code': 'Claude Code', codex: 'Codex CLI' };
 const sourceNames = { cursor: 'Cursor', claude: 'Claude', 'claude-code': 'Claude Code', chatgpt: 'ChatGPT', codex: 'Codex', copilot: 'Copilot', gemini: 'Gemini', other: 'AI session' };
 const isPack = text => /^---[ \t]*\nformat:\s*impromptu-context-pack\/1/m.test(String(text));
-async function openContext() { contextData = await attempt(() => api.contextState()); if (contextData) renderContext(); }
+async function openContext() {
+  if (!state.contextPacksEnabled) return;
+  contextData = await attempt(() => api.contextState());
+  if (contextData && state.contextPacksEnabled) renderContext();
+}
+function applyContextPacksPreference() {
+  const enabled = state.contextPacksEnabled === true;
+  $('context-nav').hidden = !enabled;
+  $('context-packs-setting').checked = enabled;
+  if (!enabled) {
+    $('inbox-badge').hidden = true;
+    if (activeView === 'context') showView('workspace');
+  }
+}
+async function refreshPackInbox() {
+  if (!state.contextPacksEnabled) return;
+  if (activeView === 'context') return openContext();
+  const data = await api.contextState();
+  if (!state.contextPacksEnabled) return;
+  contextData = data;
+  $('inbox-badge').hidden = !data.inbox.files.length;
+  $('inbox-badge').textContent = String(data.inbox.files.length);
+}
 function renderContext() {
+  if (!state.contextPacksEnabled) return;
   const { packs, inbox, skills, prompt } = contextData;
   $('handoff-text').textContent = prompt;
   $('handoff-skills').innerHTML = skills.map(s => `<div class="perm-row"><span>${escapeHtml(toolNames[s.tool])} <small>${escapeHtml(s.path)}</small></span><strong class="${s.installed ? 'granted' : ''}">${s.installed ? 'Installed' : 'Not installed'}</strong><button type="button" class="text-button" data-skill-tool="${escapeHtml(s.tool)}" data-installed="${s.installed}">${s.installed ? 'Remove' : 'Install'}</button></div>`).join('');
@@ -925,6 +953,17 @@ function updateProviderNote() {
 }
 const nextPrompt = pack => (pack.sections?.['Suggested next prompt'] || '').replace(/^\(.*\)$/m, '').trim();
 function setupContext() {
+  applyContextPacksPreference();
+  $('context-packs-setting').onchange = async () => {
+    const toggle = $('context-packs-setting');
+    toggle.disabled = true;
+    try {
+      state.contextPacksEnabled = await api.setContextPacksEnabled(toggle.checked);
+      applyContextPacksPreference();
+      await refreshPackInbox();
+    } catch (error) { toggle.checked = state.contextPacksEnabled === true; toast(error.message, true); }
+    finally { toggle.disabled = false; }
+  };
   $('copy-handoff').onclick = () => attempt(async () => { await api.copy(contextData?.prompt || (await api.contextState()).prompt); toast('Hand-off prompt copied. Paste it into your AI chat.'); });
   $('open-inbox').onclick = () => attempt(async () => { contextData = await api.openInbox(); renderContext(); });
   $('pack-import').onclick = () => attempt(async () => { const text = $('pack-paste').value; if (!text.trim()) throw new Error('Paste a context pack first.'); afterImport(await api.importPackText({ text, redactSecrets: $('pack-redact').checked })); });
@@ -959,8 +998,8 @@ function setupContext() {
     setAction('compress'); $('context-details').open = true;
     toast('Hand-back prompt ready with the Tokenmining skill. Choose Compress or Improve, then copy it back.');
   };
-  api.onInboxChanged(() => { if (activeView === 'context') openContext(); else api.contextState().then(data => { contextData = data; $('inbox-badge').hidden = !data.inbox.files.length; $('inbox-badge').textContent = String(data.inbox.files.length); }).catch(() => {}); });
-  api.contextState().then(data => { contextData = data; $('inbox-badge').hidden = !data.inbox.files.length; $('inbox-badge').textContent = String(data.inbox.files.length); }).catch(() => {});
+  api.onInboxChanged(() => { refreshPackInbox().catch(() => {}); });
+  refreshPackInbox().catch(() => {});
 }
 let hylandData = null, activeSession = null, hylandBusy = false;
 const hylandSources = { 'teams-recap': 'Teams recap', confluence: 'Confluence', manual: 'Notes' };
@@ -1157,6 +1196,7 @@ function applyModePreset(mode) {
 }
 function openSettings(preselect) {
   $('appearance').value = state.theme || 'system';
+  $('context-packs-setting').checked = state.contextPacksEnabled === true;
   $('connection-mode').value = state.connection.mode; $('endpoint').value = state.connection.endpoint; $('model').value = state.connection.model; $('api-key').value = ''; $('clear-key').checked = false; $('clipboard-setting').checked = state.importClipboard;
   $('api-key').placeholder = state.hasKey ? 'Key is in memory · leave blank to keep it' : 'Not saved to disk';
   $('local-only-setting').checked = Boolean(state.localOnly); applyLocalOnlyOptions();
@@ -1298,7 +1338,6 @@ async function boot() {
   if (!api) throw new Error('Open Impromptu using the desktop launcher.');
   state = await api.bootstrap(); fillIcons();
   const mac = state.platform === 'darwin';
-  $('hide-window').hidden = true;
   $('glass-option').hidden = false; $('glass-option').disabled = false;
   $('glass-option').textContent = mac ? 'Glass · macOS' : 'Glass · Windows';
   $('max-ind-option').hidden = false; $('max-ind-option').disabled = false;
@@ -1370,11 +1409,16 @@ async function boot() {
     finally { button.disabled = false; }
   };
   $('settings-form').onsubmit = event => { event.preventDefault(); attempt(async () => { if (busy) throw new Error('Wait for the current request to finish before changing connection.'); state = await api.saveSettings({ mode: $('connection-mode').value, endpoint: $('endpoint').value, model: $('model').value, region: $('aws-region').value.trim(), profile: $('aws-profile').value.trim(), apiKey: $('api-key').value, clearKey: $('clear-key').checked, importClipboard: $('clipboard-setting').checked, localOnly: $('local-only-setting').checked }); $('api-key').value = ''; setupHidden = false; if (state.connection.mode === 'ollama') detectLocalAI(); else renderSetup(); updateConnection(); knowledgeStatus(); $('settings-dialog').close(); toast('Settings saved.'); }); };
-  $('hide-window').onclick = () => api.hide();
   document.addEventListener('keydown', event => { const modal = $('settings-dialog').open || $('knowledge-settings').open || $('mascot-consent').open || $('local-ai-dialog').open; if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !modal) { if (activeView === 'workspace') { event.preventDefault(); improve(); } if (activeView === 'knowledge') { event.preventDefault(); lookupKnowledge(); } if (activeView === 'chat') { event.preventDefault(); sendChat(); } } if (event.key === 'Escape' && !modal) api.hide(); });
-  api.onInvoke(text => { if (isPack(text)) { showView('context'); $('pack-paste').value = text; toast('A context pack was brought in. Review it, then choose Import.'); return; } incoming(text); });
+  api.onInvoke(text => {
+    if (isPack(text)) {
+      if (!state.contextPacksEnabled) { toast('Context packs are off. Enable “Show Context packs” in Settings to import this pack.'); return; }
+      showView('context'); $('pack-paste').value = text; toast('A context pack was brought in. Review it, then choose Import.'); return;
+    }
+    incoming(text);
+  });
   api.onNotice(message => toast(message, true));
-  api.onSettings(data => { state = data; renderAppearance(); updateConnection(); renderSetup(); knowledgeStatus(); });
+  api.onSettings(data => { state = data; applyContextPacksPreference(); renderAppearance(); updateConnection(); renderSetup(); knowledgeStatus(); });
   api.onAppearance(renderAppearance);
 }
 boot().catch(error => toast(error.message, true));

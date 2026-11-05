@@ -25,7 +25,11 @@ function findCodex(preferred = '', { platform = process.platform, env = process.
   const candidates = [preferred,
     '/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex',
     '/Applications/Codex.app/Contents/Resources/codex',
-    ...String(env.PATH || '').split(':').map(dir => path.posix.join(dir, 'codex')),
+    ...(platform === 'darwin' ? [
+      path.posix.join(home, 'Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex'),
+      path.posix.join(home, 'Applications/Codex.app/Contents/Resources/codex')
+    ] : []),
+    ...String(env.PATH || '').split(':').filter(Boolean).map(dir => path.posix.join(dir, 'codex')),
     path.posix.join(home, '.local/bin', 'codex'), '/opt/homebrew/bin/codex', '/usr/local/bin/codex'];
   return candidates.find(file => file && exists(file)) || '';
 }

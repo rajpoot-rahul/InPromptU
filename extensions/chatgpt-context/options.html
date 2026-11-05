@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>InPromptU context connection</title><link rel="stylesheet" href="options.css"></head>
+<body><main>
+  <p class="eyebrow">INPROMPTU COMPANION</p><h1>Your conversations, in context.</h1>
+  <p>Pair with InPromptU to automatically share loaded user and assistant messages from saved ChatGPT conversations you open. Collection continues while the extension is paired and the desktop bridge is on.</p>
+  <p>This does not read unopened chats, attachments, account credentials or hidden agent state. The desktop app keeps collected messages in memory. When you improve a prompt, selected excerpts may be sent to the AI provider you selected in InPromptU.</p>
+  <form id="pair-form"><label for="code">Pairing code from InPromptU → Prompt workspace → Connected agent context</label><input id="code" type="password" autocomplete="off" required placeholder="impromptu:…"><button type="submit">Pair &amp; enable sharing</button></form>
+  <p id="status" role="status">Checking connection…</p><button id="disconnect" type="button">Stop sharing &amp; forget pairing</button>
+  <p>Pair again after restarting InPromptU or reconnecting its bridge. Disconnect the source in InPromptU to clear collected messages. Use the extension only with conversations you intend to share.</p>
+</main><script src="options.js"></script></body></html>
