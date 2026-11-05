@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { FORMAT, LIMITS, safeUrl, classifyHref, parseSession, LearningStore, scanFolder, pendingFolders, resolveAttachment, digestMessages, parseDigest, sessionText } = require('../src/hyland-learning.cjs');
+const { FORMAT, LIMITS, safeUrl, classifyHref, parseSession, LearningStore, scanFolder, pendingFolders, isInside, resolveAttachment, digestMessages, parseDigest, sessionText } = require('../src/hyland-learning.cjs');
 
 const session = `---
 format: ${FORMAT}
@@ -141,6 +141,42 @@ test('folder scanning reads session.md files, skips unsafe ones, and resolves at
   assert.throws(() => resolveAttachment(root, s, 'attachments/none.pdf'), /not found/);
   assert.throws(() => resolveAttachment(root, { ...s, folder: '' }, 'attachments/slides.pdf'), /inside the learning folder/);
   if (process.platform !== 'win32') assert.throws(() => resolveAttachment(root, s, 'attachments/link.pdf'), /inside the learning folder/);
+});
+
+test('Windows: CRLF files parse like LF, folder names come from Windows paths, and the store dedupes them case-insensitively', t => {
+  const crlf = session.replace(/\n/g, '\r\n');
+  const parsed = parseSession(crlf, { folder: 'C:\\Users\\Sample\\Impromptu\\Learning\\2026-10-29-caching' });
+  assert.deepEqual(parsed, parseSession(session));
+  assert.ok(!JSON.stringify(parsed).includes('\\r'));
+  const bare = parseSession('Notes from a hallway chat.\r\n', { folder: 'C:\\Users\\Sample\\Impromptu\\Learning\\2026-09-02-hallway-agents' });
+  assert.deepEqual([bare.title, bare.date, bare.summary], ['Hallway agents', '2026-09-02', 'Notes from a hallway chat.']);
+  const recap = parseSession('Meeting notes\r\nA fictional recap.\r\n\r\nFollow-up tasks\r\nTry it (Sam)\r\n', { loose: true, defaults: { title: 'Recap' } });
+  assert.deepEqual([recap.summary, recap.actionItems], ['A fictional recap.', ['Try it (Sam)']]);
+  const store = new LearningStore(path.join(temp(t), 's.json'));
+  assert.equal(store.upsert(crlf, { origin: 'folder', folder: 'C:\\Users\\Sample\\Impromptu\\Learning\\2026-10-29-Caching', modified: 'm1' }).status, 'added');
+  assert.equal(store.upsert(crlf, { origin: 'folder', folder: 'c:\\users\\sample\\impromptu\\learning\\2026-10-29-caching', modified: 'm1' }).status, 'unchanged');
+  const root = temp(t), folder = path.join(root, '2026-10-29-caching');
+  fs.mkdirSync(path.join(folder, 'attachments'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'session.md'), crlf);
+  fs.writeFileSync(path.join(folder, 'attachments', 'slides.pdf'), 'pdf');
+  const found = scanFolder(root).found;
+  assert.deepEqual(parseSession(found[0].text, { folder: found[0].folder }), parsed);
+  const s = new LearningStore(path.join(temp(t), 'f.json')).upsert(found[0].text, { origin: 'folder', folder: found[0].folder, modified: found[0].modified }).session;
+  assert.equal(resolveAttachment(root, s, 'attachments\\slides.pdf'), fs.realpathSync(path.join(folder, 'attachments', 'slides.pdf')));
+});
+
+test('Windows: backslash links stay relative, and drive letters, UNC paths and alternate data streams are blocked', () => {
+  assert.deepEqual(classifyHref('attachments\\deck v2.pdf'), { kind: 'file', href: 'attachments/deck v2.pdf' });
+  for (const bad of ['attachments\\..\\..\\secret.pdf', 'C:\\Users\\Sample\\secret.pdf', 'c:/Users/Sample/secret.pdf', 'D:secret.pdf', '\\\\server\\share\\secret.pdf', '//server/share/secret.pdf', 'attachments/slides.pdf:hidden', 'attachments/slides.pdf::$DATA', 'file:///C:/secret.pdf']) assert.equal(classifyHref(bad).kind, 'blocked', bad);
+});
+
+test('Windows: containment is case-insensitive, rejects other drives, UNC shares, prefixes and the folder itself', () => {
+  const base = 'C:\\Users\\Sample\\Impromptu\\Learning', win = path.win32;
+  assert.equal(isInside(base, 'c:\\users\\sample\\IMPROMPTU\\learning\\2026-10-29-caching\\slides.pdf', win), true);
+  assert.equal(isInside(base, 'C:\\Users\\Sample\\Impromptu\\Learning\\..notes\\a.pdf', win), true);
+  for (const bad of [base, 'C:\\Users\\Sample\\Impromptu\\Learning2\\a.pdf', 'D:\\Users\\Sample\\Impromptu\\Learning\\a.pdf', 'C:\\Users\\Sample\\Impromptu\\Learning\\..\\secret.pdf', '\\\\server\\share\\Learning\\a.pdf', 'C:\\Users\\Sample\\Impromptu']) assert.equal(isInside(base, bad, win), false, bad);
+  assert.equal(isInside('/home/sample/Impromptu/Learning', '/home/sample/Impromptu/Learning/..notes/a.pdf', path.posix), true);
+  assert.equal(isInside('/home/sample/Impromptu/Learning', '/home/sample/Impromptu/Learning/../a.pdf', path.posix), false);
 });
 
 test('summary and digest prompts frame notes as untrusted data and validate the model output', t => {

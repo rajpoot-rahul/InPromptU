@@ -75,7 +75,7 @@ The shortcut reads clipboard text once. There is no background clipboard polling
 
 Hyland runs many AI discussions, such as the Teams series *AI Coding Tools - Open Office Hours*. **Hyland latest learning** (in *Your space*) keeps track of them so you stay organised: what was discussed, the attachments, and whether you attended and went through the content.
 
-- **Import collected sessions.** Each session is a folder `~/Impromptu/Learning/<YYYY-MM-DD>-<slug>/` with a `session.md` (format below) and optional `attachments/`. Choose **Scan folder**. While the app is open, new session folders (and, on macOS, changed ones) show a badge on the nav item. Rescanning updates the notes but keeps your status, notes and added links. Sessions are deduplicated by folder name, or by date and title.
+- **Import collected sessions.** Each session is a folder `~/Impromptu/Learning/<YYYY-MM-DD>-<slug>/` (on Windows, `%USERPROFILE%\Impromptu\Learning\<YYYY-MM-DD>-<slug>\`) with a `session.md` (format below) and optional `attachments/`. Choose **Scan folder**. While the app is open, new or changed sessions show a badge on the nav item within about 10 seconds. Rescanning updates the notes but keeps your status, notes and added links. Sessions are deduplicated by folder name, or by date and title.
 ![Hyland latest learning with fictional sample sessions, Dark theme](docs/images/hyland-learning/session-detail-dark.png)
 
 - **Or paste meeting notes**, such as a Teams recap ("Meeting notes", "Follow-up tasks", "Chapters"), with a series, title, date and optional https link.

@@ -15,6 +15,7 @@ const HEADINGS = [
   ['topics', /^(topics?|chapters?|agenda|discussed)$/i],
   ['attachments', /^(attachments?|files|links|resources|shared files)$/i]
 ];
+const leaf = folder => String(folder || '').split(/[\\/]/).filter(Boolean).pop() || '';
 const clip = (value, max) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 function safeUrl(raw) {
@@ -29,7 +30,7 @@ function classifyHref(raw) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(href) || /^[\\/]/.test(href) || !href) return { kind: 'blocked', href: href.slice(0, 300) };
   let decoded; try { decoded = decodeURIComponent(href); } catch { return { kind: 'blocked', href: href.slice(0, 300) }; }
   const normal = path.posix.normalize(decoded.replace(/\\/g, '/'));
-  if (normal.startsWith('..') || normal.startsWith('/') || normal.includes('\0')) return { kind: 'blocked', href: href.slice(0, 300) };
+  if (normal.startsWith('..') || normal.startsWith('/') || /[\0:]/.test(normal)) return { kind: 'blocked', href: href.slice(0, 300) };
   return { kind: 'file', href: normal.slice(0, 300) };
 }
 function frontMatter(text) {
@@ -74,7 +75,7 @@ function normalDate(raw, folder = '') {
   const value = String(raw || '').trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value))) return value;
   if (value && !Number.isNaN(Date.parse(value))) return new Date(value).toISOString();
-  return path.basename(folder).match(/^(\d{4}-\d{2}-\d{2})/)?.[1] || '';
+  return leaf(folder).match(/^(\d{4}-\d{2}-\d{2})/)?.[1] || '';
 }
 const humanize = slug => slug.replace(/^\d{4}-\d{2}-\d{2}-?/, '').replace(/[-_]+/g, ' ').trim().replace(/^./, c => c.toUpperCase());
 function parseSession(raw, { folder = '', loose = false, defaults = {} } = {}) {
@@ -83,7 +84,7 @@ function parseSession(raw, { folder = '', loose = false, defaults = {} } = {}) {
   const { meta, body } = frontMatter(raw);
   if (meta.format && meta.format !== FORMAT) throw new Error(`Unsupported learning session format “${meta.format}”.`);
   const parts = splitSections(body, { loose: loose || !meta.format });
-  const title = clip(meta.title || defaults.title || body.match(/^#\s+(.+)$/m)?.[1] || humanize(path.basename(folder)) || parts.lead.split('\n')[0] || 'Untitled session', LIMITS.title);
+  const title = clip(meta.title || defaults.title || body.match(/^#\s+(.+)$/m)?.[1] || humanize(leaf(folder)) || parts.lead.split('\n')[0] || 'Untitled session', LIMITS.title);
   const source = SOURCES.includes(String(meta.source || defaults.source || '').toLowerCase()) ? String(meta.source || defaults.source).toLowerCase() : 'manual';
   const summary = String(parts.summary || (parts.lead && !(defaults.title && parts.lead === title) ? parts.lead : '')).trim().slice(0, LIMITS.summary);
   const missing = ['summary', 'actionItems', 'topics', 'attachments'].filter(key => !parts[key]);
@@ -103,12 +104,12 @@ class LearningStore {
     fs.writeFileSync(tmp, JSON.stringify({ version: 1, sessions: this.sessions }, null, 2), { mode: 0o600 });
     fs.renameSync(tmp, this.file);
   }
-  find(parsed, folder) { const name = folder && path.basename(folder).toLowerCase(); return this.sessions.find(s => (name && s.folderName === name) || titleKey(s) === titleKey(parsed)); }
+  find(parsed, folder) { const name = folder && leaf(folder).toLowerCase(); return this.sessions.find(s => (name && s.folderName === name) || titleKey(s) === titleKey(parsed)); }
   upsert(raw, { origin = 'paste', folder = '', modified = '', defaults = {}, loose = false } = {}) {
     const cleaned = redact(raw);
     const parsed = parseSession(cleaned.text, { folder, defaults, loose });
     const existing = this.find(parsed, folder);
-    const location = folder ? { origin, folder: path.resolve(folder), folderName: path.basename(folder).toLowerCase(), sourceModified: modified } : {};
+    const location = folder ? { origin, folder: path.resolve(folder), folderName: leaf(folder).toLowerCase(), sourceModified: modified } : {};
     const content = { ...parsed, redacted: cleaned.findings.map(f => f.kind), ...location };
     if (existing) {
       if (folder && existing.folderName === location.folderName && existing.sourceModified === modified) return { session: existing, status: 'unchanged' };
@@ -149,7 +150,8 @@ class LearningStore {
   }
 }
 
-function scanFolder(root) {
+// Directory junctions and symlinks are not isDirectory() entries, so they are never followed.
+function sessionFiles(root) {
   const found = [], skipped = [];
   let entries; try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch { return { found, skipped }; }
   let base; try { base = fs.realpathSync(root); } catch { return { found, skipped }; }
@@ -160,16 +162,21 @@ function scanFolder(root) {
       if (!stat.isFile()) throw new Error('session.md is not a regular file');
       if (stat.size > LIMITS.file) throw new Error('session.md is too large');
       if (!isInside(base, fs.realpathSync(file))) throw new Error('outside the learning folder');
-      found.push({ folder: path.join(root, entry.name), text: fs.readFileSync(file, 'utf8'), modified: stat.mtime.toISOString() });
+      found.push({ folder: path.join(root, entry.name), file, modified: stat.mtime.toISOString() });
     } catch (error) { if (error.code !== 'ENOENT') skipped.push(`${entry.name}: ${error.message}`); }
   }
   return { found, skipped };
 }
+function scanFolder(root) {
+  const { found, skipped } = sessionFiles(root);
+  return { found: found.flatMap(({ folder, file, modified }) => { try { return [{ folder, text: fs.readFileSync(file, 'utf8'), modified }]; } catch (error) { skipped.push(`${leaf(folder)}: ${error.message}`); return []; } }), skipped };
+}
 function pendingFolders(root, store) {
-  return scanFolder(root).found.filter(item => { const name = path.basename(item.folder).toLowerCase(); const s = store.sessions.find(x => x.folderName === name); return !s || s.sourceModified !== item.modified; }).length;
+  return sessionFiles(root).found.filter(item => { const name = leaf(item.folder).toLowerCase(); const s = store.sessions.find(x => x.folderName === name); return !s || s.sourceModified !== item.modified; }).length;
 }
 const OPENABLE = /\.(pdf|pptx?|docx?|xlsx?|csv|txt|md|vtt|png|jpe?g|gif|webp|mp4|mov|m4a|mp3)$/i;
-const isInside = (base, target) => { const rel = path.relative(base, target); return Boolean(rel) && !rel.startsWith('..') && !path.isAbsolute(rel); };
+// path.win32.relative compares case-insensitively and returns an absolute path across drives.
+const isInside = (base, target, p = path) => { const rel = p.relative(base, target); return Boolean(rel) && rel !== '..' && !rel.startsWith(`..${p.sep}`) && !p.isAbsolute(rel); };
 function resolveAttachment(root, session, href) {
   const item = classifyHref(href);
   if (item.kind !== 'file' || !session.folder) throw new Error('Only files inside the learning folder can be opened.');
@@ -207,4 +214,4 @@ function parseDigest(content) {
   return { overview: parsed.overview.trim().slice(0, 3000), points: list('points'), actions: list('actions') };
 }
 
-module.exports = { FORMAT, SOURCES, LIMITS, safeUrl, classifyHref, parseSession, listItems, attachmentItems, LearningStore, scanFolder, pendingFolders, resolveAttachment, sessionText, digestMessages, parseDigest };
+module.exports = { FORMAT, SOURCES, LIMITS, safeUrl, classifyHref, parseSession, listItems, attachmentItems, LearningStore, scanFolder, pendingFolders, isInside, resolveAttachment, sessionText, digestMessages, parseDigest };

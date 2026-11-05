@@ -86,6 +86,21 @@ test('Windows context hand-off uses the home folder for the inbox and each tool 
   assert.ok(state.prompt.includes(path.join(data, 'Impromptu', 'Inbox')));
 });
 
+test('Windows Hyland latest learning uses the home folder, imports CRLF sessions and opens attachments by stored index only', async t => {
+  const { handlers, sender, data, opened } = desktop(t, { platform: 'win32' });
+  const folder = path.join(data, 'Impromptu', 'Learning', '2026-10-29-fictional-windows');
+  assert.equal((await handlers.get('hyland-state')(sender)).folder.path, path.join(data, 'Impromptu', 'Learning'));
+  fs.mkdirSync(path.join(folder, 'attachments'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'attachments', 'notes.txt'), 'fictional');
+  fs.writeFileSync(path.join(folder, 'session.md'), '---\r\nformat: impromptu-learning-session/1\r\nseries: Fictional Series\r\ntitle: Windows session\r\ndate: 2026-10-29\r\n---\r\n## Summary\r\nA fictional summary.\r\n## Action items\r\n- Try it\r\n## Attachments\r\n- [Notes](attachments\\notes.txt)\r\n- [Drive](C:\\Windows\\notepad.exe)\r\n');
+  const scan = await handlers.get('hyland-scan')(sender);
+  const s = scan.state.series[0].sessions[0];
+  assert.deepEqual([scan.added, s.title, s.summary, s.actionItems, s.attachments.map(a => a.kind)], [1, 'Windows session', 'A fictional summary.', ['Try it'], ['file', 'blocked']]);
+  await handlers.get('hyland-open')(sender, { id: s.id, target: 0 });
+  await assert.rejects(handlers.get('hyland-open')(sender, { id: s.id, target: 1 }), /blocked/);
+  assert.deepEqual(opened, [fs.realpathSync(path.join(folder, 'attachments', 'notes.txt'))]);
+});
+
 test('Hyland latest learning imports the folder, persists status, and opens only safe attachments', async t => {
   const { handlers, sender, data, opened } = desktop(t);
   const folder = path.join(data, 'Impromptu', 'Learning', '2026-10-29-fictional-office-hours');
