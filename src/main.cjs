@@ -23,7 +23,7 @@ if (process.platform === 'win32') app.setAppUserModelId('com.impromptu.companion
 if (process.env.IMPROMPTU_USER_DATA) app.setPath('userData', path.resolve(process.env.IMPROMPTU_USER_DATA));
 const lock = app.requestSingleInstanceLock();
 if (!lock) app.quit();
-let chats, skillStore, packStore, learningStore, inboxWatcher = null, learningWatcher = null;
+let chats, skillStore, packStore, learningStore, inboxWatcher = null, learningPoll = null;
 const evidenceCache = new EvidenceCache();
 const coach = new mascotLib.Coach();
 let mascotWin = null, mascotTimer = null, mascotView = { busy: '', capturing: false, message: null, nudge: null, vision: { ok: false, message: 'Checking your local model…' } };
@@ -139,11 +139,12 @@ function contextState() {
 }
 function ensureInbox() { fs.mkdirSync(inboxDir(), { recursive: true, mode: 0o700 }); watchInbox(); }
 const learningDir = () => process.env.IMPROMPTU_LEARNING_DIR ? path.resolve(process.env.IMPROMPTU_LEARNING_DIR) : path.join(app.getPath('home'), 'Impromptu', 'Learning');
+// Polls file stats instead of fs.watch: a watch handle on Windows kept the process alive and missed edits inside session folders.
 function watchLearning() {
-  if (learningWatcher || !fs.existsSync(learningDir())) return;
-  let timer;
-  // Recursive watches keep the process alive on Windows even when unref'd; elsewhere only new session folders are noticed.
-  try { learningWatcher = fs.watch(learningDir(), { recursive: require('node:os').platform() === 'darwin' }, () => { clearTimeout(timer); timer = setTimeout(() => win?.webContents.send('learning-folder-changed', hylandLib.pendingFolders(learningDir(), learningStore)), 600); timer.unref?.(); }); learningWatcher.on('error', () => { try { learningWatcher?.close(); } catch {} learningWatcher = null; }); learningWatcher.unref?.(); } catch { learningWatcher = null; }
+  if (learningPoll) return;
+  let last = -1;
+  learningPoll = setInterval(() => { const pending = fs.existsSync(learningDir()) ? hylandLib.pendingFolders(learningDir(), learningStore) : 0; if (pending !== last) { last = pending; win?.webContents.send('learning-folder-changed', pending); } }, 10000);
+  learningPoll.unref?.();
 }
 function hylandState() { const exists = fs.existsSync(learningDir()); return { ...learningStore.overview(), folder: { path: learningDir(), exists, pending: exists ? hylandLib.pendingFolders(learningDir(), learningStore) : 0 }, format: hylandLib.FORMAT, sources: hylandLib.SOURCES }; }
 const mascotEntry = pathToFileURL(path.join(__dirname, 'mascot.html')).href;
@@ -619,10 +620,9 @@ if (lock) {
         try { counts[learningStore.upsert(item.text, { origin: 'folder', folder: item.folder, modified: item.modified }).status]++; }
         catch (error) { skipped.push(`${path.basename(item.folder)}: ${error.message}`); }
       }
-      watchLearning();
       return { ...counts, skipped: skipped.slice(0, 20), state: hylandState() };
     });
-    handle('hyland-open-folder', async () => { fs.mkdirSync(learningDir(), { recursive: true, mode: 0o700 }); watchLearning(); const error = await shell.openPath(learningDir()); if (error) throw new Error(error); return hylandState(); });
+    handle('hyland-open-folder', async () => { fs.mkdirSync(learningDir(), { recursive: true, mode: 0o700 }); const error = await shell.openPath(learningDir()); if (error) throw new Error(error); return hylandState(); });
     handle('hyland-paste', ({ text, series, title, date, url, source } = {}) => {
       const field = (value, max) => typeof value === 'string' ? value.trim().slice(0, max) : '';
       if (typeof text !== 'string' || !text.trim()) throw new Error('Paste the meeting notes or Teams recap first.');
@@ -759,6 +759,6 @@ function updateTray() {
   ]));
 }
 app.on('activate', () => { if (state) show(); });
-app.on('before-quit', () => { quitting = true; try { inboxWatcher?.close(); learningWatcher?.close(); } catch {} knowledge?.close(); for (const controller of chatReplies.values()) controller.abort(); });
+app.on('before-quit', () => { quitting = true; try { inboxWatcher?.close(); } catch {} clearInterval(learningPoll); knowledge?.close(); for (const controller of chatReplies.values()) controller.abort(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => {});
