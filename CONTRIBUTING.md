@@ -56,7 +56,7 @@ Save drafts and quit the existing app before replacing it. Installed apps do not
 ## One release for both platforms
 
 1. Choose a version not already released. For the next patch use `npm version patch --no-git-tag-version`. This updates both package files; do not manually edit launcher paths or create a tag.
-2. Run `npm run verify`, review the changes and merge/push to main. The initial aligned release can use the existing unpublished 0.2.7 version.
+2. Run `npm run verify`, review the changes and merge/push to main. Add release notes as `docs/releases/v<version>.md` and point the README at them.
 3. In GitHub Actions, run **Desktop release** on `main`. Leave **publish** off for a rehearsal; artifacts are retained for 14 days. Turn it on to publish both installers after validation. With GitHub CLI:
 
 ```sh

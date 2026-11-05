@@ -1,7 +1,7 @@
 {
   "name": "impromptu-desktop",
   "productName": "Impromptu",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "A desktop companion for clearer prompts, Hyland knowledge and source-backed replies.",
   "private": true,
   "main": "src/main.cjs",
