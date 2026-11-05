@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFile, spawn } = require('node:child_process');
 const { ollamaOrigin, DEFAULT_ENDPOINT } = require('./ollama.cjs');
-const { powershell, parseDN } = require('./windows.cjs');
+const { powershell, powershellEnv, parseDN } = require('./windows.cjs');
 
 // Sizes are the registry download sizes; minRam is a practical floor for responsive use.
 // gemma3:1b was tested and excluded: it echoes the request instead of following Impromptu's structured prompts.
@@ -119,7 +119,7 @@ async function verifyMacApp(app, runFn = run) {
 // The file path travels in an environment variable, so no part of it is parsed as PowerShell.
 const SIGNATURE_SCRIPT = '$s = Get-AuthenticodeSignature -LiteralPath $env:IMPROMPTU_VERIFY_FILE; [pscustomobject]@{ status = [string]$s.Status; subject = [string]$s.SignerCertificate.Subject } | ConvertTo-Json -Compress';
 async function readWindowsSignature(file, runFn = run, env = process.env) {
-  const { stdout } = await runFn(powershell(env), ['-NoProfile', '-NonInteractive', '-Command', SIGNATURE_SCRIPT], { env: { ...env, IMPROMPTU_VERIFY_FILE: file } });
+  const { stdout } = await runFn(powershell(env), ['-NoProfile', '-NonInteractive', '-Command', SIGNATURE_SCRIPT], { env: powershellEnv(env, { IMPROMPTU_VERIFY_FILE: file }) });
   try { const data = JSON.parse(String(stdout).replace(/^\uFEFF/, '').trim()); return { status: String(data.status || ''), subject: String(data.subject || '') }; }
   catch { return { status: '', subject: '' }; }
 }

@@ -5,7 +5,7 @@ const { execFile } = require('node:child_process');
 const crypto = require('node:crypto');
 const { ollamaOrigin } = require('./ollama.cjs');
 const { analyze } = require('./engine.cjs');
-const { powershell } = require('./windows.cjs');
+const { powershell, powershellEnv } = require('./windows.cjs');
 
 const DEFAULTS = { enabled: false, consentAt: '', nudges: true, breakMinutes: 90, scrollFrames: 4, visionModel: '' };
 const LIMITS = { frames: 6, question: 1000, selection: 30000 };
@@ -24,7 +24,7 @@ function readSettings(raw) {
   return value;
 }
 
-const run = (file, args, execFn = execFile) => new Promise((resolve, reject) => execFn(file, args, { timeout: 8000, windowsHide: true }, error => error ? reject(error) : resolve()));
+const run = (file, args, execFn = execFile, extra = {}) => new Promise((resolve, reject) => execFn(file, args, { timeout: 8000, windowsHide: true, ...extra }, error => error ? reject(error) : resolve()));
 // Windows merges synthetic keys with keys still held down, so Ctrl+Shift+I would turn Ctrl+C into Ctrl+Shift+C.
 // Wait briefly for the user to release the shortcut, then send the fixed key to the foreground window.
 const windowsKeyScript = keys => `Add-Type -AssemblyName System.Windows.Forms; $end = [DateTime]::UtcNow.AddMilliseconds(1500); while ([System.Windows.Forms.Control]::ModifierKeys -ne [System.Windows.Forms.Keys]::None -and [DateTime]::UtcNow -lt $end) { Start-Sleep -Milliseconds 30 }; [System.Windows.Forms.SendKeys]::SendWait('${keys}')`;
@@ -34,7 +34,7 @@ function sendKeys(kind, platform = process.platform, execFn = execFile, env = pr
   const mac = { copy: 'keystroke "c" using command down', pageDown: 'key code 121', pageUp: 'key code 116' }[kind];
   if (!mac) throw new Error('Unsupported key action.');
   if (platform === 'darwin') return run('/usr/bin/osascript', ['-e', `tell application "System Events" to ${mac}`], execFn);
-  if (platform === 'win32') return run(powershell(env), ['-NoProfile', '-NonInteractive', '-Command', windowsKeyScript(WINDOWS_KEYS[kind])], execFn);
+  if (platform === 'win32') return run(powershell(env), ['-NoProfile', '-NonInteractive', '-Command', windowsKeyScript(WINDOWS_KEYS[kind])], execFn, { env: powershellEnv(env) });
   return Promise.reject(new Error('Screen actions are available on macOS and Windows.'));
 }
 

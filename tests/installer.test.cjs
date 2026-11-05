@@ -65,6 +65,9 @@ test('Windows accepts only a valid Authenticode signature from Ollama Inc., chec
   assert.equal(calls[0].args.at(-1), SIGNATURE_SCRIPT);
   assert.ok(!calls[0].args.join(' ').includes('OllamaSetup'));
   assert.equal(calls[0].options.env.IMPROMPTU_VERIFY_FILE, file);
+  await verifyWindowsInstaller(file, signature('Valid', OLLAMA_SUBJECT), { ...env, PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules' });
+  assert.equal(Object.keys(calls.at(-1).options.env).some(key => key.toLowerCase() === 'psmodulepath'), false);
+  assert.equal(calls.at(-1).options.env.SystemRoot, 'C:\\Windows');
   await assert.rejects(verifyWindowsInstaller(file, signature('HashMismatch', OLLAMA_SUBJECT), env), /not validly signed by Ollama Inc/);
   await assert.rejects(verifyWindowsInstaller(file, signature('NotSigned', ''), env), /not validly signed/);
   await assert.rejects(verifyWindowsInstaller(file, signature('Valid', 'CN=Ollama Helper Ltd, O=Ollama Helper Ltd'), env), /not validly signed/);
@@ -117,7 +120,10 @@ test('on a real Windows machine the signature script runs and .NET renders the O
   assert.ok(isOllamaWindowsSigner(subject), `pin rejected the real subject: ${subject}`);
   const system = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
   const signature = await readWindowsSignature(system);
-  assert.equal(signature.status, 'Valid');
+  if (signature.status !== 'Valid') {
+    const raw = require('node:child_process').spawnSync(powershell(), ['-NoProfile', '-NonInteractive', '-Command', SIGNATURE_SCRIPT], { env: { ...process.env, IMPROMPTU_VERIFY_FILE: system }, encoding: 'utf8' });
+    assert.fail(`signature script returned ${JSON.stringify(signature)}; raw stdout ${JSON.stringify(raw.stdout)} stderr ${JSON.stringify(raw.stderr)}`);
+  }
   assert.match(signature.subject, /Microsoft/);
   await assert.rejects(verifyWindowsInstaller(system), /not validly signed by Ollama Inc/);
   const tricky = path.join(os.tmpdir(), `impromptu 'quote' $(x) ${Date.now()}.exe`);

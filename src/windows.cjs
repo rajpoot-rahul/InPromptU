@@ -5,6 +5,13 @@ const path = require('node:path');
 function powershell(env = process.env) {
   return path.win32.join(env.SystemRoot || env.windir || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 }
+// A PSModulePath inherited from PowerShell 7 makes Windows PowerShell 5.1 load incompatible modules, so
+// Get-AuthenticodeSignature silently fails. Without it, powershell.exe uses its own default module path.
+function powershellEnv(env = process.env, extra = {}) {
+  const clean = {};
+  for (const [key, value] of Object.entries(env)) if (key.toLowerCase() !== 'psmodulepath') clean[key] = value;
+  return { ...clean, ...extra };
+}
 // Splits an X.500 name as .NET prints it ("CN=Ollama Inc., O=Ollama Inc., ..."), honouring quoted values.
 function parseDN(subject) {
   const fields = {}; let key = '', value = '', inKey = true, quoted = false;
@@ -22,4 +29,4 @@ function parseDN(subject) {
   return fields;
 }
 
-module.exports = { powershell, parseDN };
+module.exports = { powershell, powershellEnv, parseDN };
