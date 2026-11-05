@@ -153,7 +153,7 @@ function renderSetup() {
   $('setup-message').textContent = setupError || {
     done: `Improve now uses ${model} on this computer. ${state.localOnly ? 'Local-only mode is on: cloud providers and knowledge lookups are blocked.' : 'Cloud providers stay available in Settings.'}`,
     checking: 'Checking this computer…',
-    ready: configured && !missing ? `Improve uses ${model} on this computer. Choose another installed model to switch.` : `${flow.localMessage('ready', { count: localAI.models.length })} Your prompts stay on this device when you use it.`,
+    ready: configured && !missing ? `Improve uses ${model} on this computer. Choose another installed model to switch.` : `${flow.localMessage('ready', { count: localAI?.models?.length ?? 0 })} Your prompts stay on this device when you use it.`,
     'not-set-up': flow.LOCAL_PHASE2,
     'no-models': flow.localMessage('no-models')
   }[status] || '';
