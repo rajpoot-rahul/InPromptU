@@ -32,7 +32,7 @@ let chats, skillStore, packStore, learningStore, inboxWatcher = null, learningPo
 let agentContext, contextBridge;
 const evidenceCache = new EvidenceCache();
 const coach = new mascotLib.Coach();
-let mascotWin = null, mascotTimer = null, mascotView = { busy: '', capturing: false, message: null, nudge: null, vision: { ok: false, message: 'Checking your local model…' } };
+let mascotWin = null, mascotTimer = null, mascotView = { busy: '', capturing: false, message: null, nudge: null, vision: { ok: false, message: '' } };
 const chatReplies = new Map();
 let win, tray, state, knowledge, sessionKey = '', busy = false, quitting = false, shortcutRegistered = false;
 const sourceLinks = new Set();
@@ -164,9 +164,9 @@ async function mascotVision() {
   const endpoint = state.connection.mode === 'ollama' ? state.connection.endpoint : ollama.DEFAULT_ENDPOINT;
   const model = state.mascot.visionModel || (state.connection.mode === 'ollama' ? state.connection.model : '') || state.chat.model;
   const found = await ollama.probe(endpoint);
-  if (found.status !== 'ready') return { ok: false, message: found.message };
-  if (!model) return { ok: false, message: 'Choose a local vision model in Settings → Mascot.' };
-  if (!found.models.some(m => m.name === model)) return { ok: false, message: `${model} is not installed in Ollama.` };
+  if (found.status !== 'ready') return { ok: false, message: setupFlow.SCREEN_PHASE2 };
+  if (!model) return { ok: false, message: 'Choose a vision model in Settings → Mascot.' };
+  if (!found.models.some(m => m.name === model)) return { ok: false, message: `${model} is not installed on this computer. Choose another in Settings → Mascot.` };
   if (!await mascotLib.visionCapable(endpoint, model)) return { ok: false, message: `${model} cannot read images. Choose a vision model in Settings → Mascot.` };
   return { ok: true, endpoint, model };
 }
@@ -397,7 +397,7 @@ if (lock) {
       const connection = validateConnection({ mode: 'ollama', endpoint: input?.endpoint || ollama.DEFAULT_ENDPOINT, model: input?.model });
       const found = await ollama.probe(connection.endpoint);
       if (found.status !== 'ready') throw new Error(found.message);
-      if (!found.models.some(model => model.name === connection.model)) throw new Error(`“${connection.model}” is not installed in Ollama. Choose one of the installed models.`);
+      if (!found.models.some(model => model.name === connection.model)) throw new Error(`“${connection.model}” is not installed on this computer. Choose one of the installed models.`);
       busy = true;
       try {
         const start = Date.now();
@@ -429,7 +429,7 @@ if (lock) {
           const existing = installer.findOllama();
           if (!existing) await installer.installOllama({ signal: controller.signal, onProgress: sendSetupProgress });
           else {
-            sendSetupProgress({ stage: 'start', message: 'Starting the Ollama already on this computer…' });
+            sendSetupProgress({ stage: 'start', message: 'Starting the local AI runtime already on this computer…' });
             await installer.startOllama(existing);
             await installer.waitForServer(ollama.DEFAULT_ENDPOINT);
           }
@@ -443,7 +443,7 @@ if (lock) {
           await installer.pullModel(model, { signal: controller.signal, onProgress: sendSetupProgress });
         }
         sendSetupProgress({ stage: 'test', message: `Testing ${model} with a fictional sample prompt…` });
-        const result = await adoptLocalModel({ model: model.trim(), localOnly: localOnly !== false }).catch(error => { throw /did not return|invalid suggestion|invalid explanation/i.test(error.message) ? new Error(`${model} downloaded, but it could not complete the test prompt, so it is probably too small for prompt help. Choose a larger model; you can remove this one later with “ollama rm ${model}”.`) : error; });
+        const result = await adoptLocalModel({ model: model.trim(), localOnly: localOnly !== false }).catch(error => { throw /did not return|invalid suggestion|invalid explanation/i.test(error.message) ? new Error(`${model} downloaded, but it could not complete the test prompt, so it is probably too small for prompt help. Choose a larger model.`) : error; });
         sendSetupProgress({ stage: 'done', message: 'Local AI is ready.' });
         return result;
       } catch (error) {
@@ -469,7 +469,7 @@ if (lock) {
       const names = { bedrock: 'AWS Bedrock', openrouter: 'OpenRouter', huggingface: 'Hugging Face', compatible: 'Custom API' };
       return {
         local: found.status === 'ready' ? found.models.map(m => ({ model: m.name, label: `Local LLM · ${m.name}` })) : [],
-        localMessage: found.status === 'ready' ? '' : found.message,
+        localMessage: found.status === 'ready' ? '' : found.status === 'no-models' ? 'no models installed' : 'Phase 2 preview, not set up',
         cloud: cloudModes.map(mode => {
           const current = state.connection.mode === mode;
           const problem = current ? cloudProblem() : `Set up ${names[mode]} in Settings to use it here.`;

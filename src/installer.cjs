@@ -52,7 +52,7 @@ function findOllama(platform = process.platform, env = process.env, exists = isF
 
 // Starts an installed Ollama in the background. Windows prefers the tray app, which runs the server and its updater.
 function startOllama(found, { platform = process.platform, exists = isFileOrApp, execFn = execFile, spawnFn = spawn } = {}) {
-  if (!found) throw new Error('Ollama was not found on this computer.');
+  if (!found) throw new Error('The local AI runtime was not found on this computer.');
   if (platform === 'darwin' && found.endsWith('.app')) return new Promise((resolve, reject) => execFn('/usr/bin/open', ['-g', found], error => error ? reject(error) : resolve({ file: '/usr/bin/open', args: ['-g', found] })));
   const tray = platform === 'win32' ? path.win32.join(path.win32.dirname(found), 'ollama app.exe') : '';
   const [file, args] = tray && exists(tray) ? [tray, []] : [found, ['serve']];
@@ -79,7 +79,7 @@ async function latestRelease(fetchFn = fetch, platform = process.platform) {
 
 async function download(url, file, { onProgress = () => {}, signal, fetchFn = fetch, maxBytes = 2e9 } = {}) {
   const response = await fetchFn(url, { redirect: 'follow', signal });
-  if (!response.ok) throw new Error(`The Ollama download failed (${response.status}).`);
+  if (!response.ok) throw new Error(`The local AI runtime download failed (${response.status}).`);
   const total = Number(response.headers.get('content-length')) || 0;
   const out = fs.createWriteStream(file, { mode: 0o600 });
   let done = 0;
@@ -112,7 +112,7 @@ async function verifyMacApp(app, runFn = run) {
   const details = `${info.stdout}\n${info.stderr}`;
   const authority = details.match(/^Authority=Developer ID Application: (.+)$/m)?.[1] || '';
   const team = details.match(/^TeamIdentifier=(\S+)$/m)?.[1] || '';
-  if (team !== OLLAMA_TEAM_ID || !authority) throw new Error('The downloaded app is not signed by Ollama (Infra Technologies, Inc), so it was not installed.');
+  if (team !== OLLAMA_TEAM_ID || !authority) throw new Error('The downloaded app is not signed by its expected publisher, so it was not installed.');
   await runFn('/usr/sbin/spctl', ['--assess', '--type', 'execute', app]);
   return authority;
 }
@@ -125,7 +125,7 @@ async function readWindowsSignature(file, runFn = run, env = process.env) {
 }
 async function verifyWindowsInstaller(file, runFn = run, env = process.env) {
   const { status, subject } = await readWindowsSignature(file, runFn, env);
-  if (status !== 'Valid' || !isOllamaWindowsSigner(subject)) throw new Error('The downloaded installer is not validly signed by Ollama Inc., so it was not run.');
+  if (status !== 'Valid' || !isOllamaWindowsSigner(subject)) throw new Error('The downloaded installer is not validly signed by its expected publisher, so it was not run.');
   return parseDN(subject).CN;
 }
 
@@ -135,45 +135,45 @@ async function waitForServer(endpoint = DEFAULT_ENDPOINT, timeoutMs = 90000, fet
     try { const response = await fetchFn(`${ollamaOrigin(endpoint)}/api/version`); if (response.ok) return true; } catch {}
     await new Promise(r => setTimeout(r, 1500));
   }
-  throw new Error('Ollama was installed but did not start. Open the Ollama app once, then choose Check again.');
+  throw new Error('Local AI was installed but has not started yet. Wait a moment, then choose Check again.');
 }
 
 // OllamaSetup.exe bundles GPU runtimes: about 1.7 GB to download and several GB once installed.
 const WINDOWS_INSTALL_FACTOR = 4;
 async function installOllama({ onProgress = () => {}, signal, fetchFn = fetch, runFn = run, platform = process.platform, startFn = startOllama, findFn = findOllama, freeGB = () => systemSpecs().freeGB, serverTimeoutMs = 90000 } = {}) {
-  if (!['darwin', 'win32'].includes(platform)) throw new Error('Automatic installation is available on macOS and Windows. Install Ollama from ollama.com, then choose Check again.');
+  if (!['darwin', 'win32'].includes(platform)) throw new Error('Automatic installation is available on macOS and Windows.');
   const release = await latestRelease(fetchFn, platform);
   const free = freeGB();
-  if (platform === 'win32' && release.size && free !== null && free < (release.size / 1e9) * WINDOWS_INSTALL_FACTOR + 1) throw new Error(`Not enough free disk space to install Ollama (about ${Math.ceil((release.size / 1e9) * WINDOWS_INSTALL_FACTOR + 1)} GB needed, ${free} GB free).`);
+  if (platform === 'win32' && release.size && free !== null && free < (release.size / 1e9) * WINDOWS_INSTALL_FACTOR + 1) throw new Error(`Not enough free disk space to install local AI (about ${Math.ceil((release.size / 1e9) * WINDOWS_INSTALL_FACTOR + 1)} GB needed, ${free} GB free).`);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-ollama-'));
   try {
     const file = path.join(dir, path.basename(new URL(release.url).pathname) || 'ollama-download');
-    onProgress({ stage: 'download', message: `Downloading Ollama ${release.version} from ${release.source}…`, done: 0, total: release.size || 0 });
-    await download(release.url, file, { signal, fetchFn, maxBytes: platform === 'win32' ? 4e9 : 2e9, onProgress: p => onProgress({ stage: 'download', message: `Downloading Ollama ${release.version}…`, ...p }) });
-    onProgress({ stage: 'verify', message: 'Checking that the download is genuinely signed by Ollama…' });
+    onProgress({ stage: 'download', message: 'Downloading the local AI runtime…', done: 0, total: release.size || 0 });
+    await download(release.url, file, { signal, fetchFn, maxBytes: platform === 'win32' ? 4e9 : 2e9, onProgress: p => onProgress({ stage: 'download', message: 'Downloading the local AI runtime…', ...p }) });
+    onProgress({ stage: 'verify', message: 'Checking the download\'s signature…' });
     if (platform === 'darwin') {
       await runFn('/usr/bin/ditto', ['-x', '-k', file, dir]);
       const app = path.join(dir, 'Ollama.app');
       const signer = await verifyMacApp(app, runFn);
       let target = '/Applications/Ollama.app';
       try { fs.accessSync('/Applications', fs.constants.W_OK); } catch { target = path.join(os.homedir(), 'Applications/Ollama.app'); fs.mkdirSync(path.dirname(target), { recursive: true }); }
-      if (fs.existsSync(target)) throw new Error(`An Ollama app already exists at ${target}. Open it, then choose Check again.`);
-      onProgress({ stage: 'install', message: `Installing Ollama (signed by ${signer}) to ${path.dirname(target)}…` });
+      if (fs.existsSync(target)) throw new Error(`The local AI runtime is already in ${path.dirname(target)}. Open it once, then choose Check again.`);
+      onProgress({ stage: 'install', message: `Installing the local AI runtime (signature verified: ${signer}) to ${path.dirname(target)}…` });
       await runFn('/usr/bin/ditto', [app, target]);
       await runFn('/usr/bin/open', ['-g', target]);
     } else {
       const signer = await verifyWindowsInstaller(file, runFn);
       if (signal?.aborted) throw new Error('Setup was cancelled.');
-      onProgress({ stage: 'install', message: `Installing Ollama (signed by ${signer}) for this Windows user…` });
+      onProgress({ stage: 'install', message: 'Installing the local AI runtime (signature verified) for this Windows user…' });
       // Inno Setup: per-user install to %LOCALAPPDATA%\Programs\Ollama without UAC; its post-install step starts the tray app.
       await runFn(file, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-'], { timeout: 1200000 });
     }
-    onProgress({ stage: 'start', message: 'Starting Ollama…' });
+    onProgress({ stage: 'start', message: 'Starting local AI…' });
     if (platform === 'win32') {
       try { await waitForServer(DEFAULT_ENDPOINT, Math.min(20000, serverTimeoutMs), fetchFn); }
       catch {
         const installed = findFn();
-        if (!installed) throw new Error('Ollama setup finished, but ollama.exe was not found in %LOCALAPPDATA%\\Programs\\Ollama. Open Ollama from the Start menu, then choose Check again.');
+        if (!installed) throw new Error('Local AI setup finished, but the runtime could not be started. Restart Windows, then choose Check again.');
         await startFn(installed);
         await waitForServer(DEFAULT_ENDPOINT, serverTimeoutMs, fetchFn);
       }
@@ -195,13 +195,13 @@ async function pullModel(name, { endpoint = DEFAULT_ENDPOINT, onProgress = () =>
   const watchdog = setInterval(() => { if (Date.now() - quietSince > stallMs) { stalled = true; controller.abort(); } }, Math.min(5000, stallMs));
   try {
   const response = await fetchFn(`${ollamaOrigin(endpoint)}/api/pull`, { method: 'POST', redirect: 'error', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: name.trim(), stream: true }) });
-  if (!response.ok) throw new Error(`Ollama could not start the download (${response.status}).`);
+  if (!response.ok) throw new Error(`The model download could not start (${response.status}).`);
   const layers = new Map(); let buffer = '', status = '';
   const decoder = new TextDecoder(); const reader = response.body.getReader();
   const handle = line => {
     if (!line.trim()) return;
     const data = JSON.parse(line);
-    if (data.error) throw new Error(/not found|file does not exist|manifest unknown/i.test(data.error) ? `The model “${name}” was not found in the Ollama library.` : `Ollama: ${String(data.error).slice(0, 200)}`);
+    if (data.error) throw new Error(/not found|file does not exist|manifest unknown/i.test(data.error) ? `The model “${name}” was not found in the model library.` : `Model download: ${String(data.error).slice(0, 200)}`);
     status = data.status || status;
     if (data.digest && data.total) layers.set(data.digest, { total: data.total, completed: data.completed || 0 });
     const total = [...layers.values()].reduce((n, l) => n + l.total, 0), done = [...layers.values()].reduce((n, l) => n + l.completed, 0);

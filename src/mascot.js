@@ -26,15 +26,15 @@ function render(state) {
   info = state;
   $('root').dataset.state = state.busy ? 'busy' : state.nudge ? 'nudge' : 'idle';
   $('dot').hidden = !(state.capturing || state.nudge);
-  $('status').textContent = state.busy ? state.busy : state.vision.ok ? `Local model: ${state.vision.model}` : state.vision.message;
+  $('status').textContent = state.busy || 'Ready';
   const screenReady = state.vision.ok && state.permissions.screen;
   for (const name of ['explain-screen', 'read-page']) document.querySelector(`[data-action="${name}"]`).disabled = Boolean(state.busy) || !screenReady;
   for (const name of ['selection-workspace', 'selection-knowledge']) document.querySelector(`[data-action="${name}"]`).disabled = Boolean(state.busy) || !state.permissions.accessibility;
   $('ask').disabled = Boolean(state.busy) || !screenReady;
   $('read-page').textContent = `Read this page (scrolls up to ${state.scrollFrames} ${state.scrollFrames === 1 ? 'screen' : 'screens'})`;
-  $('privacy').textContent = !state.permissions.accessibility || !state.permissions.screen
-    ? `Grant ${[!state.permissions.accessibility && 'Accessibility', !state.permissions.screen && 'Screen Recording'].filter(Boolean).join(' and ')} in Impromptu Settings → Mascot to use every action.`
-    : 'Screen reading runs only when you click, and only on a local model. Nothing is recorded in the background.';
+  const missing = [!state.permissions.accessibility && 'Accessibility', state.vision.ok && !state.permissions.screen && 'Screen Recording'].filter(Boolean);
+  $('privacy').textContent = [!state.vision.ok && state.vision.message, missing.length && `Grant ${missing.join(' and ')} in Impromptu Settings → Mascot to use ${state.vision.ok ? 'every action' : 'the selection actions'}.`].filter(Boolean).join(' ')
+    || 'Screen reading runs only when you click, and only on this computer. Nothing is recorded in the background.';
   if (state.capturing) bubble('Reading your screen now. Impromptu captures only what is visible, and only for this request.', 'capturing');
   else if (state.busy) bubble(state.busy);
   else if (state.message) bubble(state.message.text, state.message.tone || '', state.message.actions || [{ name: 'dismiss', label: 'OK' }], state.message.detail || '');

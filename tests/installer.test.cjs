@@ -51,7 +51,7 @@ test('only an app signed by Ollama and notarized is accepted; other signers are 
   const signed = (authority, team) => async (file, args) => { calls.push([file, args[0]]); return { stdout: '', stderr: file.endsWith('codesign') && args[0] === '-dv' ? `Identifier=com.electron.ollama\nAuthority=Developer ID Application: ${authority}\nTeamIdentifier=${team}` : '' }; };
   assert.equal(await verifyMacApp('/tmp/Ollama.app', signed('Infra Technologies, Inc (3MU9H2V9Y9)', '3MU9H2V9Y9')), 'Infra Technologies, Inc (3MU9H2V9Y9)');
   assert.deepEqual(calls.map(c => c[1]), ['--verify', '-dv', '--assess']);
-  await assert.rejects(verifyMacApp('/tmp/Ollama.app', signed('Ollama Lookalike (EVIL12345)', 'EVIL12345')), /not signed by Ollama/);
+  await assert.rejects(verifyMacApp('/tmp/Ollama.app', signed('Ollama Lookalike (EVIL12345)', 'EVIL12345')), /not signed by its expected publisher/);
   await assert.rejects(verifyMacApp('/tmp/Ollama.app', async () => { throw new Error('code object is not signed at all'); }), /not signed/);
 });
 
@@ -68,7 +68,7 @@ test('Windows accepts only a valid Authenticode signature from Ollama Inc., chec
   await verifyWindowsInstaller(file, signature('Valid', OLLAMA_SUBJECT), { ...env, PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules' });
   assert.equal(Object.keys(calls.at(-1).options.env).some(key => key.toLowerCase() === 'psmodulepath'), false);
   assert.equal(calls.at(-1).options.env.SystemRoot, 'C:\\Windows');
-  await assert.rejects(verifyWindowsInstaller(file, signature('HashMismatch', OLLAMA_SUBJECT), env), /not validly signed by Ollama Inc/);
+  await assert.rejects(verifyWindowsInstaller(file, signature('HashMismatch', OLLAMA_SUBJECT), env), /not validly signed by its expected publisher/);
   await assert.rejects(verifyWindowsInstaller(file, signature('NotSigned', ''), env), /not validly signed/);
   await assert.rejects(verifyWindowsInstaller(file, signature('Valid', 'CN=Ollama Helper Ltd, O=Ollama Helper Ltd'), env), /not validly signed/);
   await assert.rejects(verifyWindowsInstaller(file, signature('Valid', 'CN=Ollama Inc., O=Ollama Inc., SERIALNUMBER=9999999'), env), /not validly signed/);
@@ -105,7 +105,7 @@ test('the Windows install downloads OllamaSetup.exe, verifies it, runs Inno Setu
   runs.length = 0;
   await assert.rejects(installOllama({ platform: 'win32', fetchFn, runFn: async (file, args) => { runs.push(path.win32.basename(file)); return { stdout: JSON.stringify({ status: 'Valid', subject: 'CN=Someone Else' }) }; }, freeGB: () => 50 }), /not validly signed/);
   assert.deepEqual(runs, ['powershell.exe']);
-  await assert.rejects(installOllama({ platform: 'win32', fetchFn, runFn, freeGB: () => 3 }), /Not enough free disk space to install Ollama/);
+  await assert.rejects(installOllama({ platform: 'win32', fetchFn, runFn, freeGB: () => 3 }), /Not enough free disk space to install local AI/);
   await assert.rejects(installOllama({ platform: 'linux', fetchFn, runFn }), /macOS and Windows/);
 });
 
@@ -125,7 +125,7 @@ test('on a real Windows machine the signature script runs and .NET renders the O
     assert.fail(`signature script returned ${JSON.stringify(signature)}; raw stdout ${JSON.stringify(raw.stdout)} stderr ${JSON.stringify(raw.stderr)}`);
   }
   assert.match(signature.subject, /Microsoft/);
-  await assert.rejects(verifyWindowsInstaller(system), /not validly signed by Ollama Inc/);
+  await assert.rejects(verifyWindowsInstaller(system), /not validly signed by its expected publisher/);
   const tricky = path.join(os.tmpdir(), `impromptu 'quote' $(x) ${Date.now()}.exe`);
   fs.writeFileSync(tricky, 'not signed');
   try { const unsigned = await readWindowsSignature(tricky); assert.ok(unsigned.status && unsigned.status !== 'Valid', JSON.stringify(unsigned)); } finally { fs.rmSync(tricky, { force: true }); }

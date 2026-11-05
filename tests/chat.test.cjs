@@ -74,7 +74,7 @@ test('streaming reassembles split NDJSON, reports usage and only calls localhost
 
 test('streaming failures are explicit and never produce a fake reply', async () => {
   const base = { endpoint: 'http://localhost:11434/api/chat', model: 'gemma4:latest', messages: [] };
-  await assert.rejects(streamChat({ ...base, fetchFn: async () => { throw new TypeError('fetch failed'); } }), /not responding/);
+  await assert.rejects(streamChat({ ...base, fetchFn: async () => { throw new TypeError('fetch failed'); } }), /isn't set up on this computer/);
   await assert.rejects(streamChat({ ...base, fetchFn: async () => new Response(JSON.stringify({ error: "model 'gemma4:latest' not found" }), { status: 404 }) }), /not installed/);
   await assert.rejects(streamChat({ ...base, fetchFn: async () => ndjson([{ message: { content: 'par' } }, { error: 'runner crashed' }]) }), /runner crashed/);
   await assert.rejects(streamChat({ ...base, fetchFn: async () => ndjson([{ done: true }]) }), /empty reply/);

@@ -14,7 +14,7 @@ test('detection lists installed models and only ever contacts localhost', async 
   });
   assert.equal(result.status, 'ready');
   assert.deepEqual(result.models.map(m => [m.name, m.parameterSize]), [['gemma4:latest', '8.1B']]);
-  assert.match(result.message, /0\.40\.4 is running with 1 installed model/);
+  assert.equal(result.message, 'Local AI is ready with 1 installed model.');
   assert.deepEqual(urls, ['http://localhost:11434/api/version', 'http://localhost:11434/api/tags']);
   await assert.rejects(probe('https://ollama.example.com/api/chat', () => { throw new Error('must not fetch'); }), /localhost/);
   assert.equal(isLocalURL('http://127.0.0.1:8080/v1'), true);
@@ -24,11 +24,12 @@ test('detection lists installed models and only ever contacts localhost', async 
 test('detection distinguishes not running, no models, and a non-Ollama service', async () => {
   const refused = await probe(undefined, async () => { throw new TypeError('fetch failed', { cause: new Error('ECONNREFUSED') }); });
   assert.equal(refused.status, 'not-running');
-  assert.match(refused.message, /ollama serve/);
+  assert.equal(refused.message, "Local AI (Phase 2 preview) isn't set up on this computer.");
   const empty = await probe(undefined, async url => url.endsWith('/api/version') ? json({ version: '1.0' }) : json({ models: [] }));
   assert.equal(empty.status, 'no-models');
   const other = await probe(undefined, async () => new Response('not here', { status: 404 }));
   assert.equal(other.status, 'error');
+  assert.equal(other.message, refused.message, 'an unexpected service reads as not set up, not as an error');
 });
 
 test('Ollama runners without structured output fall back once to prompt-only JSON', async () => {
@@ -47,10 +48,10 @@ test('Ollama runners without structured output fall back once to prompt-only JSO
 });
 
 test('Ollama failures explain the local fix and never fabricate output', async () => {
-  await assert.rejects(requestImprovement({ prompt: 'Hello there' }, local, '', async () => json({ error: "model 'gemma4:latest' not found" }, 404)), /not installed in Ollama/);
-  await assert.rejects(requestImprovement({ prompt: 'Hello there' }, local, '', async () => { throw new TypeError('fetch failed'); }), /Ollama is not responding at localhost:11434/);
+  await assert.rejects(requestImprovement({ prompt: 'Hello there' }, local, '', async () => json({ error: "model 'gemma4:latest' not found" }, 404)), /not installed on this computer/);
+  await assert.rejects(requestImprovement({ prompt: 'Hello there' }, local, '', async () => { throw new TypeError('fetch failed'); }), /isn't set up on this computer\. Your prompt is unchanged/);
   let calls = 0;
-  await assert.rejects(requestImprovement({ prompt: 'Hello there' }, local, '', async () => { calls++; return json({ error: 'out of memory' }, 500); }), /Ollama could not run .*out of memory/);
+  await assert.rejects(requestImprovement({ prompt: 'Hello there' }, local, '', async () => { calls++; return json({ error: 'out of memory' }, 500); }), /Local AI could not run .*out of memory/);
   assert.equal(calls, 1);
   assert.throws(() => parseSuggestion('I cannot help with that.'), /invalid suggestion/);
 });
