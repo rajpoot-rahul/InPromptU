@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const crypto = require('node:crypto');
 const { analyze, normalizeInput } = require('./engine.cjs');
-const { requestImprovement, validateConnection, assertAllowed, complete } = require('./provider.cjs');
+const { requestImprovement, validateConnection, assertAllowed, complete, isLocalConnection } = require('./provider.cjs');
 const ollama = require('./ollama.cjs');
 const { ChatStore, streamChat, LIMITS: chatLimits } = require('./chat.cjs');
 const { SkillStore, generateSkill } = require('./skills.cjs');
@@ -16,6 +16,7 @@ const contextLib = require('./context.cjs');
 const hylandLib = require('./hyland-learning.cjs');
 const installer = require('./installer.cjs');
 const { KnowledgeService, sourceURL } = require('./knowledge.cjs');
+const insights = require('./insights.cjs');
 
 app.setName('Impromptu');
 // Matches the installer's shortcut appId so the taskbar groups and pins the running app with its Start menu entry.
@@ -30,6 +31,7 @@ let mascotWin = null, mascotTimer = null, mascotView = { busy: '', capturing: fa
 const chatReplies = new Map();
 let win, tray, state, knowledge, sessionKey = '', busy = false, quitting = false, shortcutRegistered = false;
 const sourceLinks = new Set();
+let promptLog;
 const shortcut = 'CommandOrControl+Shift+I';
 const entry = pathToFileURL(path.join(__dirname, 'index.html')).href;
 const themes = ['system', 'light', 'dark', 'glass', 'max-ind'];
@@ -287,6 +289,7 @@ if (lock) {
     skillStore = new SkillStore(path.join(app.getPath('userData'), 'skills.json'));
     packStore = new contextLib.PackStore(path.join(app.getPath('userData'), 'context-packs.json'));
     learningStore = new hylandLib.LearningStore(path.join(app.getPath('userData'), 'learning-sessions.json'));
+    promptLog = new insights.PromptLog(path.join(app.getPath('userData'), 'prompt-log.json'));
     watchInbox(); watchLearning();
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
@@ -336,6 +339,7 @@ if (lock) {
         const evidence = evidenceCache.select(input?.evidence);
         const request = evidence.length ? { ...input, context: [typeof input.context === 'string' ? input.context.trim() : '', evidenceContext(evidence)].filter(Boolean).join('\n\n') } : input;
         const start = Date.now(); const result = await requestImprovement(request, state.connection, sessionKey, undefined, skillStore.all());
+        try { promptLog.record(insights.entryFrom(input, result)); } catch {}
         if (evidence.length) result.evidence = evidenceSummaries(evidence); skillStore.recordUse(result.skillId); learn(result.action || 'improve'); coach.record(result.action || 'improve', input?.prompt || ''); maybeNudge(); return { ...result, durationMs: Date.now() - start }; }
       finally { busy = false; }
     });
@@ -535,7 +539,29 @@ if (lock) {
       state.ranked.board = state.ranked.board.slice(0, 200); persist();
       return { added, updated, skipped, state: learningState() };
     });
-    handle('open-reading', async url => { if (typeof url !== 'string' || !learning.readingAllowed(url)) throw new Error('Only links from the Learner track can be opened.'); await shell.openExternal(url); return true; });
+    handle('open-reading', async url => { if (typeof url !== 'string' || !(learning.readingAllowed(url) || insights.readingAllowed(url))) throw new Error('Only links from the Learner track and My progress can be opened.'); await shell.openExternal(url); return true; });
+    const insightsState = () => ({ enabled: promptLog.enabled, count: promptLog.entries.length, summary: insights.summarize(promptLog.entries), canCoach: state.connection.mode !== 'offline', localConnection: isLocalConnection(state.connection), localOnly: state.localOnly });
+    handle('insights-state', () => insightsState());
+    handle('insights-settings', ({ enabled } = {}) => { promptLog.setEnabled(enabled === true); return insightsState(); });
+    handle('insights-erase', () => { promptLog.clear(); return insightsState(); });
+    handle('insights-export', async () => {
+      if (!promptLog.entries.length) throw new Error('There is no prompt history to export.');
+      const result = await dialog.showSaveDialog(win, { title: 'Export your prompt history', defaultPath: 'impromptu-prompt-history.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
+      if (result.canceled) return false;
+      fs.writeFileSync(result.filePath, JSON.stringify(promptLog.exportable(), null, 2), { mode: 0o600 }); return true;
+    });
+    handle('insights-coach', async () => {
+      if (busy) throw new Error('Wait for the current request to finish.');
+      if (state.connection.mode === 'offline') throw new Error('An AI coaching summary needs an AI model. Set one up in Settings; the insights on this page need none.');
+      assertAllowed(state.connection, state.localOnly);
+      const messages = insights.coachMessages(promptLog.entries);
+      busy = true;
+      try {
+        const start = Date.now();
+        const { content, usage } = await complete(messages, state.connection, sessionKey);
+        return { ...insights.parseCoach(content), model: state.connection.model, local: isLocalConnection(state.connection), usage, durationMs: Date.now() - start };
+      } finally { busy = false; }
+    });
     handle('skill-delete', id => { skillStore.delete(id); return skillStore.all(); });
     handle('skill-export', async () => {
       if (!skillStore.custom.length) throw new Error('Create a skill before exporting.');

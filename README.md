@@ -203,9 +203,24 @@ Clicking Improve sends your original prompt, supplied context, audience, format,
 
 API keys are held only in the desktop main process's memory until quit. They are not returned to the renderer or saved to disk. Changing endpoint clears the old key. Connection settings are saved; enter the key again after restarting.
 
+## My progress: prompt insights
+
+**My progress** (in *Your space*) learns from every prompt you process in the Prompt workspace, with any provider, offline included: each Improve, Compress or Explain is noted in a local prompt history. From it the page shows:
+
+- **Prompt Specificity**, a 0–100 score per prompt with your average, the last 7 days against before, and a weekly sparkline. The formula is shown in the app: 12 points for each of the five signals (task, context, audience, format, boundaries; up to 60), 9 points for each distinct concrete detail such as a number, name, identifier, file, quote or link (up to 25), and up to 15 for a workable length (12–300 words).
+- **What your prompts include**: how often each signal appears, with its trend.
+- **Your areas to improve**: the weak spots in your last 50 prompts, ranked, each with why it matters, one or two of your own prompts with what was missing and a suggested addition, a **Try it** button that opens the prompt in the Prompt workspace with Explain selected, the matching Learner track milestone and starter skill, and reading from OpenAI, Anthropic, Google, Microsoft and the Prompting Guide. Only these checked links can be opened.
+- **Your habits**: prompt length and estimated tokens, context use, Improve/Compress/Explain counts, average Compress savings, repeated near-identical prompts (with a shortcut to make one a skill), skills and provider types used.
+- An optional **AI coaching summary**: only when you click, your statistics and up to 8 recent prompt excerpts go to the model configured in Settings (local-only mode is respected). The prompts are framed as data, not instructions, and the result is labelled AI-generated and not saved.
+
+![My progress with a fictional prompt history, Light theme](docs/images/my-progress/light-top.png)
+![Areas to improve with example prompts and reading, Dark theme](docs/images/my-progress/dark-areas.png)
+
+The history is `prompt-log.json` in the profile folder (latest 1,000 prompts, restricted file permissions where supported, not encrypted). Each entry holds the date, action, skill, provider type, signals, word and estimated-token counts, Compress savings and the prompt text; context you add is not stored. **Keep a local prompt history for insights** (on by default, in Settings and My progress) records nothing new when off. **Erase prompt history** deletes it and **Export JSON** saves a copy. Nothing is tracked or sent anywhere else.
+
 ## Privacy and storage
 
-Drafts and unsaved improvements stay in the app's memory. Only **Save** writes a prompt-coaching session. Up to 100 sessions are retained locally in Electron's user-data folder (`~/Library/Application Support/Impromptu` on Mac; `%APPDATA%/Impromptu` on Windows). Saved prompt/context content is JSON with restricted file permissions where supported, **not encrypted**. Export contains saved prompts and responses, so review it before sharing. The app adds no telemetry, central database, employee scoring or background monitoring. Explicit knowledge requests use the connected services described above.
+Drafts and unsaved improvements stay in the app's memory. The local prompt history for My progress is described above and can be turned off or erased. Only **Save** writes a prompt-coaching session. Up to 100 sessions are retained locally in Electron's user-data folder (`~/Library/Application Support/Impromptu` on Mac; `%APPDATA%/Impromptu` on Windows). Saved prompt/context content is JSON with restricted file permissions where supported, **not encrypted**. Export contains saved prompts and responses, so review it before sharing. The app adds no telemetry, central database, employee scoring or background monitoring. Explicit knowledge requests use the connected services described above.
 
 The desktop renderer is sandboxed with context isolation and no Node integration. Its narrow IPC API validates the sender; navigation, popups and permissions are denied. Model requests and the Codex connection run in the main process following explicit clicks. Retrieved source links open in the system browser only when clicked.
 

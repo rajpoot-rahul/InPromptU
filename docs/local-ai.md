@@ -104,7 +104,7 @@ url: <https link>
 - `scoreRun(answers)` and `scorePrompt(task, prompt)` are deterministic; a ranked mode could submit `{ total, answered, task scores }` only, never prompt text.
 - Score card file: `{ format: "impromptu-scorecard", version: 1, alias, total, answered: 6, tasks: { <taskId>: 0–100 }, date, app }`. `validateScorecard` requires all six task IDs and `total === round(mean(tasks))`. A future shared service can accept exactly this payload. `workspace.json` → `ranked: { joined, alias, joinedAt, board: [card + importedAt] }`.
 - IPC: `joinRanked({ alias, consent: true })`, `leaveRanked({ clearBoard })`, `removeRanked(alias)`, `exportScorecard()`, `importScorecards()`; `learningState().ranked` holds `{ joined, alias, hasCard, entries[{ rank, alias, total, date, you? }], participants, average, taskAverages }`.
-- IPC: `learningState()`, `markMilestone({ id, done })` (self-reported steps only), `submitBenchmark(answers)`, `eraseLearning()`, `openReading(url)` (curriculum links only).
+- IPC: `learningState()`, `markMilestone({ id, done })` (self-reported steps only), `submitBenchmark(answers)`, `eraseLearning()`, `openReading(url)` (curriculum and My progress links only).
 
 ## Local chat (`src/chat.cjs`)
 
@@ -116,6 +116,16 @@ url: <https link>
 - Persisted setting: `chat: { saveNewChats: boolean, model: string }` in `workspace.json`.
 
 Context Packs and Skillify can start a chat with `chatNew`, then `chatSend` with the pack or skill text as the first message.
+
+## My progress insights (`src/insights.cjs`)
+
+- `PromptLog(file)` writes `prompt-log.json` (mode `0600`) in the profile folder: `{ version: 1, enabled, entries: [{ id, at, action: improve|compress|explain, skillId, mode, signals: [signal ids present], words, estimatedTokens, contextWords, savings: { before, after, pct } | null, prompt, truncated }] }`. The newest 1,000 entries are kept, oldest first; prompts are cut to 4,000 characters and context text is never stored. `record(entry)` does nothing while `enabled` is false.
+- The main process records `entryFrom(input, result)` after every successful `improve` IPC call, whatever the action or provider. Any other prompt-processing feature should record the same way.
+- `summarize(entries, now?)` is deterministic and needs no model: `{ total, firstAt, lastAt, specificity: { average, recent, earlier, delta, recentCount, latest, parts, weeks[{ from, to, count, average }] }, coverage[{ id, label, count, pct, recentPct, earlierPct }], weaknesses[{ id, title, why, gap, count, of, examples[{ id, at, prompt, excerpt, missing[], addition, score }], actions[], readings[{ title, source, url }] }], habits, formula[] }`. `specificity({ prompt, signals })` and `concreteDetails(text)` expose the score.
+- Reading links live in `READINGS`; each was checked to return HTTP 200. `open-reading` opens a URL only when `learning.readingAllowed` or `insights.readingAllowed` accepts it.
+- AI coaching: `coachMessages(entries)` frames the prompts as untrusted data and sends statistics plus up to 8 excerpts of 400 characters; `parseCoach` validates `{ summary, focus[], tips[] }`. The main process refuses offline mode and calls `assertAllowed` before `provider.complete`.
+- IPC: `insightsState()` returns `{ enabled, count, summary, canCoach, localConnection, localOnly }`. The others are `insightsSettings({ enabled })`, `eraseInsights()`, `exportInsights()` (file format `impromptu-prompt-log`, version 1) and `insightsCoach()`.
+- The view is `src/insights-view.js` with `src/insights.css`, loaded after `renderer.js`.
 
 ## Rules for new features
 
