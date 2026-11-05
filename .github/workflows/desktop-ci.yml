@@ -14,11 +14,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, windows-2025]
+        os: [macos-15, macos-15-intel, windows-2025]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
-    env:
-      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -28,4 +26,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ${{ runner.os == 'Windows' && '1' || '' }}
       - run: npm run verify
+      - name: Package the native Mac app
+        if: runner.os == 'macOS'
+        run: node scripts/package.cjs darwin "$(node -p 'process.arch')"
+      - name: Check packaged resources and startup in all themes
+        if: runner.os == 'macOS'
+        run: node scripts/check-mac-startup.cjs

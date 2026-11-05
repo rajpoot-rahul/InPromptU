@@ -45,3 +45,38 @@ test('Codex is found on Windows as codex.exe on PATH or inside an npm global ins
   assert.equal(findCodex('', options([`${npm}\\codex.cmd`])), '');
   assert.equal(findCodex('', { platform: 'darwin', env: { PATH: '/usr/bin:/opt/tools' }, home: '/Users/me', exists: file => file === '/opt/tools/codex' }), '/opt/tools/codex');
 });
+
+test('Mac Codex discovery works without a terminal PATH for system apps, user apps and both Homebrew prefixes', () => {
+  const { findCodex } = require('../src/codex.cjs');
+  const home = '/Users/Example Person';
+  const paths = [
+    '/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex',
+    '/Applications/Codex.app/Contents/Resources/codex',
+    `${home}/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`,
+    `${home}/Applications/Codex.app/Contents/Resources/codex`,
+    `${home}/.local/bin/codex`, '/opt/homebrew/bin/codex', '/usr/local/bin/codex'
+  ];
+  for (const arch of ['arm64', 'x64']) {
+    for (const executable of paths) {
+      assert.equal(findCodex('', { platform: 'darwin', arch, home, env: { PATH: '/usr/bin:/bin' }, exists: file => file === executable }), executable);
+    }
+  }
+  const chosen = `${home}/Dev tools/codex`;
+  assert.equal(findCodex(chosen, { platform: 'darwin', home, env: {}, exists: file => file === chosen || file === paths[0] }), chosen);
+  assert.equal(findCodex('', { platform: 'darwin', home, env: { PATH: '' }, exists: file => file === 'codex' }), '');
+});
+
+test('Codex paths with spaces are passed to spawn without a shell', async () => {
+  const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu codex '));
+  const executable = path.join(folder, 'codex');
+  fs.writeFileSync(executable, 'synthetic executable');
+  const { child } = transport(); let options;
+  const client = new CodexClient({ executable, cwd: folder, spawnFn: (file, args, opts) => {
+    assert.equal(file, executable); assert.deepEqual(args.slice(0, 2), ['app-server', '--stdio']); options = opts; return child;
+  } });
+  try {
+    await client.start();
+    assert.equal(options.cwd, folder); assert.equal(options.shell, undefined);
+  } finally { client.close(); fs.rmSync(folder, { recursive: true, force: true }); }
+});

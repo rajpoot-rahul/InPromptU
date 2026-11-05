@@ -58,7 +58,6 @@
 }
 
 :root[data-theme="glass"] body { min-height: 100vh; background-color: var(--glass-solid); background-image: var(--glass-wash); }
-:root[data-theme="glass"] .titlebar { background: transparent; border-color: transparent; }
 :root[data-theme="glass"] :is(.sidebar, .topbar, .panel, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source, .knowledge-connection, .coach-strip, dialog) {
   background: var(--glass-surface);
   border: 1px solid var(--glass-edge);
@@ -66,7 +65,7 @@
 
 }
 :root[data-theme="glass"] .sidebar {
-  inset: 60px auto 12px 12px;
+  inset: 8px auto 12px 12px;
   width: calc(var(--sidebar) - 20px);
   padding: 25px 12px 0;
   border-radius: 22px;
@@ -81,7 +80,7 @@
 :root[data-theme="glass"] .panel { border-radius: 22px; }
 :root[data-theme="glass"] .panel-heading { border-color: var(--line); }
 :root[data-theme="glass"] :is(.knowledge-connection, .coach-strip, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source) { border-radius: 17px; }
-:root[data-theme="glass"] :is(.titlebar span, .workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol, .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number, .sample-row > span, .optional, .detail-arrow, .skill-picker > label, .skill-picker p, .editor-footer p, .empty-footnote, .usage-note, .workspace-footer, .signal-row, .skill-card .skill-meta, .history-item .meta, .feedback, .stat span, .privacy-note, .help, .version, .shortcut-status, .field-hint, .sources-heading > span, .source-meta) { color: var(--glass-muted); }
+:root[data-theme="glass"] :is(.workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol, .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number, .sample-row > span, .optional, .detail-arrow, .skill-picker > label, .skill-picker p, .editor-footer p, .empty-footnote, .usage-note, .workspace-footer, .signal-row, .skill-card .skill-meta, .history-item .meta, .feedback, .stat span, .privacy-note, .help, .version, .shortcut-status, .field-hint, .sources-heading > span, .source-meta) { color: var(--glass-muted); }
 :root[data-theme="glass"] :is(.page-heading p, .section-heading p, .knowledge-connection p, .result-empty > p, .empty-steps, .result-details li, .skill-card p, .skill-card details, .progress-panel > p, .bar-row, .knowledge-fact details, .knowledge-source details, .knowledge-reply .help) { color: var(--glass-muted); }
 :root[data-theme="glass"] :is(.eyebrow, .page-heading h1 span, .section-heading h1 span, .brand-dot, .companion > span, .text-button, .knowledge-summary h3, .knowledge-reply > label, .source-title, .result-details h3, .result-details li::before) { color: var(--glass-heading); }
 :root[data-theme="glass"] :is(.panel-heading, .knowledge-summary > p, .knowledge-fact p, .history-item h2, .icon-button, .checkbox-label, dialog label:not(.checkbox-label), .context-fields label, .knowledge-form .checkbox-label, .result-empty h3, .empty-state h2) { color: var(--glass-text); }

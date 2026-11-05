@@ -61,6 +61,50 @@ test('the prompt log is bounded, private, can be turned off and erased', t => {
   assert.equal(new PromptLog(path.win32.join(dir, 'win-style.json')).entries.length, 0);
 });
 
+test('Windows prompt history retries temporary locks without removing the previous log', { skip: process.platform !== 'win32' }, t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-log-lock-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'prompt-log.json');
+  const log = new PromptLog(file);
+  log.record(entry('Original saved prompt'));
+  const original = fs.readFileSync(file, 'utf8');
+  const rename = fs.renameSync;
+  let attempts = 0;
+  t.mock.method(fs, 'renameSync', (source, destination) => {
+    if (destination === file && ++attempts < 3) {
+      assert.equal(fs.readFileSync(file, 'utf8'), original);
+      throw Object.assign(new Error('Temporary lock'), { code: 'EPERM' });
+    }
+    return rename(source, destination);
+  });
+  log.record(entry('New prompt after lock clears'));
+  assert.equal(attempts, 3);
+  assert.deepEqual(new PromptLog(file).entries.map(item => item.prompt), ['Original saved prompt', 'New prompt after lock clears']);
+});
+
+test('prompt history reports permanent or exhausted rename errors and preserves the last saved file', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-log-failure-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'prompt-log.json');
+  const log = new PromptLog(file);
+  log.record(entry('Original saved prompt'));
+  const original = fs.readFileSync(file, 'utf8');
+  const rename = fs.renameSync;
+  let attempts = 0, code = 'EIO';
+  t.mock.method(fs, 'renameSync', (source, destination) => {
+    if (destination !== file) return rename(source, destination);
+    attempts++;
+    throw Object.assign(new Error('Cannot replace file'), { code });
+  });
+  assert.throws(() => log.record(entry('Unwritten prompt')), { code: 'EIO' });
+  assert.equal(attempts, 1);
+  assert.equal(fs.readFileSync(file, 'utf8'), original);
+  attempts = 0; code = 'EPERM';
+  assert.throws(() => log.persist(), { code: 'EPERM' });
+  assert.equal(attempts, process.platform === 'win32' ? 6 : 1);
+  assert.equal(fs.readFileSync(file, 'utf8'), original);
+});
+
 test('insights rank the weakest areas with the user’s own examples, trends and habits', () => {
   const entries = [];
   for (let i = 0; i < 12; i++) entries.push(entry(`help with that thing for ${i % 3 ? 'again' : 'now'} please`, { days: 20 + i }));

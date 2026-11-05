@@ -58,7 +58,6 @@
 }
 
 :root[data-theme="max-ind"] body { min-height: 100vh; background-color: var(--ind-solid); background-image: var(--ind-wash); }
-:root[data-theme="max-ind"] .titlebar { background: transparent; border-color: transparent; }
 :root[data-theme="max-ind"] :is(.sidebar, .topbar, .panel, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source, .knowledge-connection, .coach-strip, dialog) {
   background: var(--ind-surface);
   border: 1px solid var(--ind-edge);
@@ -66,7 +65,7 @@
 
 }
 :root[data-theme="max-ind"] .sidebar {
-  inset: 60px auto 12px 12px;
+  inset: 8px auto 12px 12px;
   width: calc(var(--sidebar) - 20px);
   padding: 25px 12px 0;
   border-radius: 22px;
@@ -81,7 +80,7 @@
 :root[data-theme="max-ind"] .panel { border-radius: 22px; }
 :root[data-theme="max-ind"] .panel-heading { border-color: var(--line); }
 :root[data-theme="max-ind"] :is(.knowledge-connection, .coach-strip, .skill-card, .history-item, .stat, .progress-panel, .knowledge-source) { border-radius: 17px; }
-:root[data-theme="max-ind"] :is(.titlebar span, .workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol, .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number, .sample-row > span, .optional, .detail-arrow, .skill-picker > label, .skill-picker p, .editor-footer p, .empty-footnote, .usage-note, .workspace-footer, .signal-row, .skill-card .skill-meta, .history-item .meta, .feedback, .stat span, .privacy-note, .help, .version, .shortcut-status, .field-hint, .sources-heading > span, .source-meta) { color: var(--ind-muted); }
+:root[data-theme="max-ind"] :is(.workspace-tag, .nav-label, .breadcrumb, .shortcut-symbol, .shortcut-note p, .profile small, .profile > span, .editor-meta, .step-number, .sample-row > span, .optional, .detail-arrow, .skill-picker > label, .skill-picker p, .editor-footer p, .empty-footnote, .usage-note, .workspace-footer, .signal-row, .skill-card .skill-meta, .history-item .meta, .feedback, .stat span, .privacy-note, .help, .version, .shortcut-status, .field-hint, .sources-heading > span, .source-meta) { color: var(--ind-muted); }
 :root[data-theme="max-ind"] :is(.page-heading p, .section-heading p, .knowledge-connection p, .result-empty > p, .empty-steps, .result-details li, .skill-card p, .skill-card details, .progress-panel > p, .bar-row, .knowledge-fact details, .knowledge-source details, .knowledge-reply .help) { color: var(--ind-muted); }
 :root[data-theme="max-ind"] :is(.eyebrow, .page-heading h1 span, .section-heading h1 span, .brand-dot, .companion > span, .text-button, .knowledge-summary h3, .knowledge-reply > label, .source-title, .result-details h3, .result-details li::before) { color: var(--ind-heading); }
 :root[data-theme="max-ind"] :is(.panel-heading, .knowledge-summary > p, .knowledge-fact p, .history-item h2, .icon-button, .checkbox-label, dialog label:not(.checkbox-label), .context-fields label, .knowledge-form .checkbox-label, .result-empty h3, .empty-state h2) { color: var(--ind-text); }
@@ -165,7 +164,6 @@
   }
 }
 :root[data-theme="max-ind"] body { background-color: var(--ind-solid); }
-:root[data-theme="max-ind"] .titlebar { background: var(--ind-solid); border-bottom: 3px double var(--ind-edge); }
 :root[data-theme="max-ind"] .sidebar {
   background-color: var(--ind-navigation);
   background-image: repeating-linear-gradient(45deg, transparent 0 13px, #edbd660c 13px 14px), repeating-linear-gradient(-45deg, transparent 0 13px, #edbd660c 13px 14px);
