@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Harness - presenter notes</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#1b2b3c;font:16px/1.6 system-ui,-apple-system,sans-serif}
+header{background:#14304d;color:white;padding:30px 24px}header>div,main{max-width:960px;margin:auto}main{padding:24px}
+h1{margin:4px 0}h2{color:#14304d;margin-top:0}section{background:white;border:1px solid #d8e1ec;border-radius:12px;padding:22px 24px;margin-bottom:18px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}th,td{border:1px solid #d8e1ec;padding:8px 10px;text-align:left;vertical-align:top}th{background:#f2f5f9}
+code,pre{font-family:ui-monospace,Menlo,monospace;font-size:13.5px}pre{background:#f7f9fc;border:1px solid #d8e1ec;border-radius:8px;padding:12px;white-space:pre-wrap}
+.note{background:#eef5fc;border-left:4px solid #1765a8;padding:12px 16px;border-radius:6px}.warn{background:#fff4dc;border-left:4px solid #a86b00;padding:12px 16px;border-radius:6px}
+nav a{margin-right:14px;color:#1765a8}li{margin:4px 0}
+</style>
+</head>
+<body>
+<header><div><p>Team Impromptu · Rahul Rajpoot (team leader), Surekha Jaknalli, Vivek Chaturvedi · Task Harness by Surekha Jaknalli</p>
+<h1>Task Harness: presenter notes</h1><p>What to say, what to show, and what to answer. For setup and code, see <code>README.md</code> and <code>task-harness/README.md</code>.</p></div></header>
+<main>
+<nav><a href="#what">What it is</a><a href="#results">Results</a><a href="#start">Start the app</a><a href="#demo">Demo</a><a href="#qa">Questions</a><a href="#exists">Existing work</a><a href="#limits">Limits</a></nav>
+
+<section id="what">
+<h2>What it is, in one minute</h2>
+<p>AI is usually right but sometimes <b>quietly wrong</b>. Task Harness is a reusable <b>quality gate</b> around any AI call:</p>
+<p><b>Pick task (template) → Clean → Build prompt → AI answers → Code checks → One retry or human review → Log</b></p>
+<p>The checks are plain code: is every value really in the source, is it from the right line (not the due date, not the customer, not a PO number), do the sums add up, is the format exactly right. Nothing wrong passes silently.</p>
+<div class="note"><b>One line:</b> "Impromptu improves the question. Task Harness checks the answer." <br><b>Analogy:</b> the AI is a fast new employee; the harness is the checklist and the supervisor.</div>
+<p>Two tasks are built: <b>Invoice extraction</b> (30 test invoices with known answers, so accuracy is measured) and <b>Key facts from any text</b> (summary, key points with exact quotes, names, dates, numbers, action items; 8 example texts included).</p>
+</section>
+
+<section id="results">
+<h2>Real results (Claude on Hyland AWS Bedrock, 30 synthetic invoices)</h2>
+<table>
+<tr><th>Setup</th><th>Correct</th><th>Format errors</th><th>Silent errors</th><th>Sec / invoice</th><th>Cost for 30*</th></tr>
+<tr><td>Claude Opus 5.5, plain prompt</td><td>30/30</td><td>15</td><td>0</td><td>6.4</td><td>~$0.45</td></tr>
+<tr><td>Claude Haiku 5.5, plain prompt</td><td>24/30</td><td>27</td><td><b>6</b></td><td>3.4</td><td>~$0.01</td></tr>
+<tr><td><b>Claude Haiku 5.5 + harness</b></td><td><b>30/30</b></td><td><b>0</b></td><td><b>0</b></td><td><b>2.5</b></td><td><b>~$0.01</b></td></tr>
+</table>
+<p class="note">Headline: the cheapest model with the harness matches the most expensive model's accuracy, with clean output, about <b>2.6× faster</b> and <b>~38× cheaper</b>. *List-price estimates; Bedrock prices may differ.</p>
+</section>
+
+<section id="start">
+<h2>Start the demo app</h2>
+<ol>
+<li>If it has been a few hours, sign in to AWS (needed for Live mode only): <pre>aws sso login --sso-session &lt;your-sso-session&gt;</pre></li>
+<li>Start the app (from the <code>task-harness</code> folder): <pre>.venv/bin/python -m taskharness serve --aws-profile &lt;your-aws-sso-profile&gt;</pre></li>
+<li>Open <b>http://127.0.0.1:8000</b>. Keep the Terminal open; press <b>Ctrl + C</b> to stop.</li>
+</ol>
+<div class="warn">"Address already in use" means an older copy is still running: stop it with Ctrl + C in its Terminal window first. <b>Saved run</b> works offline; <b>Live</b> needs internet and a current AWS sign-in.</div>
+</section>
+
+<section id="demo">
+<h2>Demo steps (about 3 minutes)</h2>
+<ol>
+<li><b>2 · Try it</b> (60 s): defaults are ready (inv_001 🔁, Full harness, Haiku, Saved run). Click <b>Run ▶</b>. Show the six stages, Original vs Cleaned, "🔁 Fixed on retry", the answer table and the checks.</li>
+<li><b>3 · Side by side</b> (45 s): Plain on the left, Harness on the right, invoice marked ★ (e.g. inv_004). Click <b>Compare ▶</b>. Left: discount −393.32, "Nobody was warned". Right: correct.</li>
+<li><b>Any text</b> (30 s): Task <b>Key facts from any text</b> → Document <b>📝 Example text: Customer email</b> → Run (Live). Every key point has an exact quote; all checks pass.</li>
+<li><b>Not an invoice</b> (optional): Task Invoice extraction → <b>📄 Your own document</b> → paste random text → Run. It is <b>sent for human review</b> with a plain-English "Why?".</li>
+<li><b>4 · Results</b> (30 s): read the headline banner.</li>
+</ol>
+</section>
+
+<section id="qa">
+<h2>Likely questions</h2>
+<ul>
+<li><b>"Doesn't Brainware already do invoices?"</b> Yes, for classic capture, and we are not replacing it. Invoices are our test case because the answers are easy to verify. The gap is generative-AI calls, which usually have no standard checks.</li>
+<li><b>"Isn't this just better prompting?"</b> No. The prompt is one step; the value is that code checks every answer and nothing wrong passes silently.</li>
+<li><b>"Doesn't Claude check itself?"</b> No. It can be confidently wrong; our test showed 6 of 30 silent errors from the cheap model alone.</li>
+<li><b>"Is it tied to one model?"</b> No. It works with Claude on Bedrock, the Anthropic API or OpenAI; only the model name changes.</li>
+<li><b>"Is the data real?"</b> Synthetic invoices and example texts with no customer data. Next step: real, approved documents from one team.</li>
+<li><b>"Is it in Impromptu already?"</b> Not yet. It works as a separate prototype; plugging it into Impromptu's prompt rewrite (<code>src/provider.cjs</code>) is the next step.</li>
+</ul>
+</section>
+
+<section id="exists">
+<h2>What already exists at Hyland (checked 5 November 2026)</h2>
+<table>
+<tr><th>What</th><th>What it does</th><th>Relation to Task Harness</th></tr>
+<tr><td>Brainware (product)</td><td>Classic capture with validation and human verification</td><td>Overlaps the invoice <i>example</i> only</td></tr>
+<tr><td>Internal prompt optimizer</td><td>Improves and compresses prompt wording</td><td>Improves the question; does not check the answer</td></tr>
+<tr><td>LLM extraction proofs of concept</td><td>Extract fields with Claude on Bedrock</td><td>No standard answer checks or measurement; good reuse candidates</td></tr>
+<tr><td>Coding-agent rubric harness</td><td>Checks AI-generated code against 203 rules</td><td>Same approach, different domain</td></tr>
+<tr><td>LLM gateway security guardrails</td><td>Security checks before/after LLM calls</td><td>Same place, different goal; the harness could plug in there</td></tr>
+</table>
+<p class="small">Only repository names and READMEs were checked; confirm with those teams before claiming the idea is unique.</p>
+</section>
+
+<section id="limits">
+<h2>Honest limits</h2>
+<ul>
+<li>30 synthetic invoices and two tasks so far; checks are written per task.</li>
+<li>For "Key facts", checks prove quotes, names, dates and numbers are in the text, not that the <i>meaning</i> of a summary is right.</li>
+<li>Invoice capture itself already exists (Brainware); costs are list-price estimates.</li>
+<li>Not yet integrated into Impromptu or the AI gateway.</li>
+</ul>
+</section>
+</main>
+</body>
+</html>

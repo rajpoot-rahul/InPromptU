@@ -76,8 +76,13 @@ Never paste keys or tokens into chat, files, tickets or slides. Set them only in
 # Start the demo web app on http://127.0.0.1:8000
 .venv/bin/python -m taskharness serve --aws-profile <profile>
 
-# Rebuild the slide deck from the latest results
+# Rebuild the slide deck from the latest results (writes ../docs/TaskHarness-Hackathon-Slides.pptx)
 .venv/bin/python slides/make_slides.py
+
+# Rebuild the submission videos (needs the "video" extra, Google Chrome and a running web app; writes ../videos/)
+.venv/bin/pip install -e ".[video]"
+.venv/bin/python slides/make_video.py --app http://127.0.0.1:8000 --rate 160                      # ~4-minute video
+.venv/bin/python slides/make_video.py --app http://127.0.0.1:8000 --rate 160 --variant impromptu  # ~75-second Impromptu segment
 ```
 
 If the web app says "address already in use", an older copy is still running: stop it with Ctrl+C in its terminal (or `kill <PID>` from `lsof -nP -iTCP:8000 -sTCP:LISTEN`).
@@ -141,7 +146,8 @@ task-harness/
 │                       #   sample_invoice, not_an_invoice (meeting notes), customer_email, support_ticket,
 │                       #   test_run_log, policy_excerpt, contract_clause, release_notes (all synthetic)
 ├── runs/               # saved run results used by the web app (runs/live/ is not committed)
-├── slides/make_slides.py
+├── slides/make_slides.py   # builds ../docs/TaskHarness-Hackathon-Slides.pptx
+├── slides/make_video.py    # builds ../videos/*.mp4 (screenshots + slides + narration)
 └── tests/              # 69 tests
 ```
 

@@ -1,7 +1,7 @@
 """Build the hackathon slide deck from the saved run results.
 
 Usage:  .venv/bin/python slides/make_slides.py
-Writes: ../TaskHarness-Hackathon-Slides.pptx (next to the project folder)
+Writes: ../docs/TaskHarness-Hackathon-Slides.pptx
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 
 from taskharness.web.server import estimate_cost, index_runs, model_label  # noqa: E402
 
-OUT = ROOT.parent / "TaskHarness-Hackathon-Slides.pptx"
+OUT = ROOT.parent / "docs" / "TaskHarness-Hackathon-Slides.pptx"
 
 NAVY = RGBColor(0x14, 0x30, 0x4D)
 BLUE = RGBColor(0x17, 0x65, 0xA8)
@@ -145,7 +145,7 @@ def build(r: dict) -> Presentation:
     text(s, 0.8, 2.1, 11.5, 1.3, "Task Harness", size=54, bold=True, color=WHITE)
     text(s, 0.8, 3.85, 11.5, 1.3, "A reusable quality gate for every AI call at Hyland:\nchecked, consistent and cheaper.",
          size=24, color=WHITE)
-    text(s, 0.8, 6.3, 11.5, 0.5, "Surekha Jaknalli  ·  November 2026", size=14, color=PALE)
+    text(s, 0.8, 6.3, 11.5, 0.5, "Team Impromptu: Rahul Rajpoot (team leader), Surekha Jaknalli, Vivek Chaturvedi  ·  November 2026", size=14, color=PALE)
 
     # 2. Problem
     s = new_slide(prs, "When teams call a generative AI model to read a document, it's usually right, but sometimes it's "
@@ -343,7 +343,7 @@ def build(r: dict) -> Presentation:
         text(s, x + 0.3, y + 0.8, 3.3, 1.3, body, size=15)
 
     # 8. Limits and ask
-    s = new_slide(prs, f"To be upfront: this is {docs} synthetic invoices and one task so far, and invoice capture itself "
+    s = new_slide(prs, f"To be upfront: this is {docs} synthetic invoices and two tasks so far, and invoice capture itself "
                        "already exists in Brainware. The next step is a pilot with one team on real, approved documents, "
                        "adding the harness to an existing AI proof of concept, and working with the Brainware/IDP and "
                        "HAIP teams. Thank you, happy to take questions.")
@@ -351,7 +351,7 @@ def build(r: dict) -> Presentation:
     card(s, 0.6, 1.6, 5.95, 4.5)
     text(s, 0.9, 1.8, 5.4, 0.5, "Limits today", size=22, bold=True, color=RED)
     bullets(s, 0.9, 2.45, 5.4, 3.6, [
-        f"{docs} synthetic invoices with known answers, one task.",
+        f"{docs} synthetic invoices with known answers; two tasks.",
         "Checks are written per task; each new task needs its own.",
         "Invoice capture already exists (Brainware); invoices are only our test case.",
         "Not yet checked: whether HAIP or newer AI products already gate AI answers.",

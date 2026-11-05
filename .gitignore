@@ -6,4 +6,4 @@ __pycache__/
 .DS_Store
 ~$*
 task-harness/runs/live/
-video/scenes/
+videos/scenes/

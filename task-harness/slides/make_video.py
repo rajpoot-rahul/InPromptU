@@ -3,7 +3,7 @@
 Usage (the web app must be running, e.g. `taskharness serve --port 8767 --aws-profile <profile>`):
     .venv/bin/python slides/make_video.py --app http://127.0.0.1:8767 [--voice Samantha] [--rate 165] [--skip-shots]
 
-Writes into ../video/: shots/*.png, scenes/*.png|wav|mp4, TaskHarness-video-script.txt,
+Writes into ../videos/: shots/*.png, scenes/*.png, *-script.txt, *.srt and the MP4 files.
 TaskHarness-video.srt and ../TaskHarness-5min-Video.mp4.
 Live screenshots call the AI twice (Claude Haiku, a fraction of a cent).
 """
@@ -19,8 +19,8 @@ import wave
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT.parent / "video"
-FINAL = ROOT.parent / "TaskHarness-5min-Video.mp4"
+OUT = ROOT.parent / "videos"
+FINAL = OUT / "TaskHarness-5min-Video.mp4"
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -400,7 +400,7 @@ def main() -> None:
 
     results = load_results()
     if args.variant == "impromptu":
-        scenes, final, stem = build_segment_scenes(results), ROOT.parent / "Impromptu-TaskHarness-Segment.mp4", "Impromptu-TaskHarness-segment"
+        scenes, final, stem = build_segment_scenes(results), OUT / "Impromptu-TaskHarness-Segment.mp4", "Impromptu-TaskHarness-segment"
     else:
         scenes, final, stem = build_scenes(results), FINAL, "TaskHarness-video"
     if not args.skip_shots:

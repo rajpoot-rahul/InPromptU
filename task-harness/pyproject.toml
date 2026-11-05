@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
 slides = ["python-pptx>=1.0"]
+video = ["python-pptx>=1.0", "playwright>=1.40", "imageio-ffmpeg>=0.5"]
 
 [tool.setuptools.packages.find]
 include = ["taskharness*"]
