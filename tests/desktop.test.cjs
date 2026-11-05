@@ -227,7 +227,7 @@ test('guided local setup tests the chosen installed model, then saves it with lo
 });
 
 test('local-only mode is enforced in the main process for cloud providers and knowledge', async t => {
-  const { handlers, sender, data } = desktop(t);
+  const { handlers, sender, data, opened } = desktop(t);
   const base = { endpoint: '', model: 'openrouter/free', apiKey: '', importClipboard: true };
   await assert.rejects(handlers.get('save-settings')(sender, { ...base, mode: 'openrouter', localOnly: true }), /Local-only mode is on/);
   await assert.rejects(handlers.get('test-connection')(sender, { ...base, mode: 'openrouter', localOnly: true }), /Local-only mode is on/);
@@ -238,6 +238,8 @@ test('local-only mode is enforced in the main process for cloud providers and kn
   await assert.rejects(handlers.get('knowledge-lookup')(sender, { message: 'What is ABC-1?' }), /Local-only mode is on/);
   await assert.rejects(handlers.get('aws-sso-login')(sender, 'hyland'), /Local-only mode is on/);
   await assert.rejects(handlers.get('open-help')(sender, 'https://evil.example'), /Unknown help link/);
+  assert.equal(await handlers.get('open-help')(sender, 'openrouter-keys'), true);
+  assert.equal(opened.at(-1), 'https://openrouter.ai/settings/keys');
   assert.equal((await handlers.get('setup-dismiss')(sender)).setup.dismissed, true);
   const restored = desktop(t);
   assert.equal((await restored.handlers.get('bootstrap')(restored.sender)).setup.dismissed, false);
@@ -494,6 +496,7 @@ test('chats can use the configured cloud provider: listed, multi-turn, labelled,
   await handlers.get('save-settings')(sender, { mode: 'compatible', endpoint: 'https://approved.example/v1/chat/completions', model: 'team-model', apiKey: 'key', importClipboard: true, localOnly: false });
   const providers = await handlers.get('chat-providers')(sender);
   assert.equal(providers.local.length, 0);
+  assert.deepEqual(providers.cloud.map(p => p.mode), ['openrouter', 'bedrock', 'huggingface', 'compatible']);
   assert.equal(providers.cloud.find(p => p.mode === 'compatible').available, true);
   assert.match(providers.cloud.find(p => p.mode === 'bedrock').reason, /Set up AWS Bedrock/);
   const chat = await handlers.get('chat-new')(sender, { provider: 'cloud' });

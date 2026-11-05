@@ -17,6 +17,7 @@ const hylandLib = require('./hyland-learning.cjs');
 const installer = require('./installer.cjs');
 const { KnowledgeService, sourceURL } = require('./knowledge.cjs');
 const insights = require('./insights.cjs');
+const setupFlow = require('./setup-flow.js');
 
 app.setName('Impromptu');
 // Matches the installer's shortcut appId so the taskbar groups and pins the running app with its Start menu entry.
@@ -410,7 +411,7 @@ if (lock) {
     const chatModel = value => { if (typeof value !== 'string' || !value.trim() || value.length > 200) throw new Error('Choose a local model for this chat.'); return value.trim(); };
     handle('chat-list', () => chats.summaries());
     handle('chat-get', id => chats.get(id));
-    const cloudModes = ['bedrock', 'openrouter', 'huggingface', 'compatible'];
+    const cloudModes = setupFlow.CLOUD_ORDER;
     const cloudLabel = connection => ({ bedrock: `AWS Bedrock (${connection.region})`, openrouter: 'OpenRouter', huggingface: 'Hugging Face', compatible: (() => { try { return `Custom API (${new URL(connection.endpoint).host})`; } catch { return 'Custom API'; } })() }[connection.mode] || connection.mode);
     const cloudProblem = () => {
       if (!cloudModes.includes(state.connection.mode)) return 'Set up a cloud provider in Settings first.';
@@ -688,7 +689,7 @@ if (lock) {
       } finally { busy = false; }
     });
     handle('setup-dismiss', () => { state.setup = { ...state.setup, dismissed: true }; persist(); return publicState(); });
-    const helpLinks = { 'ollama-download': 'https://ollama.com/download', 'ollama-models': 'https://ollama.com/search' };
+    const helpLinks = { 'openrouter-keys': 'https://openrouter.ai/settings/keys', 'ollama-download': 'https://ollama.com/download', 'ollama-models': 'https://ollama.com/search' };
     handle('open-help', async id => {
       const model = typeof id === 'string' && id.startsWith('model:') ? installer.CATALOG.find(m => `model:${m.name}` === id) : null;
       if (model) { await shell.openExternal(`https://ollama.com/library/${model.name.split(':')[0]}`); return true; }
