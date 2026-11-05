@@ -31,6 +31,7 @@ const samples = {
 function input() { return { prompt: $('prompt').value, context: $('context').value, audience: $('audience').value, format: $('format').value, skillId: $('skill').value }; }
 function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = String(message).replace(/^Error invoking remote method '[^']+': Error: /, ''); $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => $('toast').hidden = true, error ? 8000 : 3500); }
 async function attempt(fn) { try { return await fn(); } catch (error) { toast(error.message, true); } }
+function guarded(name, fn) { try { return fn(); } catch (error) { console.error(`Impromptu: ${name} failed`, error); toast(`Part of Impromptu (${name}) could not load: ${error.message}`, true); } }
 function showView(view) {
   if (view === 'context' && !state.contextPacksEnabled) view = 'workspace';
   activeView = view;
@@ -153,7 +154,7 @@ function renderSetup() {
   $('setup-message').textContent = setupError || {
     done: `Improve now uses ${model} on this computer. ${state.localOnly ? 'Local-only mode is on: cloud providers and knowledge lookups are blocked.' : 'Cloud providers stay available in Settings.'}`,
     checking: 'Checking this computer…',
-    ready: configured && !missing ? `Improve uses ${model} on this computer. Choose another installed model to switch.` : `${flow.localMessage('ready', { count: localAI.models.length })} Your prompts stay on this device when you use it.`,
+    ready: configured && !missing ? `Improve uses ${model} on this computer. Choose another installed model to switch.` : `${flow.localMessage('ready', { count: localAI?.models?.length || 0 })} Your prompts stay on this device when you use it.`,
     'not-set-up': flow.LOCAL_PHASE2,
     'no-models': flow.localMessage('no-models')
   }[status] || '';
@@ -1341,10 +1342,12 @@ async function boot() {
   document.querySelectorAll('.shortcut-keys').forEach(el => el.innerHTML = (mac ? ['⌘', '⇧', 'I'] : ['Ctrl', 'Shift', 'I']).map(key => `<kbd>${key}</kbd>`).join(''));
   $('run-key').textContent = mac ? '⌘ ↵' : 'Ctrl ↵';
   if (state.platform === 'win32') $('mascot-consent-platform').textContent = 'On Windows it needs no extra permission, but it cannot copy from or scroll apps running as administrator.';
-  updateSkill(); updateConnection(); refreshSkills(state.skills); renderEvidence(); setupKnowledge(); setupChat(); setupSkills(); setupLearning(); setupMascot(); setupContext(); setupHyland(); setupInstaller(); setupFirstRun(); setupLocalAI(); showView('knowledge');
+  // Navigation first, and each feature set up independently, so one failing module cannot leave the window unclickable.
+  document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => guarded(`open ${button.dataset.view}`, () => showView(button.dataset.view)));
+  for (const [name, step] of [['skills', () => { updateSkill(); refreshSkills(state.skills); }], ['connection', updateConnection], ['evidence', renderEvidence], ['knowledge', setupKnowledge], ['chat', setupChat], ['skill library', setupSkills], ['learning', setupLearning], ['mascot', setupMascot], ['context packs', setupContext], ['Hyland learning', setupHyland], ['installer', setupInstaller], ['first run', setupFirstRun], ['local AI', setupLocalAI]]) guarded(name, step);
+  guarded('open knowledge', () => showView('knowledge'));
   $('ollama-refresh').onclick = detectSettingsModels;
   $('local-only-setting').onchange = applyLocalOnlyOptions;
-  document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => showView(button.dataset.view));
   document.querySelector('.brand').onclick = event => { event.preventDefault(); showView('workspace'); };
   inputIds.forEach(id => $(id).addEventListener('input', invalidate));
   $('skill').onchange = () => { updateSkill(); invalidate(); };
