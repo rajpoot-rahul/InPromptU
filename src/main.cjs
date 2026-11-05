@@ -142,7 +142,8 @@ const learningDir = () => process.env.IMPROMPTU_LEARNING_DIR ? path.resolve(proc
 function watchLearning() {
   if (learningWatcher || !fs.existsSync(learningDir())) return;
   let timer;
-  try { learningWatcher = fs.watch(learningDir(), { recursive: true }, () => { clearTimeout(timer); timer = setTimeout(() => win?.webContents.send('learning-folder-changed', hylandLib.pendingFolders(learningDir(), learningStore)), 600); }); learningWatcher.on('error', () => { try { learningWatcher?.close(); } catch {} learningWatcher = null; }); learningWatcher.unref?.(); } catch { learningWatcher = null; }
+  // Recursive watches keep the process alive on Windows even when unref'd; elsewhere only new session folders are noticed.
+  try { learningWatcher = fs.watch(learningDir(), { recursive: require('node:os').platform() === 'darwin' }, () => { clearTimeout(timer); timer = setTimeout(() => win?.webContents.send('learning-folder-changed', hylandLib.pendingFolders(learningDir(), learningStore)), 600); timer.unref?.(); }); learningWatcher.on('error', () => { try { learningWatcher?.close(); } catch {} learningWatcher = null; }); learningWatcher.unref?.(); } catch { learningWatcher = null; }
 }
 function hylandState() { const exists = fs.existsSync(learningDir()); return { ...learningStore.overview(), folder: { path: learningDir(), exists, pending: exists ? hylandLib.pendingFolders(learningDir(), learningStore) : 0 }, format: hylandLib.FORMAT, sources: hylandLib.SOURCES }; }
 const mascotEntry = pathToFileURL(path.join(__dirname, 'mascot.html')).href;
