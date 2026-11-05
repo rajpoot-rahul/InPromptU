@@ -88,3 +88,12 @@ test('AWS CLI discovery handles Windows installation paths and semicolon-separat
   assert.equal(findAws({ platform: 'win32', env: { PATH: 'C:\\Other;D:\\Company Tools' }, exists: file => file === custom }), custom);
   assert.equal(findAws({ platform: 'win32', env: {}, exists: () => false }), '');
 });
+
+test('Bedrock receives the whole conversation as alternating turns with system text separate', () => {
+  const { converseInput } = require('../src/bedrock.cjs');
+  const input = converseInput([{ role: 'system', content: 'rules' }, { role: 'assistant', content: 'orphan' }, { role: 'user', content: 'pack' }, { role: 'user', content: 'question' }, { role: 'assistant', content: 'answer' }, { role: 'user', content: 'follow-up' }]);
+  assert.deepEqual(input.system, [{ text: 'rules' }]);
+  assert.deepEqual(input.messages.map(m => [m.role, m.content[0].text]), [['user', 'pack\n\nquestion'], ['assistant', 'answer'], ['user', 'follow-up']]);
+  assert.deepEqual(converseInput([{ content: 'instructions' }, { content: 'draft' }]), { system: [{ text: 'instructions' }], messages: [{ role: 'user', content: [{ text: 'draft' }] }] });
+  assert.throws(() => converseInput([{ role: 'system', content: 'only rules' }]), /no message/);
+});

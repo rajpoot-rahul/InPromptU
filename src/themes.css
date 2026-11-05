@@ -121,3 +121,8 @@
   .incoming-banner, #knowledge-warnings { background: #352b1c; border-color: #685638; color: #f0d19b; }
   .incoming-banner .text-button, .incoming-banner .icon-button { color: #f1d69e; }
 }
+
+@media (prefers-color-scheme: dark) {
+  #setup-message.error { color: #f0b49a; }
+  .mode-badge[data-health="warning"] .tiny-dot { background: #e0a85e; }
+}

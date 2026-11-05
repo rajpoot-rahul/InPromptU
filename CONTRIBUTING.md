@@ -38,6 +38,8 @@ npm run installer:mac
 npm run installer:windows
 ```
 
+**Keep macOS permissions across local rebuilds (mascot features).** Ad-hoc builds get a new code identity every time, so macOS silently stops applying Accessibility and Screen Recording grants after each reinstall, even while System Settings still shows them as on. Run `node scripts/local-signing.cjs setup` once. It creates a self-signed "Impromptu Local Signing" certificate in your login keychain, and `npm run package:mac` then signs with it automatically. The designated requirement stays `identifier "com.impromptu.companion" and certificate leaf = H"…"`, so grants persist. To clear stale grants from older builds: `tccutil reset ScreenCapture com.impromptu.companion` and `tccutil reset Accessibility com.impromptu.companion`. CI is unchanged and still produces ad-hoc builds.
+
 Build Mac installers on macOS. Windows can be cross-built, but installation must be checked on Windows. Expected output names are derived from `package.json`:
 
 - `release/Impromptu-<version>-Mac-Apple-Silicon-Installer.pkg`
