@@ -15,6 +15,7 @@ const paths = {
   copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 5V3H3v13h2"/>', bookmark: '<path d="M6 3h12v18l-6-4-6 4Z"/>',
   bulb: '<path d="M9 18h6m-5 3h4M8 14a7 7 0 1 1 8 0c-1 1-1 2-1 2H9s0-1-1-2"/>', shield: '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/>',
   code: '<path d="m8 5-6 7 6 7m8-14 6 7-6 7m-3-15-2 16"/>', route: '<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>', chat: '<path d="M4 5h16v11H9l-5 4Z"/><path d="M8 9h8M8 12h5"/>', file: '<path d="M14 2H5v20h14V7Zm0 0v5h5M8 12h8m-8 4h6"/>', download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+  cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"/>',
   book: '<path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5Zm0 17A2.5 2.5 0 0 1 6.5 19H20v3H6.5"/><path d="M9 7h7M9 11h5"/>'
 };
 function icon(name) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.spark}</svg>`; }
@@ -33,11 +34,12 @@ async function attempt(fn) { try { return await fn(); } catch (error) { toast(er
 function showView(view) {
   activeView = view;
   if (view === 'workspace' || view === 'knowledge') incomingMode = view;
-  for (const name of ['workspace', 'chat', 'context', 'knowledge', 'skills', 'history', 'progress', 'learn', 'hyland']) $(`${name}-view`).hidden = name !== view;
+  for (const name of ['workspace', 'local-ai', 'chat', 'context', 'knowledge', 'skills', 'history', 'progress', 'learn', 'hyland']) $(`${name}-view`).hidden = name !== view;
   document.querySelectorAll('.nav-item[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
-  $('page-title').textContent = { workspace: 'Prompt workspace', chat: 'Local chat', knowledge: 'Knowledge & reply', skills: 'Skill library', history: 'Saved sessions', progress: 'My progress', learn: 'Learner track', context: 'Context packs', hyland: 'Hyland latest learning' }[view];
+  $('page-title').textContent = { workspace: 'Prompt workspace', 'local-ai': 'Local AI', chat: 'Local chat', knowledge: 'Knowledge & reply', skills: 'Skill library', history: 'Saved sessions', progress: 'My progress', learn: 'Learner track', context: 'Context packs', hyland: 'Hyland latest learning' }[view];
   if (view === 'hyland') openHyland();
   if (view === 'chat') openChatView();
+  if (view === 'local-ai') onLocalAIView();
   if (view === 'skills') renderSkills();
   if (view === 'learn') openLearning();
   if (view === 'context') openContext();
@@ -60,33 +62,102 @@ function updateConnection() {
   $('processing-note').innerHTML = `${icon(offline || local ? 'lock' : 'shield')}<span>${note}${evidenceNote}</span>`;
 }
 
+const flow = window.ImpromptuSetup;
 let localAI = null, setupBusy = false, setupCompleted = false, setupHidden = false, setupError = '', detecting = null;
-function shouldShowSetup() {
-  if (state.preview || setupHidden) return false;
-  if (setupCompleted) return true;
-  if (state.connection.mode === 'ollama') return Boolean(localAI && (localAI.status !== 'ready' || !localAI.models.some(m => m.name === state.connection.model)));
-  return state.connection.mode === 'offline' && !state.setup?.dismissed;
+let firstRunBusy = false, firstRunDone = false, firstRunError = '', localTab = 'overview';
+const providerNames = { offline: 'offline templates', openrouter: 'OpenRouter', bedrock: 'Amazon Bedrock', huggingface: 'Hugging Face', compatible: 'a custom API', ollama: 'a local model' };
+const localNeedsAttention = () => flow.localNeedsAttention(state.connection.mode, state.connection.model, localAI);
+function renderWorkspaceCard() {
+  const card = flow.workspaceCard({ mode: state.connection.mode, dismissed: state.setup?.dismissed, hidden: setupHidden, preview: state.preview, completed: firstRunDone, localOnly: state.localOnly, localNeedsAttention: localNeedsAttention() });
+  const firstRun = Boolean(card?.startsWith('first-run'));
+  $('first-run').hidden = !firstRun;
+  $('local-attention').hidden = card !== 'local-attention';
+  if (card === 'local-attention') {
+    $('local-attention-title').textContent = localAI.status === 'ready' ? `“${state.connection.model}” is no longer installed` : 'Your local model is not responding';
+    $('local-attention-message').textContent = `${localAI.message || ''} Fix it in Local AI under Phase 2. Your draft stays here.`.trim();
+  }
+  if (!firstRun) return;
+  const done = card === 'first-run-done', localOnly = card === 'first-run-local-only';
+  $('first-run').dataset.status = done ? 'done' : firstRunBusy ? 'testing' : firstRunError ? 'error' : 'idle';
+  $('first-run-eyebrow').textContent = done ? 'CONNECTED · OPENROUTER' : localOnly ? 'GET STARTED · LOCAL-ONLY MODE' : 'GET STARTED · REAL AI IN A FEW MINUTES';
+  $('first-run-title').textContent = done ? 'OpenRouter is ready' : localOnly ? 'Cloud AI is blocked on this computer' : 'Start with OpenRouter';
+  $('first-run-message').textContent = firstRunError || (done ? `Improve now uses ${state.connection.model} through OpenRouter. Your key stays in memory until you quit; after restarting, enter it again in Settings.`
+    : localOnly ? 'Impromptu keeps working offline with templates in the meantime.'
+      : 'Connect a free AI model so Improve, Compress and Explain use real AI. Until then, Impromptu works offline with templates.');
+  $('first-run-message').classList.toggle('error', Boolean(firstRunError));
+  $('first-run-steps').hidden = done || localOnly;
+  $('first-run-local-only').hidden = !localOnly;
+  $('first-run-others').hidden = done;
+  document.querySelectorAll('[data-setup-mode]').forEach(button => { button.hidden = localOnly; });
+  $('first-run-dismiss').textContent = done ? 'Done' : 'Not now';
+  for (const id of ['or-key', 'or-model', 'or-test', 'or-open-keys', 'first-run-dismiss']) $(id).disabled = firstRunBusy;
+  $('or-test').setAttribute('aria-busy', String(firstRunBusy));
+  $('or-test-label').textContent = firstRunBusy ? 'Testing OpenRouter…' : 'Test & use OpenRouter';
+}
+async function connectOpenRouter() {
+  if (firstRunBusy || busy) return;
+  const apiKey = $('or-key').value.trim(), model = $('or-model').value.trim() || flow.OPENROUTER.model;
+  if (!apiKey) { firstRunError = 'Paste your OpenRouter key first (step 2).'; renderWorkspaceCard(); $('or-key').focus(); return; }
+  const settings = { mode: 'openrouter', endpoint: flow.OPENROUTER.endpoint, model, region: '', profile: '', apiKey, clearKey: false, localOnly: Boolean(state.localOnly) };
+  firstRunBusy = true; firstRunError = ''; renderWorkspaceCard();
+  try {
+    await api.testConnection(settings);
+    state = await api.saveSettings({ ...settings, importClipboard: state.importClipboard });
+    $('or-key').value = ''; firstRunDone = true;
+    toast(`OpenRouter connected. ${state.connection.model} answered a test prompt.`);
+  } catch (error) { firstRunError = `${cleanError(error.message)} Nothing was saved. Check the key and model, then try again.`; }
+  finally { firstRunBusy = false; renderWorkspaceCard(); updateConnection(); knowledgeStatus(); }
+}
+function setupFirstRun() {
+  $('or-open-keys').onclick = () => attempt(() => api.openHelp('openrouter-keys'));
+  $('or-test').onclick = connectOpenRouter;
+  $('or-key').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); connectOpenRouter(); } });
+  for (const id of ['or-key', 'or-model']) $(id).addEventListener('input', () => { if (firstRunError) { firstRunError = ''; renderWorkspaceCard(); } });
+  document.querySelectorAll('[data-setup-mode]').forEach(button => button.onclick = () => openSettings(button.dataset.setupMode));
+  $('first-run-dismiss').onclick = () => attempt(async () => {
+    if (firstRunDone) firstRunDone = false;
+    else state = await api.dismissSetup();
+    renderWorkspaceCard();
+  });
+  $('local-attention-dismiss').onclick = () => { setupHidden = true; renderWorkspaceCard(); };
+}
+function renderLocalOverview() {
+  const status = flow.runtimeStatus(localAI, Boolean(detecting)), using = state.connection.mode === 'ollama';
+  $('lo-runtime-card').dataset.state = status;
+  $('lo-runtime').textContent = { checking: 'Checking…', ready: 'Running', 'no-models': 'Running · no models', 'not-running': 'Not running', error: 'Check failed' }[status];
+  $('lo-runtime-note').textContent = status === 'checking' ? 'Looking for a local AI runtime on this computer…' : localAI?.message || '';
+  $('lo-model').textContent = using ? state.connection.model : 'None';
+  $('lo-model-note').textContent = using ? localNeedsAttention() ? 'Needs attention. Open Set up & models.' : 'Used by Improve in the Prompt workspace.' : `The Prompt workspace uses ${providerNames[state.connection.mode] || 'another provider'}. Switch in Set up & models.`;
+  $('lo-local-only').textContent = state.localOnly ? 'On' : 'Off';
+  $('lo-local-only-note').textContent = state.localOnly ? 'Cloud AI providers and knowledge lookups are blocked.' : 'Cloud providers stay available. Turn it on in Settings.';
+}
+function renderLocalModels() {
+  const models = localAI?.status === 'ready' ? localAI.models : [];
+  const inUse = name => state.connection.mode === 'ollama' && state.connection.model === name;
+  $('local-model-list').innerHTML = models.length ? models.map(m => `<div class="inbox-item"><span><strong>${escapeHtml(m.name)}</strong><small>${escapeHtml([m.parameterSize, m.sizeBytes ? gb(m.sizeBytes) : ''].filter(Boolean).join(' · ') || 'Installed')}</small></span>${inUse(m.name) ? '<em class="hl-chip attended">In use</em>' : ''}</div>`).join('')
+    : `<p class="help">${detecting || !localAI ? 'Checking this computer…' : 'No models installed yet. Choose Download another model, or Set up local AI for me above.'}</p>`;
+  $('local-download').disabled = installRunning;
 }
 function renderSetup() {
+  renderWorkspaceCard(); renderLocalOverview(); renderLocalModels();
   const card = $('local-setup');
-  card.hidden = !shouldShowSetup();
-  if (card.hidden) return;
   const configured = state.connection.mode === 'ollama';
   const status = setupCompleted ? 'done' : detecting || !localAI ? 'checking' : localAI.status;
   const model = state.connection.model;
+  const missing = configured && status === 'ready' && !localAI.models.some(m => m.name === model);
   card.dataset.status = status;
-  $('setup-eyebrow').textContent = configured && !setupCompleted ? 'LOCAL AI · NEEDS ATTENTION' : 'GUIDED SETUP · ON THIS COMPUTER';
+  $('setup-eyebrow').textContent = configured && (missing || ['not-running', 'no-models', 'error'].includes(status)) ? 'LOCAL AI · NEEDS ATTENTION' : 'GUIDED SETUP · ON THIS COMPUTER';
   $('setup-title').textContent = {
     done: 'Local AI is ready', checking: configured ? 'Checking your local model…' : 'Use AI that stays on this computer',
     'not-running': configured ? 'Ollama is not responding' : 'Use AI that stays on this computer',
     'no-models': 'Ollama is running. Add a model to begin.', error: 'Local AI check did not complete',
-    ready: configured ? `“${model}” is no longer installed` : 'Choose a model installed on this computer'
+    ready: missing ? `“${model}” is no longer installed` : configured ? 'Local AI is in use' : 'Choose a model installed on this computer'
   }[status];
   $('setup-message').textContent = setupError || {
     done: `Improve now uses ${model} through Ollama on this computer. ${state.localOnly ? 'Local-only mode is on: cloud providers and knowledge lookups are blocked.' : 'Cloud providers stay available in Settings.'}`,
     checking: 'Looking for Ollama on this computer…',
-    ready: `${localAI?.message} Your prompts stay on this device when you use it.`,
-    'not-running': `${localAI?.message}${configured ? ' Improve will not work until it responds.' : ' Impromptu keeps working offline in the meantime.'}`
+    ready: configured && !missing ? `Improve uses ${model} on this computer. Choose another installed model to switch.` : `${localAI?.message} Your prompts stay on this device when you use it.`,
+    'not-running': `${localAI?.message}${configured ? ' Improve will not work until it responds.' : ' Impromptu keeps working with your current provider in the meantime.'}`
   }[status] || localAI?.message || '';
   $('setup-message').classList.toggle('error', Boolean(setupError));
   $('setup-install').hidden = status !== 'not-running';
@@ -97,7 +168,7 @@ function renderSetup() {
   $('setup-auto-label').textContent = status === 'no-models' ? 'Download a model for me' : 'Set up local AI for me';
   $('setup-cloud').hidden = configured || !['not-running', 'no-models', 'error'].includes(status);
   $('setup-check').hidden = ['done', 'checking'].includes(status);
-  $('setup-dismiss').textContent = status === 'done' ? 'Done' : configured ? 'Hide for now' : 'Not now';
+  $('setup-dismiss').hidden = status !== 'done';
   if (status === 'ready') {
     const select = $('setup-model'), previous = select.value;
     select.innerHTML = localAI.models.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}${m.parameterSize ? ` · ${escapeHtml(m.parameterSize)}` : ''}${m.sizeBytes ? ` · ${(m.sizeBytes / 1e9).toFixed(1)} GB` : ''}</option>`).join('');
@@ -107,6 +178,7 @@ function renderSetup() {
   for (const id of ['setup-use', 'setup-check', 'setup-dismiss', 'setup-model', 'setup-local-only', 'setup-auto', 'setup-cloud']) $(id).disabled = setupBusy;
   $('setup-use').setAttribute('aria-busy', String(setupBusy));
   $('setup-use-label').textContent = setupBusy ? 'Testing on this computer…' : 'Test & use this model';
+  if (localTab === 'settings') renderLocalModelChoice(localAI);
 }
 async function detectLocalAI() {
   if (detecting) return detecting;
@@ -131,21 +203,96 @@ async function useLocalModel() {
   } catch (error) { setupError = cleanError(error.message); }
   finally { setupBusy = false; renderSetup(); updateConnection(); knowledgeStatus(); }
 }
+function selectLocalTab(tab, focus = false) {
+  localTab = tab;
+  document.querySelectorAll('[data-local-tab]').forEach(button => {
+    const selected = button.dataset.localTab === tab;
+    button.setAttribute('aria-selected', String(selected)); button.tabIndex = selected ? 0 : -1;
+    $(button.getAttribute('aria-controls')).hidden = !selected;
+    if (selected && focus) button.focus();
+  });
+  if (tab === 'settings') fillLocalSettings();
+}
+function openLocalAI(tab) {
+  if (activeView !== 'local-ai') showView('local-ai');
+  if (tab) selectLocalTab(tab);
+}
+function onLocalAIView() {
+  renderSetup(); selectLocalTab(localTab);
+  if (!setupBusy && !installRunning) detectLocalAI();
+}
+function fillLocalSettings() {
+  if (document.activeElement !== $('local-endpoint')) $('local-endpoint').value = state.connection.mode === 'ollama' ? state.connection.endpoint : 'http://localhost:11434/api/chat';
+  $('local-only-toggle').checked = Boolean(state.localOnly);
+  renderLocalModelChoice(localAI);
+}
+function renderLocalModelChoice(found) {
+  const models = found?.status === 'ready' ? found.models : [];
+  const select = $('local-model-choice'), previous = select.value;
+  select.innerHTML = models.length ? models.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join('') : '<option value="">No installed models found</option>';
+  select.value = [previous, state.connection.model].find(name => models.some(m => m.name === name)) || models[0]?.name || '';
+  select.disabled = !models.length || setupBusy;
+  $('local-settings-use').disabled = !models.length || setupBusy;
+}
+async function detectLocalSettings() {
+  const button = $('local-detect'); button.disabled = true;
+  $('local-detect-status').textContent = 'Checking this computer…';
+  try {
+    const found = await api.detectLocalAI($('local-endpoint').value.trim());
+    renderLocalModelChoice(found);
+    $('local-detect-status').textContent = found.models.length ? `${found.message} Installed: ${found.models.map(m => m.name).join(', ')}.` : found.message;
+  } catch (error) { $('local-detect-status').textContent = cleanError(error.message); }
+  finally { button.disabled = false; }
+}
+async function useLocalSettings() {
+  if (setupBusy || busy) return;
+  const model = $('local-model-choice').value;
+  setupBusy = true; renderLocalModelChoice(localAI);
+  $('local-settings-use-label').textContent = 'Testing on this computer…';
+  $('local-settings-status').textContent = `Sending a fictional sample prompt to ${model}…`;
+  try {
+    const result = await api.useLocalAI({ model, endpoint: $('local-endpoint').value.trim(), localOnly: $('local-only-toggle').checked });
+    state = result.state;
+    $('local-settings-status').textContent = `Ready. ${model} answered in ${(result.durationMs / 1000).toFixed(1)} seconds. Improve now uses it.`;
+  } catch (error) { $('local-settings-status').textContent = cleanError(error.message); }
+  finally { setupBusy = false; $('local-settings-use-label').textContent = 'Test & use this model'; await detectLocalAI(); updateConnection(); knowledgeStatus(); }
+}
+async function saveLocalOnly() {
+  const c = state.connection, localOnly = $('local-only-toggle').checked;
+  try {
+    state = await api.saveSettings({ mode: c.mode, endpoint: c.endpoint, model: c.model, region: c.region || '', profile: c.profile || '', apiKey: '', clearKey: false, importClipboard: state.importClipboard, localOnly });
+    $('local-settings-status').textContent = state.localOnly ? 'Local-only mode is on. Cloud AI providers and knowledge lookups are blocked.' : 'Local-only mode is off. Cloud providers are available again.';
+  } catch (error) {
+    $('local-only-toggle').checked = Boolean(state.localOnly);
+    $('local-settings-status').textContent = `${cleanError(error.message)} Switch the Prompt workspace to a local model first, then turn on local-only mode.`;
+  }
+  renderSetup(); updateConnection(); knowledgeStatus();
+}
 function setupLocalAI() {
   $('setup-check').onclick = () => detectLocalAI();
   $('setup-use').onclick = useLocalModel;
   $('setup-get-ollama').onclick = () => attempt(() => api.openHelp('ollama-download'));
   $('setup-browse-models').onclick = () => attempt(() => api.openHelp('ollama-models'));
   $('setup-copy-command').onclick = () => attempt(async () => { await api.copy($('setup-pull-command').textContent); toast('Command copied. Paste it into a terminal, then choose Check again.'); });
-  $('setup-dismiss').onclick = () => attempt(async () => {
-    if (setupCompleted) setupCompleted = false;
-    else if (state.connection.mode === 'offline') state = await api.dismissSetup();
-    else setupHidden = true;
-    renderSetup();
+  $('setup-dismiss').onclick = () => { setupCompleted = false; renderSetup(); };
+  const tabs = [...document.querySelectorAll('[data-local-tab]')];
+  tabs.forEach((button, index) => {
+    button.onclick = () => selectLocalTab(button.dataset.localTab);
+    button.onkeydown = event => {
+      const next = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: tabs.length - 1 }[event.key];
+      if (next === undefined) return;
+      event.preventDefault(); selectLocalTab(tabs[(next + tabs.length) % tabs.length].dataset.localTab, true);
+    };
   });
-  // Re-check when the user returns from starting Ollama or installing a model.
-  window.addEventListener('focus', () => { if ((!$('local-setup').hidden || activeView === 'chat') && !setupBusy && !setupCompleted && localAI?.status !== 'ready') detectLocalAI(); });
-  if (state.connection.mode === 'ollama' || (state.connection.mode === 'offline' && !state.setup?.dismissed)) detectLocalAI();
+  document.querySelectorAll('[data-local-tab-go]').forEach(button => button.onclick = () => selectLocalTab(button.dataset.localTabGo, true));
+  document.querySelectorAll('[data-open-local-ai]').forEach(button => button.onclick = () => openLocalAI(button.dataset.openLocalAi));
+  $('lo-mascot').onclick = () => { openSettings(); document.querySelector('.mascot-settings').scrollIntoView({ block: 'center' }); $('mascot-toggle').focus({ preventScroll: true }); };
+  $('local-detect').onclick = detectLocalSettings;
+  $('local-settings-use').onclick = useLocalSettings;
+  $('local-only-save').onclick = saveLocalOnly;
+  // Re-check when the user returns from starting the runtime or installing a model.
+  window.addEventListener('focus', () => { if ((activeView === 'local-ai' || activeView === 'chat' || !$('local-attention').hidden) && !setupBusy && !setupCompleted && localAI?.status !== 'ready') detectLocalAI(); });
+  if (state.connection.mode === 'ollama') detectLocalAI(); else renderSetup();
 }
 let installPlan = null, installRunning = false;
 const gb = bytes => `${(bytes / 1e9).toFixed(bytes >= 1e10 ? 0 : 1)} GB`;
@@ -198,8 +345,9 @@ async function runInstaller() {
 }
 function setupInstaller() {
   $('setup-auto').onclick = openInstaller;
-  $('setup-cloud').onclick = openSettings;
-  $('local-ai-cloud').onclick = () => { $('local-ai-dialog').close(); openSettings(); };
+  $('local-download').onclick = openInstaller;
+  $('setup-cloud').onclick = () => openSettings('openrouter');
+  $('local-ai-cloud').onclick = () => { $('local-ai-dialog').close(); openSettings('openrouter'); };
   $('local-ai-close').onclick = () => { if (installRunning) { toast('Setup is running. Cancel it first, or keep it running in the background.'); $('local-ai-dialog').close(); return; } $('local-ai-dialog').close(); };
   $('local-ai-start').onclick = runInstaller;
   $('local-ai-cancel').onclick = () => { if (installRunning) { api.cancelLocalAI(); $('local-ai-stage').textContent = 'Cancelling…'; } else { $('local-ai-cancel').textContent = 'Cancel'; $('local-ai-choose').hidden = false; $('local-ai-progress').hidden = true; } };
@@ -517,7 +665,7 @@ async function improve() {
   catch (error) {
     toast(error.message, true);
     if (state.connection.mode === 'ollama') { setupHidden = false; detectLocalAI(); }
-    else if (state.connection.mode === 'offline' && promptAction !== 'improve') { setupHidden = false; state.setup = { ...state.setup, dismissed: false }; detectLocalAI(); }
+    else if (state.connection.mode === 'offline' && promptAction !== 'improve') { setupHidden = false; state.setup = { ...state.setup, dismissed: false }; renderWorkspaceCard(); }
   }
   finally { setBusy(false); }
 }
@@ -763,15 +911,15 @@ async function fillProviders(select) {
   const previous = select.value;
   if (!chatProviders) { select.innerHTML = '<option value="">Could not list providers</option>'; return; }
   const local = chatProviders.local.length ? chatProviders.local.map(p => `<option value="local:${escapeHtml(p.model)}">${escapeHtml(p.label)}</option>`).join('') : `<option value="" disabled>Local LLM · ${escapeHtml(chatProviders.localMessage || 'not available')}</option>`;
-  const cloud = chatProviders.cloud.map(p => `<option value="cloud:${escapeHtml(p.mode)}" ${p.available ? '' : 'disabled'}>${escapeHtml(p.label)}${p.available ? '' : ` · ${escapeHtml(p.reason)}`}</option>`).join('');
-  select.innerHTML = `<optgroup label="On this computer">${local}</optgroup><optgroup label="Cloud · your configured provider${chatProviders.localOnly ? ' (blocked by local-only mode)' : ''}">${cloud}</optgroup>`;
+  const cloud = flow.sortByMode(chatProviders.cloud).map(p => `<option value="cloud:${escapeHtml(p.mode)}" ${p.available ? '' : 'disabled'}>${escapeHtml(p.label)}${p.available ? '' : ` · ${escapeHtml(p.reason)}`}</option>`).join('');
+  select.innerHTML = `<optgroup label="Cloud · your configured provider${chatProviders.localOnly ? ' (blocked by local-only mode)' : ''}">${cloud}</optgroup><optgroup label="On this computer · Phase 2">${local}</optgroup>`;
   const enabled = [...select.options].filter(o => !o.disabled && o.value);
   select.value = enabled.some(o => o.value === previous) ? previous : enabled[0]?.value || '';
 }
 function updateProviderNote() {
   const value = $('pack-provider').value;
   const cloud = chatProviders?.cloud.find(p => `cloud:${p.mode}` === value);
-  $('pack-provider-note').textContent = !value ? 'Start Ollama, or set up a cloud provider in Settings, to talk with this pack.' : cloud ? `The pack text and your questions will be sent to ${cloud.label}. Check the pack contains nothing you cannot share.` : 'Runs on this computer. The pack and your questions never leave your device.';
+  $('pack-provider-note').textContent = !value ? 'Set up a cloud provider in Settings, or a local model in Local AI, to talk with this pack.' : cloud ? `The pack text and your questions will be sent to ${cloud.label}. Check the pack contains nothing you cannot share.` : 'Runs on this computer. The pack and your questions never leave your device.';
   $('pack-provider-note').classList.toggle('warning', Boolean(cloud));
   $('pack-chat').disabled = !value || (activePack?.text.length || 0) > 28000;
 }
@@ -871,7 +1019,7 @@ function renderSession() {
 function updateHylandProvider() {
   const value = $('hl-provider').value;
   const cloud = chatProviders?.cloud.find(p => `cloud:${p.mode}` === value);
-  $('hl-provider-note').textContent = !value ? 'Start Ollama, or set up a cloud provider in Settings, to summarise or chat.' : cloud ? `Session notes go to ${cloud.label} when you click. Your personal notes are never sent.` : 'Runs on this computer. Session notes never leave your device.';
+  $('hl-provider-note').textContent = !value ? 'Set up a cloud provider in Settings, or a local model in Local AI, to summarise or chat.' : cloud ? `Session notes go to ${cloud.label} when you click. Your personal notes are never sent.` : 'Runs on this computer. Session notes never leave your device.';
   $('hl-provider-note').classList.toggle('warning', Boolean(cloud));
   if (hylandData) renderSession();
 }
@@ -1002,7 +1150,12 @@ function renderHistory() {
   document.querySelectorAll('[data-rate]').forEach(button => button.onclick = () => attempt(async () => { state.history = await api.feedback({ id: button.dataset.rate, value: button.dataset.value }); renderHistory(); }));
   document.querySelectorAll('[data-delete]').forEach(button => button.onclick = () => attempt(async () => { if (!window.confirm('Delete this saved session from this device?')) return; state.history = await api.deleteHistory(button.dataset.delete); if (savedId === button.dataset.delete) savedId = null; renderHistory(); toast('Saved session deleted.'); }));
 }
-function openSettings() {
+function applyModePreset(mode) {
+  const presets = { openrouter: [flow.OPENROUTER.endpoint, flow.OPENROUTER.model], huggingface: ['https://router.huggingface.co/v1/chat/completions', 'openai/gpt-oss-120b'], ollama: ['http://localhost:11434/api/chat', ''] };
+  [$('endpoint').value, $('model').value] = presets[mode] || ['', ''];
+  $('api-key').value = ''; $('api-key').placeholder = 'Enter the key for this provider · session only';
+}
+function openSettings(preselect) {
   $('appearance').value = state.theme || 'system';
   $('connection-mode').value = state.connection.mode; $('endpoint').value = state.connection.endpoint; $('model').value = state.connection.model; $('api-key').value = ''; $('clear-key').checked = false; $('clipboard-setting').checked = state.importClipboard;
   $('api-key').placeholder = state.hasKey ? 'Key is in memory · leave blank to keep it' : 'Not saved to disk';
@@ -1012,8 +1165,11 @@ function openSettings() {
   $('shortcut-status').classList.toggle('warning', !state.shortcutRegistered && !state.preview);
   $('version').textContent = state.version;
   $('aws-profile').value = state.connection.profile || ''; $('aws-region').value = state.connection.region || '';
+  const mode = typeof preselect === 'string' ? preselect : '';
+  if (mode && mode !== state.connection.mode && [...$('connection-mode').options].some(o => o.value === mode && !o.disabled)) { $('connection-mode').value = mode; applyModePreset(mode); }
   modeFields(); $('settings-dialog').showModal(); refreshMascotSettings();
-  if (state.connection.mode === 'ollama') detectSettingsModels();
+  if (mode) $('connection-mode').focus();
+  if ($('connection-mode').value === 'ollama') detectSettingsModels();
 }
 function modeFields() {
   const mode = $('connection-mode').value;
@@ -1025,7 +1181,7 @@ function modeFields() {
   $('connection-test-status').hidden = mode === 'offline';
   $('endpoint').readOnly = ['openrouter', 'huggingface'].includes(mode);
   $('connection-test-status').textContent = mode === 'ollama' ? 'Sends a fictional sample prompt to Ollama on this computer. No quota or credits.' : 'Sends a fictional sample prompt, not your draft. Uses provider quota or credits.';
-  $('provider-guide').textContent = { ollama: 'Start the Ollama app on this computer, then choose Detect installed models and pick one. Impromptu never downloads, deletes or updates models.', bedrock: 'Configure your company AWS SSO profile once using aws configure sso. Enter its name and AWS region, sign in, then enter your allowed Claude model ID or inference profile ID/ARN. Test requests and improvements are billed to that AWS account.', openrouter: '1. Create a key at openrouter.ai/settings/keys. 2. Paste it below. 3. Keep openrouter/free for free routing, or enter a model ID ending in :free. Free models have quotas; other models may charge credits.', huggingface: '1. Create a token at huggingface.co/settings/tokens with Inference Providers permission. 2. Paste it below. 3. Enter a supported chat model ID. Free accounts require purchased credits; eligible plans include an allowance.' }[mode] || 'Enter the full chat endpoint and an available model ID.';
+  $('provider-guide').textContent = { ollama: 'Phase 2 preview. Start the Ollama app on this computer, then choose Detect installed models and pick one. For guided setup and one-click downloads, use Local AI in the sidebar.', bedrock: 'Configure your company AWS SSO profile once using aws configure sso. Enter its name and AWS region, sign in, then enter your allowed Claude model ID or inference profile ID/ARN. Test requests and improvements are billed to that AWS account.', openrouter: '1. Create a key at openrouter.ai/settings/keys. 2. Paste it below. 3. Keep openrouter/free for free routing, or enter a model ID ending in :free. Free models have quotas; other models may charge credits.', huggingface: '1. Create a token at huggingface.co/settings/tokens with Inference Providers permission. 2. Paste it below. 3. Enter a supported chat model ID. Free accounts require purchased credits; eligible plans include an allowance.' }[mode] || 'Enter the full chat endpoint and an available model ID.';
   $('mode-explanation').textContent = { bedrock: 'Use Claude through your organisation’s Amazon Bedrock account. Authentication is managed by AWS SSO; no AWS secrets are stored in Impromptu.', offline: 'No credentials needed. Adds the selected reusable skill and your context. This mode does not call an AI model.', ollama: 'Connect a model already installed in Ollama on this computer. Model output is returned for your review.', openrouter: 'Real AI prompt improvement through OpenRouter. Your prompt is sent to OpenRouter and its selected inference provider.', huggingface: 'Real AI prompt improvement through Hugging Face Inference Providers. This is not an unlimited free service.', compatible: 'Connect an endpoint supporting the Chat Completions format. API access and billing are separate from chat subscriptions.' }[mode];
 }
 
@@ -1151,7 +1307,7 @@ async function boot() {
   document.querySelectorAll('.shortcut-keys').forEach(el => el.innerHTML = (mac ? ['⌘', '⇧', 'I'] : ['Ctrl', 'Shift', 'I']).map(key => `<kbd>${key}</kbd>`).join(''));
   $('run-key').textContent = mac ? '⌘ ↵' : 'Ctrl ↵';
   if (state.platform === 'win32') $('mascot-consent-platform').textContent = 'On Windows it needs no extra permission, but it cannot copy from or scroll apps running as administrator.';
-  updateSkill(); updateConnection(); refreshSkills(state.skills); renderEvidence(); setupKnowledge(); setupChat(); setupSkills(); setupLearning(); setupMascot(); setupContext(); setupHyland(); setupInstaller(); setupLocalAI(); showView('knowledge');
+  updateSkill(); updateConnection(); refreshSkills(state.skills); renderEvidence(); setupKnowledge(); setupChat(); setupSkills(); setupLearning(); setupMascot(); setupContext(); setupHyland(); setupInstaller(); setupFirstRun(); setupLocalAI(); showView('knowledge');
   $('ollama-refresh').onclick = detectSettingsModels;
   $('local-only-setting').onchange = applyLocalOnlyOptions;
   document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => showView(button.dataset.view));
@@ -1194,9 +1350,7 @@ async function boot() {
   });
   $('connection-mode').onchange = () => {
     const mode = $('connection-mode').value;
-    const presets = { openrouter: ['https://openrouter.ai/api/v1/chat/completions', 'openrouter/free'], huggingface: ['https://router.huggingface.co/v1/chat/completions', 'openai/gpt-oss-120b'], ollama: ['http://localhost:11434/api/chat', ''] };
-    [$('endpoint').value, $('model').value] = presets[mode] || ['', ''];
-    $('api-key').value = ''; $('api-key').placeholder = 'Enter the key for this provider · session only';
+    applyModePreset(mode);
     modeFields();
     if (mode === 'ollama') detectSettingsModels();
   };

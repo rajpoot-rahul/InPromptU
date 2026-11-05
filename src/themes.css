@@ -126,3 +126,9 @@
   #setup-message.error { color: #f0b49a; }
   .mode-badge[data-health="warning"] .tiny-dot { background: #e0a85e; }
 }
+
+@media (prefers-color-scheme: dark) {
+  #first-run-message.error { color: #f0b49a; }
+  .local-status [data-state=ready] strong { color: #a9dcb5; }
+  .local-status :is([data-state=not-running], [data-state=error], [data-state=no-models]) strong { color: #e2be80; }
+}

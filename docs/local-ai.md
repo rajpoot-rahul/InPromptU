@@ -19,7 +19,25 @@ Chat, Compress/Explain, Context Packs, Skillify and coaching should reuse this l
 | `detectLocalAI(endpoint?)` | Run `probe`; defaults to the saved Ollama endpoint. |
 | `useLocalAI({ model, endpoint?, localOnly })` | Confirms the model is installed, sends a fictional test prompt, then saves the connection, `localOnly` and `setup.completedAt`. Returns `{ durationMs, state }`. |
 | `dismissSetup()` | Persists `setup.dismissed`. |
-| `openHelp(id)` | Opens only the allow-listed `ollama-download` or `ollama-models` pages. |
+| `openHelp(id)` | Opens only the allow-listed `openrouter-keys`, `ollama-download` or `ollama-models` pages (plus `model:<catalogue name>` library pages). |
+
+## Where it lives in the interface
+
+- **Sidebar → Phase 2 · Local AI → Local AI** (`data-view="local-ai"`, `#local-ai-view`), above Local chat. Its sub-menu is a `role="tablist"` with three `role="tab"` buttons (`data-local-tab` `overview`, `setup`, `settings`) controlling `#local-panel-*` tab panels. Arrow keys, Home and End move between tabs; only the selected tab is in the Tab order.
+  - **Overview:** runtime status from `detectLocalAI()`, the active local model, local-only mode, and links to the other tabs, Local chat and the mascot's screen-reading model (Settings).
+  - **Set up & models:** the guided setup card (`#local-setup`, rendered by `renderSetup()`), the one-click installer dialog (`#local-ai-dialog`, opened by **Set up local AI for me** or **Download another model**), and the installed-models list.
+  - **Settings:** endpoint, detection, model choice (`useLocalAI({ model, endpoint, localOnly })`) and **Save local-only mode** (`saveSettings` with the current connection and the new `localOnly`).
+- The Prompt workspace no longer renders the local setup flow. Its first-run card is OpenRouter (`#first-run`: `testConnection` then `saveSettings` with `mode: 'openrouter'`; the key is sent once and kept only in main-process memory). When the saved connection is a local model that needs attention, `#local-attention` links to the Local AI tab instead.
+- Detection now runs when the Local AI tab or Local chat opens, or at start-up only if the saved connection is the local model, so a fresh profile does not probe `localhost:11434` until the user visits Phase 2.
+
+## Provider order and first-run decisions (`src/setup-flow.js`)
+
+Loaded as a classic script in the renderer (`window.ImpromptuSetup`) and with `require` in the main process and tests.
+
+- `CLOUD_ORDER`: `openrouter`, `bedrock`, `huggingface`, `compatible`. `chat-providers` returns cloud providers in this order and the renderer lists them before local models.
+- `MODE_ORDER`: `openrouter`, `bedrock`, `huggingface`, `ollama`, `compatible`, `offline`, matching the Settings `#connection-mode` options. Option values are unchanged.
+- `workspaceCard({ mode, dismissed, hidden, preview, completed, localOnly, localNeedsAttention })` returns `first-run`, `first-run-local-only`, `first-run-done`, `local-attention` or `null`.
+- `localNeedsAttention(mode, model, localAI)` and `runtimeStatus(localAI, checking)` are the shared status helpers.
 
 ## Persisted state (`workspace.json` in the profile folder)
 
