@@ -40,11 +40,16 @@ npm run installer:windows
 
 **Keep macOS permissions across local rebuilds (mascot features).** Ad-hoc builds get a new code identity every time, so macOS silently stops applying Accessibility and Screen Recording grants after each reinstall, even while System Settings still shows them as on. Run `node scripts/local-signing.cjs setup` once. It creates a self-signed "Impromptu Local Signing" certificate in your login keychain, and `npm run package:mac` then signs with it automatically. The designated requirement stays `identifier "com.impromptu.companion" and certificate leaf = H"…"`, so grants persist. To clear stale grants from older builds: `tccutil reset ScreenCapture com.impromptu.companion` and `tccutil reset Accessibility com.impromptu.companion`. CI is unchanged and still produces ad-hoc builds.
 
-Build Mac installers on macOS. Windows can be cross-built, but installation must be checked on Windows. Expected output names are derived from `package.json`:
+Build Mac installers on macOS. `npm run installer:windows` cross-builds the unsigned Windows x64 NSIS `Setup.exe` on an Apple Silicon Mac without Wine, but installation must be checked on Windows. Local signing (`scripts/local-signing.cjs`) is Mac-only and is skipped for Windows packages. Expected output names are derived from `package.json`:
 
 - `release/Impromptu-<version>-Mac-Apple-Silicon-Installer.pkg`
 - `release/windows-installer/Impromptu-<version>-Windows-x64-Setup.exe`
 - Portable apps: `release/v<version>/Impromptu-darwin-arm64/Impromptu.app` and `release/v<version>/Impromptu-win32-x64/Impromptu.exe`.
+
+**Windows checks without a Windows PC.** Tests pass `platform: 'win32'` to the fake Electron in `tests/desktop.test.cjs`, and inject `platform`, `env` and `exists` into `findOllama`, `findCodex`, `findAws`, `startOllama`, `installOllama` and `sendKeys`. Tests marked `skip: process.platform !== 'win32'` run only on the `windows-2025` CI job. They check the real PowerShell signature script, the pinned Ollama signer as .NET renders it, and that the key scripts parse. Before release, check by hand on a Windows PC:
+- one-click local AI setup on a computer without Ollama;
+- the mascot's selection, Page Down and screen capture in a browser and in Office;
+- the tray icon on light and dark taskbars.
 
 Save drafts and quit the existing app before replacing it. Installed apps do not update automatically. Generated files stay out of Git.
 

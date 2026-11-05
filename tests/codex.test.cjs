@@ -31,3 +31,17 @@ test('an old process exit cannot disconnect a newly opened session', async () =>
   const pending = client.request('test/read', {}); second.child.stdout.write(JSON.stringify({ id: second.sent.at(-1).id, result: true }) + '\n');
   assert.equal(await pending, true); client.close();
 });
+
+test('Codex is found on Windows as codex.exe on PATH or inside an npm global install behind the codex.cmd shim', () => {
+  const { findCodex } = require('../src/codex.cjs');
+  const npm = 'C:\\Users\\me\\AppData\\Roaming\\npm';
+  const nested = `${npm}\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe`;
+  const options = files => ({ platform: 'win32', arch: 'x64', home: 'C:\\Users\\me', env: { APPDATA: 'C:\\Users\\me\\AppData\\Roaming', Path: `C:\\Windows;"${npm}"` }, exists: file => files.includes(file) });
+  assert.equal(findCodex('', options([`${npm}\\codex.cmd`, nested])), nested);
+  assert.equal(findCodex('', options(['C:\\Windows\\codex.exe', nested])), 'C:\\Windows\\codex.exe');
+  assert.equal(findCodex('D:\\Codex\\codex.exe', options(['D:\\Codex\\codex.exe', nested])), 'D:\\Codex\\codex.exe');
+  const arm = `${npm}\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-arm64\\vendor\\aarch64-pc-windows-msvc\\bin\\codex.exe`;
+  assert.equal(findCodex('', { ...options([arm]), arch: 'arm64' }), arm);
+  assert.equal(findCodex('', options([`${npm}\\codex.cmd`])), '');
+  assert.equal(findCodex('', { platform: 'darwin', env: { PATH: '/usr/bin:/opt/tools' }, home: '/Users/me', exists: file => file === '/opt/tools/codex' }), '/opt/tools/codex');
+});
