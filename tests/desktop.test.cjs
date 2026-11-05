@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const insights = require('../src/insights.cjs');
 
 function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-test-'));
@@ -307,6 +308,53 @@ test('learning IPC counts activity, scores benchmarks, guards links and erases o
   const erased = await handlers.get('learning-erase')(sender);
   assert.deepEqual([erased.runs.length, erased.progress.completed, Object.keys(erased.events).length], [0, 0, 0]);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(data, 'workspace.json'))).learning, { events: {}, manual: {}, runs: [] });
+});
+
+test('Improve records into the local prompt log, which can be turned off, erased and exported; coaching respects local-only', async t => {
+  for (const platform of ['darwin', 'win32']) {
+    const exportPath = path.join(os.tmpdir(), `impromptu-log-export-${platform}-${process.pid}.json`);
+    t.after(() => fs.rmSync(exportPath, { force: true }));
+    const { handlers, sender, data, opened } = desktop(t, { platform, dialog: { showSaveDialog: async () => ({ canceled: false, filePath: exportPath }) } });
+    const file = path.join(data, 'prompt-log.json');
+    assert.deepEqual([(await handlers.get('insights-state')(sender)).summary.total, fs.existsSync(file)], [0, false]);
+    await handlers.get('improve')(sender, { prompt: 'Summarise the Q3 notes below for my manager as 5 bullets.', context: 'Private context text', skillId: 'summary' });
+    const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+    assert.equal(saved.entries.length, 1);
+    assert.deepEqual([saved.entries[0].action, saved.entries[0].mode, saved.entries[0].skillId], ['improve', 'offline', 'summary']);
+    assert.ok(saved.entries[0].signals.includes('format'));
+    assert.ok(!JSON.stringify(saved).includes('Private context text'));
+    if (platform === 'darwin' && process.platform !== 'win32') assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+    const state = await handlers.get('insights-state')(sender);
+    assert.deepEqual([state.enabled, state.count, state.summary.total, state.canCoach], [true, 1, 1, false]);
+    assert.equal((await handlers.get('insights-settings')(sender, { enabled: false })).enabled, false);
+    await handlers.get('improve')(sender, { prompt: 'Not recorded while history is off.' });
+    assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).entries.length, 1);
+    await handlers.get('insights-settings')(sender, { enabled: true });
+    assert.equal(await handlers.get('insights-export')(sender), true);
+    assert.equal(JSON.parse(fs.readFileSync(exportPath, 'utf8')).format, 'impromptu-prompt-log');
+    await assert.rejects(handlers.get('insights-coach')(sender), /needs an AI model/);
+    await handlers.get('open-reading')(sender, insights.READINGS.tips.url);
+    assert.deepEqual(opened, [insights.READINGS.tips.url]);
+    await assert.rejects(handlers.get('open-reading')(sender, 'https://evil.example/'), /Only links/);
+    assert.equal((await handlers.get('insights-erase')(sender)).count, 0);
+    assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')).entries, []);
+    await assert.rejects(handlers.get('insights-export')(sender), /no prompt history/);
+    await assert.rejects(handlers.get('insights-state')({ sender: {}, senderFrame: { url: 'https://untrusted.example' } }), /Untrusted/);
+  }
+  const { handlers, sender } = desktop(t);
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const sent = [];
+  globalThis.fetch = async (url, options) => { sent.push({ url, body: JSON.parse(options.body) }); return new Response(JSON.stringify({ choices: [{ message: { content: '{"summary":"Name your audience more often.","focus":["Audience"],"tips":["Add: for my manager."]}' } }] })); };
+  await handlers.get('improve')(sender, { prompt: 'help with the thing' });
+  await handlers.get('save-settings')(sender, { mode: 'compatible', endpoint: 'https://approved.example/v1/chat/completions', model: 'team-model', apiKey: 'key', importClipboard: true, localOnly: false });
+  const coached = await handlers.get('insights-coach')(sender);
+  assert.deepEqual([coached.summary, coached.local, coached.model], ['Name your audience more often.', false, 'team-model']);
+  assert.match(sent[0].body.messages[0].content, /untrusted data/);
+  assert.ok(sent[0].body.messages[1].content.includes('help with the thing'));
+  await handlers.get('save-settings')(sender, { mode: 'compatible', endpoint: 'http://localhost:8080/v1/chat/completions', model: 'local-model', apiKey: '', importClipboard: true, localOnly: true });
+  assert.equal((await handlers.get('insights-coach')(sender)).local, true);
+  assert.equal(sent.at(-1).url, 'http://localhost:8080/v1/chat/completions');
 });
 
 test('ranked mode is opt-in, shares scores only, validates imported cards and can be left', async t => {

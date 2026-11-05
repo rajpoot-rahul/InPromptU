@@ -1,0 +1,59 @@
+/* My progress insights. Colours come from the theme variables, so Light, Dark, Glass and Max-ind all apply. */
+.ins-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 15px; margin-bottom: 26px; }
+.ins-score .eyebrow { margin-bottom: 8px; }
+.ins-score-row { display: flex; align-items: center; gap: 18px; }
+.ins-score-row > strong { font-size: 50px; font-weight: 500; letter-spacing: -2px; line-height: 1; color: var(--accent); }
+.ins-score-row > strong small { font-size: 16px; letter-spacing: 0; opacity: .6; margin-left: 2px; }
+.ins-score-row p { font-size: 11.5px; line-height: 1.7; margin: 4px 0 0; }
+.ins-band { display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ins-spark { display: block; width: 100%; height: 64px; margin-top: 16px; color: var(--accent); overflow: visible; }
+.ins-spark polyline { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ins-spark circle { fill: currentColor; }
+.ins-spark-guide { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+.ins-spark-axis { display: flex; justify-content: space-between; font-size: 9.5px; opacity: .7; margin-top: 2px; }
+.ins-parts { font-size: 11px; margin: 12px 0 4px; opacity: .85; }
+.ins-formula summary { font-size: 11px; cursor: pointer; margin-top: 6px; }
+.ins-formula ul { font-size: 11px; line-height: 1.7; padding-left: 18px; margin: 8px 0; }
+.ins-formula p { font-size: 11px; line-height: 1.7; margin: 0; opacity: .85; }
+.ins-coverage .bar-row { grid-template-columns: 80px 1fr 78px; gap: 14px; margin-top: 15px; }
+.ins-delta { font-size: 10px; margin-left: 4px; opacity: .85; }
+.ins-delta.up { color: var(--accent); font-weight: 600; }
+.ins-section { margin-bottom: 28px; }
+.ins-heading { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
+.ins-section > .help { margin: 0 0 14px; }
+.ins-areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+.ins-area { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.ins-area header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ins-area h3 { font-size: 14.5px; font-weight: 600; margin: 0; }
+.ins-gap { font-size: 10px; white-space: nowrap; opacity: .75; }
+.ins-why { font-size: 12px; line-height: 1.7; margin: 8px 0 12px; }
+.ins-example { margin: 0 0 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+.ins-example figcaption { font-size: 9.5px; letter-spacing: .6px; text-transform: uppercase; opacity: .7; margin-bottom: 6px; }
+.ins-example blockquote { margin: 0 0 8px; font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ins-add { text-decoration: none; display: inline; padding: 1px 5px; border-radius: 4px; border: 1px dashed color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--accent) 13%, transparent); color: inherit; font-weight: 500; }
+.ins-missing { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 10.5px; margin-bottom: 10px; }
+.ins-chip { font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 22%, transparent); }
+.ins-learn { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.ins-learn > strong { font-size: 9px; letter-spacing: 1.4px; text-transform: uppercase; opacity: .75; }
+.ins-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 2px; }
+.ins-actions .text-button { margin-left: 0; font-size: 11.5px; }
+.ins-learn .readings .text-button { text-align: left; }
+.ins-none { font-size: 12px; line-height: 1.7; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; margin: 0; }
+.ins-habits { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 10px; }
+.ins-habits .stat { padding: 18px 20px; }
+.ins-habits .stat strong { font-size: 24px; margin-bottom: 6px; }
+.ins-habits .stat strong small { font-size: 12px; opacity: .7; }
+.ins-habits .stat span { display: block; font-size: 11.5px; }
+.ins-habits .stat > small { display: block; font-size: 10.5px; line-height: 1.6; margin-top: 6px; opacity: .8; }
+.ins-habits .stat .text-button { margin-left: 0; font-size: 10.5px; padding: 0; }
+.ins-meta { font-size: 11px; opacity: .85; margin: 0; }
+.ins-coach, .ins-privacy { margin-bottom: 18px; }
+.ins-coach-result { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ins-coach-result p { font-size: 12.5px; line-height: 1.7; }
+.ins-coach-result h3 { font-size: 8.5px; letter-spacing: 1.2px; margin: 12px 0 6px; }
+.ins-coach-result ul { font-size: 12px; line-height: 1.7; padding-left: 18px; margin: 0; }
+.ins-privacy .checkbox-label { margin-top: 6px; }
+.ins-privacy-actions { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+.ins-empty { margin-bottom: 18px; }
+@media (max-width: 1000px) { .ins-top { grid-template-columns: 1fr; } .ins-habits { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: no-preference) { .ins-area, .ins-top > * { animation: setup-in .2s ease-out; } }

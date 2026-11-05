@@ -1001,15 +1001,6 @@ function renderHistory() {
   document.querySelectorAll('[data-rate]').forEach(button => button.onclick = () => attempt(async () => { state.history = await api.feedback({ id: button.dataset.rate, value: button.dataset.value }); renderHistory(); }));
   document.querySelectorAll('[data-delete]').forEach(button => button.onclick = () => attempt(async () => { if (!window.confirm('Delete this saved session from this device?')) return; state.history = await api.deleteHistory(button.dataset.delete); if (savedId === button.dataset.delete) savedId = null; renderHistory(); toast('Saved session deleted.'); }));
 }
-function renderProgress() {
-  if (!state.history.length) { $('progress-content').innerHTML = '<div class="empty-state"><h2>Progress starts with your own work.</h2><p>Save a few sessions to see which useful details appear in your original briefs. No synthetic scores or employee comparisons.</p><button id="progress-start" class="secondary">Start with a prompt ↗</button></div>'; $('progress-start').onclick = () => showView('workspace'); return; }
-  const count = state.history.length;
-  const rated = state.history.filter(h => h.feedback).length;
-  const helpful = state.history.filter(h => h.feedback === 'helpful').length;
-  const skillsUsed = new Set(state.history.map(h => h.input.skillId)).size;
-  const signals = ['task', 'context', 'audience', 'format', 'boundaries'].map(id => ({ id, count: state.history.filter(h => h.result.analysis?.signals?.find(s => s.id === id)?.present).length }));
-  $('progress-content').innerHTML = `<div class="stat-grid"><div class="stat"><strong>${count}</strong><span>Sessions you chose to save</span></div><div class="stat"><strong>${helpful}<small> / ${rated}</small></strong><span>Rated helpful / all rated</span></div><div class="stat"><strong>${skillsUsed}</strong><span>Working approaches explored</span></div></div><section class="progress-panel"><h2>Details in your original briefs</h2><p>Text signals across your saved prompts and supplied context. These checks do not know the surrounding conversation or measure answer quality.</p>${signals.map(s => `<div class="bar-row"><span>${s.id[0].toUpperCase() + s.id.slice(1)}</span><progress value="${s.count}" max="${count}" aria-label="${s.id}: ${s.count} of ${count} saved briefs"></progress><span>${s.count} of ${count}</span></div>`).join('')}</section><p class="privacy-note">Visible only to you on this device. Organisation-wide standing needs a shared, comparable dataset and a participation policy; this prototype does not collect or invent one.</p>`;
-}
 function openSettings() {
   $('appearance').value = state.theme || 'system';
   $('connection-mode').value = state.connection.mode; $('endpoint').value = state.connection.endpoint; $('model').value = state.connection.model; $('api-key').value = ''; $('clear-key').checked = false; $('clipboard-setting').checked = state.importClipboard;
