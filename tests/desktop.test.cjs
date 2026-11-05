@@ -9,9 +9,11 @@ const insights = require('../src/insights.cjs');
 
 function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-test-'));
-  t.after(() => fs.rmSync(data, { recursive: true, force: true }));
   fs.writeFileSync(path.join(data, 'workspace.json'), JSON.stringify({ connection: { mode: 'offline', endpoint: '', model: '' }, theme, history: [] }));
-  const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [], opened = [];
+  const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [], opened = [], appEvents = new Map();
+  // Runs the app's own quit cleanup so fs.watch handles close; unref'd watchers still kept the Windows test process alive.
+  t.after(() => { for (const name of ['before-quit', 'will-quit']) for (const listener of appEvents.get(name) || []) listener(); });
+  t.after(() => fs.rmSync(data, { recursive: true, force: true }));
   let ready, window, copied = 'Synthetic test prompt';
   class BrowserWindow {
     constructor(options) { windows.push(this); if (!window) window = this; this.options = options; this.alwaysOnTop = []; this.vibrancy = options.vibrancy || null; this.background = options.backgroundColor; this.vibrancyCalls = 0; this.webContents = { send: (...args) => events.push(args), isLoading: () => false, setWindowOpenHandler() {}, on() {} }; }
@@ -24,7 +26,7 @@ function desktop(t, { platform = 'darwin', theme = 'system', dialog = {} } = {})
   const image = file => ({ file, template: false, representations: [], resize(size) { return { ...this, size, toPNG: () => Buffer.from(`${path.basename(file)}@${size.width}`) }; }, setTemplateImage(value) { this.template = value; }, addRepresentation(rep) { this.representations.push(rep); } });
   const menus = [];
   const fake = {
-    app: { setName() {}, setAppUserModelId: id => appCalls.push(['setAppUserModelId', id]), requestSingleInstanceLock: () => true, getPath: () => data, getVersion: () => 'test', on() {}, whenReady: () => ({ then: callback => ready = callback }) },
+    app: { setName() {}, setAppUserModelId: id => appCalls.push(['setAppUserModelId', id]), requestSingleInstanceLock: () => true, getPath: () => data, getVersion: () => 'test', on: (name, listener) => appEvents.set(name, [...(appEvents.get(name) || []), listener]), whenReady: () => ({ then: callback => ready = callback }) },
     BrowserWindow, ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
     clipboard: { readText: async () => copied, writeText: async value => { await Promise.resolve(); copied = value; } },
     globalShortcut: { register: (name, fn) => { shortcuts.set(name, fn); return true; }, unregisterAll() {} },
