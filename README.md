@@ -16,17 +16,18 @@
 </p>
 
 <p align="center">
+  <a href="https://rajpoot-rahul.github.io/InPromptU/pitch/"><b>▶ Play the pitch deck</b></a>
+  &nbsp;·&nbsp;
   <a href="https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Mac-Apple-Silicon-Installer.pkg"><b>Download for Mac</b></a>
   &nbsp;·&nbsp;
   <a href="https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Windows-x64-Setup.exe"><b>Download for Windows</b></a>
-  &nbsp;·&nbsp;
-  <a href="pitch/"><b>Pitch deck</b></a>
   &nbsp;·&nbsp;
   <a href="docs/guide.md"><b>User guide</b></a>
 </p>
 
 <p align="center">
-  <img src="docs/images/pitch/trailer.gif" width="800" alt="Highlights from the Impromptu pitch deck">
+  <a href="https://rajpoot-rahul.github.io/InPromptU/pitch/"><img src="docs/images/pitch/trailer.gif" width="800" alt="Highlights from the Impromptu pitch deck; select to play the full deck"></a><br>
+  <sub>Click the trailer to play all 28 slides in your browser: → or Space moves on, F goes full screen.</sub>
 </p>
 
 ## Why Impromptu
@@ -88,7 +89,7 @@ We're asking for a pilot with two or three teams, including a non-technical one;
 ## Install
 
 > [!NOTE]
-> These are unsigned hackathon builds, so macOS Gatekeeper and Windows SmartScreen may warn before opening them. The repository is private: sign in with an account that has access to download.
+> These are unsigned hackathon builds, so macOS Gatekeeper and Windows SmartScreen may warn before opening them.
 
 - **Mac** (Apple Silicon, macOS 13 or later): [Impromptu-Mac-Apple-Silicon-Installer.pkg](https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Mac-Apple-Silicon-Installer.pkg), then open **Applications → Impromptu**.
 - **Windows** (x64): [Impromptu-Windows-x64-Setup.exe](https://github.com/rajpoot-rahul/InPromptU/releases/latest/download/Impromptu-Windows-x64-Setup.exe), then open **Impromptu** from the Start menu.
@@ -99,7 +100,7 @@ Checksums and every asset are on the [latest release](https://github.com/rajpoot
 
 - [User guide](docs/guide.md): every workflow, the AI and knowledge connections, privacy and storage, and what has and hasn't been verified.
 - [Concept and product vision](docs/concept.md) and the [demo walkthrough](docs/demo.md).
-- [Pitch deck](pitch/): open `pitch/index.html` from a clone or ZIP.
+- [Pitch deck](https://rajpoot-rahul.github.io/InPromptU/pitch/): plays in the browser. The source is [`pitch/index.html`](pitch/index.html), which also runs offline from a clone or ZIP.
 - [Contributing](CONTRIBUTING.md): Node 24 LTS, `npm ci`, `npm run dev`, `npm run verify` and the release flow.
 
 <sub>Built for the <a href="https://impromptu-hackathon-brief.hyland-0170.chatgpt.site/#idea">Impromptu hackathon brief</a>.</sub>
