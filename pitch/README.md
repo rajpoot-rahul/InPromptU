@@ -2,7 +2,9 @@
 
 A 28-slide motion-graphics deck for presenting Impromptu. It's one offline HTML file with no network calls and no build step.
 
-**To open it,** clone the repository or download it as a ZIP, then open `pitch/index.html` in a browser. It uses the screenshots in `docs/images`, so keep the folders together. GitHub itself shows the file's source rather than the slides.
+**[Play it in your browser.](https://rajpoot-rahul.github.io/InPromptU/pitch/)** GitHub Pages publishes it from this folder whenever it changes on `main`; GitHub's file view shows the source, not the slides.
+
+**To run it offline,** clone the repository or download it as a ZIP, then open `pitch/index.html` in a browser. It uses the screenshots in `docs/images`, so keep the folders together.
 
 | Key | Action |
 | --- | --- |
