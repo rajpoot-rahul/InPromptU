@@ -9,6 +9,9 @@ const insights = require('../src/insights.cjs');
 const { EventEmitter } = require('node:events');
 
 function desktop(t, { platform = 'darwin', theme = 'system', dialog = {}, savedState = {} } = {}) {
+  // The local AI planner reads this computer's memory and free disk; fix both so CI runners can't change the results.
+  t.mock.method(os, 'totalmem', () => 16 * 2 ** 30);
+  t.mock.method(fs, 'statfsSync', () => ({ bavail: 1e8, bsize: 4096 }));
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'impromptu-test-'));
   fs.writeFileSync(path.join(data, 'workspace.json'), JSON.stringify({ connection: { mode: 'offline', endpoint: '', model: '' }, theme, history: [], ...savedState }));
   const handlers = new Map(), shortcuts = new Map(), events = [], windows = [], appCalls = [], trays = [], opened = [], appEvents = new Map();
